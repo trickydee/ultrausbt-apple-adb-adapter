@@ -37,14 +37,14 @@ Note: This software is intended to be compiled in an Ubuntu Linux environment.
 
 - Install the Raspberry Pi Pico SDK (https://github.com/raspberrypi/pico-sdk)
 - Set the `$PICO_SDK_PATH` environment variable to your pico-sdk directory
-- Open a Terminal and "cd" into this project
-- From the top level of this project, "cd" to the `src/firmware` folder
-- In Terminal, execute the following commands from the above `src/firmware` folder:
+- **From the top level of this project** you can build with:
+  - `make` (or `./build.sh`)
+- Or build manually from `src/firmware`:
   - `mkdir build`
   - `cd build`
   - `cmake ..`
   - `make`
-- The build outputs (.uf2, .bin, .elf, etc) will be placed in this folder (path is from the top level of the project):
+- The build outputs (.uf2, .bin, .elf, etc) will be placed in:
   - `src/firmware/build/src`
 - Next, plug the micro-USB side of a USB cable into HIDHopper
 - Press the button which is near the micro-USB port

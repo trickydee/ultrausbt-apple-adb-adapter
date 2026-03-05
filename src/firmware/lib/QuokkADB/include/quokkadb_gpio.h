@@ -45,8 +45,8 @@
 
 // ADB GPIOs
 #define ADB_PWR_GPIO  21
-#define ADB_IN_GPIO   20
-#define ADB_OUT_GPIO  19
+#define ADB_IN_GPIO   19
+#define ADB_OUT_GPIO  18
 #define ADB_OUT_HIGH() sio_hw->gpio_set = 1 << ADB_OUT_GPIO
 #define ADB_OUT_LOW()  sio_hw->gpio_clr = 1 << ADB_OUT_GPIO
 #define ADB_IN_GET() (gpio_get(ADB_IN_GPIO))

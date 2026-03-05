@@ -39,6 +39,7 @@
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
 #include "pico/bootrom.h"
+#include "hardware/clocks.h"
 
 #include "tusb.h"
 #include "pico/stdio.h"
