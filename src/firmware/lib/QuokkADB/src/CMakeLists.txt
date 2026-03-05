@@ -1,6 +1,7 @@
 
-add_library(QuokkADB 
+add_library(QuokkADB
     adb_platform.cpp
+    bt_hid_bridge.cpp
     flashsettings.cpp
     platformkbdparser.cpp
     platformmouseparser.cpp
@@ -8,7 +9,7 @@ add_library(QuokkADB
     quokkadb.cpp
     rp2040_serial.cpp
     usbhost.cpp
-    )
+)
 
 target_link_libraries(QuokkADB pico_stdlib hardware_pio hardware_flash hardware_clocks pico_multicore adb usb tinyusb_common tinyusb_host)
 target_include_directories(QuokkADB PUBLIC ../include)

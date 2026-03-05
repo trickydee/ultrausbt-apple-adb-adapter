@@ -35,3 +35,29 @@ Defined in `src/firmware/lib/QuokkADB/include/quokkadb_gpio.h` as `ADB_OUT_GPIO`
 | 23   | PICO_SMPS_MODE_PIN | —       | SMPS mode (board default)     |
 
 Ensure hardware is wired for ADB data out on **GPIO 18** and ADB data in on **GPIO 19**.
+
+## Bluepad32 (Bluetooth keyboard and mouse)
+
+Bluetooth HID support is available on **Pico W** and **Pico 2 W** only (boards with CYW43). It uses [Bluepad32](https://github.com/ricardoquesada/bluepad32) for BT keyboard and mouse; gamepads are not implemented yet.
+
+- **Submodule:** `src/firmware/bluepad32`. Initialize with `git submodule update --init --recursive` (or let `build.sh` do it).
+- **Build for Bluetooth:** Use a wireless board so Bluepad32 is enabled:
+  - From a clean build dir:  
+    `cd src/firmware/build && cmake -DPICO_BOARD=pico_w ..` (or `pico2_w`) then `make`
+  - Or with build script: set board in CMake (e.g. edit `build.sh` to pass `-DPICO_BOARD=pico_w` to `cmake`).
+- **Default build** (no `-DPICO_BOARD=pico_w`): builds for **pico**; Bluepad32 is disabled and the firmware is USB-only.
+- **Behaviour:** When built for `pico_w` or `pico2_w`, the firmware starts Bluetooth scanning after init. Paired BT keyboards and mice feed into the same ADB pipeline as USB (same parsers and register handling). Up to 2 BT keyboards and 2 BT mice are supported; only the first of each is currently processed in the main loop.
+- **Files:** `src/firmware/src/bluepad32_init.c`, `bluepad32_platform.c`, `btstack_config.h`, `sdkconfig.h`; `lib/QuokkADB/src/bt_hid_bridge.cpp`; platform API in `bluepad32_platform.h`, app API in `bluepad32_api.h`.
+
+## Build all boards
+
+From the project root, `./build_all.sh` builds firmware for all four boards into separate directories:
+
+| Board     | Build directory  | UF2 path |
+|----------|------------------|----------|
+| Pico     | `build-pico`     | `build-pico/src/HIDHopper-firmware.uf2` |
+| Pico W   | `build-pico_w`   | `build-pico_w/src/HIDHopper-firmware.uf2` |
+| Pico 2   | `build-pico2`    | `build-pico2/src/HIDHopper-firmware.uf2` |
+| Pico 2 W | `build-pico2_w`  | `build-pico2_w/src/HIDHopper-firmware.uf2` |
+
+Requires `PICO_SDK_PATH` or `PICO_SDK_FETCH_FROM_GIT=ON` (same as `build.sh`). Submodules are initialized automatically.

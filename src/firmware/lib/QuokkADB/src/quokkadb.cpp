@@ -50,8 +50,13 @@
 #include "adbmouseparser.h"
 #include "flashsettings.h"
 #include "platform_config.h"
+#include "bt_hid_bridge.h"
 #include <cstdio>
 #include "hardware/pio.h"
+
+#if ENABLE_BLUEPAD32
+#include "bluepad32_api.h"
+#endif
 
 using rp2040_serial::Serial;
 
@@ -122,9 +127,21 @@ int quokkadb(void) {
   
   printf("%s\n", PLATFORM_FW_VER_STRING);
   srand(time_us_32());
+
+#if ENABLE_BLUEPAD32
+  if (bluepad32_init() == NULL) {
+    printf("Bluepad32 init failed (BT disabled)\n");
+  }
+#endif
+
 /*------------ Core0 main loop ------------*/
   while (true) {
     int16_t cmd = 0;
+
+#if ENABLE_BLUEPAD32
+    bluepad32_poll();
+    process_bluepad32_devices();
+#endif
 
     if (!kbdpending)
     {

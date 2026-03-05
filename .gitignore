@@ -30,3 +30,7 @@ fp-info-cache
 images/.DS_Store
 .DS_Store
 build/
+build-pico/
+build-pico_w/
+build-pico2/
+build-pico2_w/
