@@ -30,6 +30,6 @@
 #define FW_VER_NUM      "0.2.4"
 #define FW_VER_SUFFIX   "beta"
 #define PLATFORM_FW_VERSION FW_VER_NUM "-" FW_VER_SUFFIX 
-#define PRODUCT_NAME "QuokkADB"
+#define PRODUCT_NAME "Blue-QuokkADB"
 #define PLATFORM_FW_VER_STRING PRODUCT_NAME " firmware: " PLATFORM_FW_VERSION " " __DATE__ " " __TIME__ " "
 

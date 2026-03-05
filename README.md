@@ -39,6 +39,9 @@ Note: This software is intended to be compiled in an Ubuntu Linux environment.
 - Set the `$PICO_SDK_PATH` environment variable to your pico-sdk directory
 - **From the top level of this project** you can build with:
   - `make` (or `./build.sh`)
+- To use **upstream TinyUSB** (optional), initialize the submodule first:  
+  `git submodule update --init --recursive`  
+  Then build as above; the firmware will use the TinyUSB at `src/firmware/tinyusb`. See [docs/changes.md](docs/changes.md).
 - Or build manually from `src/firmware`:
   - `mkdir build`
   - `cd build`

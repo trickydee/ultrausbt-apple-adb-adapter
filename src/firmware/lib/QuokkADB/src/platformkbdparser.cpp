@@ -34,6 +34,7 @@
 #include "flashsettings.h"
 #include "hardware/pio.h"
 #include <tusb.h>
+#include <cstdio>
 
 #if QUOKKADB
 #include "rp2040_serial.h"

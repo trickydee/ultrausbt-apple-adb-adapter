@@ -1,5 +1,18 @@
 # HIDHopper ADB – Changes
 
+## SDK and TinyUSB versions
+
+- **Pico SDK:** 2.2.0 (latest stable). When using fetch-from-git (`PICO_SDK_FETCH_FROM_GIT=ON`), the default tag is `2.2.0`. Override with `PICO_SDK_FETCH_FROM_GIT_TAG` (e.g. `master` or `2.1.1`).
+- **TinyUSB:** Supplied by the Pico SDK (submodule at `lib/tinyusb`). SDK 2.2.0 includes the TinyUSB version tested with that release (e.g. 0.18.x). No separate TinyUSB update is required.
+
+**Upstream TinyUSB (implemented).** The project optionally uses upstream [hathach/tinyusb](https://github.com/hathach/tinyusb) when the submodule is present:
+
+- **Submodule:** `src/firmware/tinyusb` (from https://github.com/hathach/tinyusb.git). Initialize with `git submodule update --init --recursive`; `build.sh` does this automatically.
+- **CMake:** In `src/firmware/CMakeLists.txt`, if `src/firmware/tinyusb/hw/bsp/rp2040` exists, `PICO_TINYUSB_PATH` is set to `src/firmware/tinyusb` before the SDK is included, so the build uses that tree. If the submodule is not inited, the SDK’s bundled TinyUSB is used.
+- Build output will show `Using upstream TinyUSB at ...` when the submodule is in use.
+
+Configured in `src/firmware/CMakeLists.txt` and `src/firmware/pico_sdk_import.cmake`.
+
 ## GPIO configuration
 
 ### ADB pins (updated)

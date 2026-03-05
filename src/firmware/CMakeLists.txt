@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.22)
 
-set(PICO_BOARD_HEADER_DIRS ${CMAKE_SOURCE_DIR}/boards) 
-#add_definitions(-DPICO_BOARD=quokkadb)
+set(PICO_BOARD_HEADER_DIRS ${CMAKE_SOURCE_DIR}/boards)
+# Use upstream TinyUSB from submodule if present (see docs/changes.md)
+if (EXISTS ${CMAKE_SOURCE_DIR}/tinyusb/hw/bsp/rp2040)
+    set(PICO_TINYUSB_PATH "${CMAKE_SOURCE_DIR}/tinyusb" CACHE PATH "Path to TinyUSB (upstream)")
+    message(STATUS "Using upstream TinyUSB at ${PICO_TINYUSB_PATH}")
+endif ()
 # initialize the SDK based on PICO_SDK_PATH
 # note: this must happen before project()
 include(pico_sdk_import.cmake)

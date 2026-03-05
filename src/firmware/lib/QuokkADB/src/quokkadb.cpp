@@ -50,6 +50,7 @@
 #include "adbmouseparser.h"
 #include "flashsettings.h"
 #include "platform_config.h"
+#include <cstdio>
 #include "hardware/pio.h"
 
 using rp2040_serial::Serial;
