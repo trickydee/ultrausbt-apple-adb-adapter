@@ -10,7 +10,7 @@ endif ()
 # note: this must happen before project()
 include(pico_sdk_import.cmake)
 
-project(HIDHopper-firmware VERSION 1.0.1)
+project(HIDHopper-firmware VERSION 1.0.2)
 
 # Single source of truth for firmware version (bump when releasing; used in banner and docs)
 add_compile_definitions(HIDHOPPER_ADB_VERSION_STRING=\"${PROJECT_VERSION}\")

@@ -97,18 +97,10 @@ void MouseRptParser::OnRightButtonUp(MOUSEINFO *mi)
     switch (m_right_btn_mode)
     {
         case MouseRightBtnMode::ctrl_click :
-
             m_mouse_left_button_is_pressed = false;
             m_mouse_button_changed = true;
-            #ifdef QUOKKADB
-            sleep_ms(100);
-            #else
-            delay(100);
-            #endif
-            while(m_keyboard->PendingKeyboardEvent());
+            // Enqueue Ctrl-up; main loop will send it (no blocking wait here to avoid deadlock)
             m_keyboard->OnKeyUp(0, USB_KEY_LEFTCTRL);
-            while(m_keyboard->PendingKeyboardEvent());
-
         break;
         case MouseRightBtnMode::right_click :
             m_mouse_right_button_is_pressed = false;
@@ -126,17 +118,10 @@ void MouseRptParser::OnRightButtonDown(MOUSEINFO *mi)
     switch (m_right_btn_mode)
     {
         case MouseRightBtnMode::ctrl_click :
-            while(m_keyboard->PendingKeyboardEvent());
+            // Enqueue Ctrl-down then left-click; main loop will send them (no blocking wait to avoid deadlock)
             m_keyboard->OnKeyDown(0, USB_KEY_LEFTCTRL);
-            while(m_keyboard->PendingKeyboardEvent());
-            #ifdef QUOKKADB
-            sleep_ms(200);
-            #else
-            delay(200);
-            #endif
             m_mouse_left_button_is_pressed = true;
             m_mouse_button_changed = true;
-
         break;
         case MouseRightBtnMode::right_click :
             m_mouse_right_button_is_pressed = true;
