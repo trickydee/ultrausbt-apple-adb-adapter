@@ -38,7 +38,8 @@ void FlashSettings::init(void)
     flash_do_cmd(txbuf, rxbuf, STORAGE_CMD_TOTAL_BYTES);
     restore_interrupts(saved_isr_state);
     _capacity =  1 << rxbuf[3];
-    _last_sector = _capacity - FLASH_SECTOR_SIZE;
+    // Use the sector 4096 bytes before the BTstack TLV region (last two sectors) to avoid overlap
+    _last_sector = _capacity - (2u * FLASH_SECTOR_SIZE) - FLASH_SECTOR_SIZE;
 
     // Read initial settings
     uint8_t* setting_buffer = read_settings_page();

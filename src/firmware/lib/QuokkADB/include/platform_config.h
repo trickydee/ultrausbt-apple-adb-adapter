@@ -26,10 +26,15 @@
 //---------------------------------------------------------------------------
 #pragma once
 
-// Use macros for version number
+// Version: HIDHopper ADB uses version from CMake (HIDHOPPER_ADB_VERSION_STRING). Otherwise QuokkADB defaults.
+#ifdef HIDHOPPER_ADB_VERSION_STRING
+#define PLATFORM_FW_VERSION HIDHOPPER_ADB_VERSION_STRING
+#define PRODUCT_NAME "HIDHopper ADB"
+#else
 #define FW_VER_NUM      "0.2.4"
 #define FW_VER_SUFFIX   "beta"
-#define PLATFORM_FW_VERSION FW_VER_NUM "-" FW_VER_SUFFIX 
+#define PLATFORM_FW_VERSION FW_VER_NUM "-" FW_VER_SUFFIX
 #define PRODUCT_NAME "Blue-QuokkADB"
+#endif
 #define PLATFORM_FW_VER_STRING PRODUCT_NAME " firmware: " PLATFORM_FW_VERSION " " __DATE__ " " __TIME__ " "
 

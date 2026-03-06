@@ -1,5 +1,14 @@
 # HIDHopper ADB – Changes
 
+## Firmware version
+
+The firmware version is defined in one place and used in the serial/boot banner and anywhere the firmware identifies itself (e.g. ADB “version” response).
+
+- **Where to set it:** `src/firmware/CMakeLists.txt` — use `project(HIDHopper-firmware VERSION x.y.z)`. Use semantic-style versions (e.g. `1.0.0`); bump when you release or tag.
+- **Where it appears:** `PLATFORM_FW_VER_STRING` in the QuokkADB `platform_config.h` (product name “HIDHopper ADB” and version from CMake), printed at boot and in response to version queries.
+
+To bump the version: edit the `VERSION` in that `project()` line and rebuild.
+
 ## SDK and TinyUSB versions
 
 - **Pico SDK:** 2.2.0 (latest stable). When using fetch-from-git (`PICO_SDK_FETCH_FROM_GIT=ON`), the default tag is `2.2.0`. Override with `PICO_SDK_FETCH_FROM_GIT_TAG` (e.g. `master` or `2.1.1`).
