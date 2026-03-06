@@ -37,6 +37,8 @@ target_include_directories(tinyusb_common INTERFACE include)
 add_subdirectory(src)
 add_subdirectory(lib/adb/src)
 add_subdirectory(lib/QuokkADB/src)
+# Display (SSD1306) headers for quokkadb.cpp
+target_include_directories(QuokkADB PRIVATE ${CMAKE_SOURCE_DIR}/src)
 add_subdirectory(lib/usb/src)
 
 # Bluepad32: add init/platform sources, includes, and link (wireless boards only)

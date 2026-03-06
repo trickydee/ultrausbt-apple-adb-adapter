@@ -57,6 +57,7 @@
 #if ENABLE_BLUEPAD32
 #include "bluepad32_api.h"
 #endif
+#include "display/display.h"
 
 using rp2040_serial::Serial;
 
@@ -116,16 +117,18 @@ int quokkadb(void) {
 
   
   setting_storage.init();
-  
-  //  Block this core when the core1 is writing to flash 
 
- 
+  display_init();
+
+  //  Block this core when the core1 is writing to flash
+
   multicore_reset_core1();
   // all USB task run in core1
   multicore_launch_core1(core1_main);
   multicore_lockout_victim_init();
   
   printf("%s\n", PLATFORM_FW_VER_STRING);
+  display_show_splash();
   srand(time_us_32());
 
 #if ENABLE_BLUEPAD32
@@ -138,9 +141,13 @@ int quokkadb(void) {
   while (true) {
     int16_t cmd = 0;
 
+    display_handle_buttons();
+
 #if ENABLE_BLUEPAD32
     bluepad32_poll();
     process_bluepad32_devices();
+    display_set_bt_counts((uint8_t)bluepad32_get_keyboard_count(),
+                         (uint8_t)bluepad32_get_mouse_count(), 0);
 #endif
 
     if (!kbdpending)

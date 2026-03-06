@@ -45,6 +45,20 @@ Defined in `src/firmware/lib/QuokkADB/include/quokkadb_gpio.h` as `ADB_OUT_GPIO`
 
 Ensure hardware is wired for ADB data out on **GPIO 18** and ADB data in on **GPIO 19**.
 
+### SSD1306 OLED display (optional)
+
+An I2C SSD1306 128×64 OLED can be connected for splash, device counts, and (on Pico W / Pico 2 W) Bluetooth device names. No GPIO collision with ADB, LED, or UART.
+
+| GPIO | Use           | Description                    |
+|------|----------------|--------------------------------|
+| 4    | I2C SDA        | Display data (i2c0)            |
+| 5    | I2C SCL        | Display clock (i2c0)           |
+| 6    | Button left    | Optional; active low           |
+| 7    | Button middle  | Cycle screens (splash → devices → BT names) |
+| 8    | Button right   | On splash: clear BT pairings (when BT enabled) |
+
+Config: `src/firmware/src/display/display_config.h`. Display address 0x3c. If no display is connected, the firmware still runs; I2C init is attempted at boot.
+
 ## Bluepad32 (Bluetooth keyboard and mouse)
 
 Bluetooth HID support is available on **Pico W** and **Pico 2 W** only (boards with CYW43). It uses [Bluepad32](https://github.com/ricardoquesada/bluepad32) for BT keyboard and mouse; gamepads are not implemented yet.
