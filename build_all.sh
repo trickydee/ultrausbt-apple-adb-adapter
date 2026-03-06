@@ -14,8 +14,22 @@ if [ ! -f "src/firmware/CMakeLists.txt" ]; then
     exit 1
 fi
 
+# Ensure Pico SDK is available: use existing env, else find SDK in common paths, else fetch from git
 if [ -z "$PICO_SDK_PATH" ] && [ -z "$PICO_SDK_FETCH_FROM_GIT" ]; then
-    echo "Error: Set PICO_SDK_PATH to your pico-sdk directory, or set PICO_SDK_FETCH_FROM_GIT=ON"
+    for candidate in "$HOME/pico/pico-sdk" "$HOME/pico-sdk" "/opt/pico-sdk" "/usr/local/pico-sdk"; do
+        if [ -f "${candidate}/pico_sdk_init.cmake" ] 2>/dev/null; then
+            export PICO_SDK_PATH="$candidate"
+            echo "Using Pico SDK at: $PICO_SDK_PATH"
+            break
+        fi
+    done
+    if [ -z "$PICO_SDK_PATH" ]; then
+        export PICO_SDK_FETCH_FROM_GIT=ON
+        echo "Pico SDK not found in common paths; fetching from git (PICO_SDK_FETCH_FROM_GIT=ON)."
+    fi
+fi
+if [ -z "$PICO_SDK_PATH" ] && [ -z "$PICO_SDK_FETCH_FROM_GIT" ]; then
+    echo "Error: Could not set PICO_SDK_PATH or PICO_SDK_FETCH_FROM_GIT."
     exit 1
 fi
 

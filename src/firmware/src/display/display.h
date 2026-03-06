@@ -26,6 +26,9 @@ void display_update_devices(void);
 void display_set_usb_counts(uint8_t kb, uint8_t mouse, uint8_t joy);
 void display_set_bt_counts(uint8_t kb, uint8_t mouse, uint8_t joy);
 
+/** Set ADB status for splash: connected, device IDs (K/M/G), srq (service request), collision. */
+void display_set_adb_status(int connected, uint8_t kbd_id, uint8_t mouse_id, uint8_t game_id, int srq, int collision);
+
 void display_handle_buttons(void);
 
 void display_show_controller_detected(const char *controller_name, const char *controller_model, uint32_t duration_ms);

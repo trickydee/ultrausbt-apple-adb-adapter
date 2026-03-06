@@ -74,8 +74,14 @@ extern uint8_t mousesrq;
 extern uint32_t kbskiptimer;
 extern uint16_t modifierkeys;
 extern bool adb_reset;
+extern uint8_t kbd_addr;
+extern uint8_t mouse_addr;
+extern volatile bool adb_collision;
 bool usb_reset = false;
 bool global_debug = false;
+
+static uint32_t last_adb_cmd_time = 0;
+static bool adb_ever_received_cmd = false;  /* display "Connected" only after at least one command */
 
 AdbInterface adb;
 
@@ -141,6 +147,14 @@ int quokkadb(void) {
   while (true) {
     int16_t cmd = 0;
 
+    /* Update display ADB status: connected, device IDs, SRQ (kbd or mouse pending), collision */
+    {
+      uint32_t now = time_us_32();
+      int connected = (adb_ever_received_cmd && (now - last_adb_cmd_time) < 2000000u) ? 1 : 0;
+      int srq = (kbdsrq || mousesrq) ? 1 : 0;
+      int collision = adb_collision ? 1 : 0;
+      display_set_adb_status(connected, kbd_addr, mouse_addr, 0, srq, collision);
+    }
     display_handle_buttons();
 
 #if ENABLE_BLUEPAD32
@@ -177,6 +191,13 @@ int quokkadb(void) {
       led_on();
     }  
     adb.ProcessCommand(cmd);
+    /* Only refresh "connected" when we actually received a command from the bus (cmd >= 0).
+     * When unplugged from ADB, ReceiveCommand returns -1 and we must not update the time,
+     * so the 2s timeout can expire and we show "ADB: --". */
+    if (cmd >= 0) {
+      adb_ever_received_cmd = true;
+      last_adb_cmd_time = time_us_32();
+    }
 
     if (adb_reset)
     {

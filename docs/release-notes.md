@@ -1,5 +1,12 @@
 # HIDHopper ADB – Release notes
 
+## 1.0.5
+
+- **ADB status line on splash (OLED):** When connected, the bottom line shows `ADB: K# M# G#` (keyboard, mouse, and gamepad device IDs). Two optional suffixes indicate bus state:
+  - **S** — Service request (SRQ): keyboard or mouse has data pending and is requesting service from the host.
+  - **!** — Collision: an ADB bus collision was detected.
+  Example: `ADB: K2 M3 G0 S` means connected with kbd 2, mouse 3, no gamepad, and a device has an SRQ pending.
+
 ## 1.0.2
 
 - **Right mouse button (ctrl-click) no longer hangs the device.**  

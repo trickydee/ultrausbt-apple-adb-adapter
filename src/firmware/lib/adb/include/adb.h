@@ -42,6 +42,8 @@
 
 extern volatile bool adb_collision;
 extern volatile bool collision_detection;
+extern uint8_t kbd_addr;
+extern uint8_t mouse_addr;
 
 class AdbInterface : public AdbInterfacePlatform {
   public:

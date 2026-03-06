@@ -30,6 +30,26 @@ static volatile uint8_t usb_mouse_count = 0;
 static volatile uint8_t bt_kb_count = 0;
 static volatile uint8_t bt_mouse_count = 0;
 
+/* Last values we actually drew; only refresh display when these change */
+static uint8_t last_drawn_usb_kb = 0xFF;
+static uint8_t last_drawn_usb_mouse = 0xFF;
+static uint8_t last_drawn_bt_kb = 0xFF;
+static uint8_t last_drawn_bt_mouse = 0xFF;
+
+/* ADB status for splash (set from main loop) */
+static int adb_connected = 0;
+static uint8_t adb_kbd_id = 0;
+static uint8_t adb_mouse_id = 0;
+static uint8_t adb_game_id = 0;
+static int adb_srq = 0;      /* service request (kbd or mouse has data pending) */
+static int adb_collision = 0;
+static int last_drawn_adb_connected = -1;
+static uint8_t last_drawn_adb_kbd = 0xFF;
+static uint8_t last_drawn_adb_mouse = 0xFF;
+static uint8_t last_drawn_adb_game = 0xFF;
+static int last_drawn_adb_srq = -1;
+static int last_drawn_adb_collision = -1;
+
 static display_screen_t current_screen = DISPLAY_SCREEN_SPLASH;
 
 #define BUTTON_DEBOUNCE_COUNT 10
@@ -62,30 +82,67 @@ void display_init(void)
     }
 }
 
+void display_set_adb_status(int connected, uint8_t kbd_id, uint8_t mouse_id, uint8_t game_id, int srq, int collision)
+{
+    adb_connected = connected ? 1 : 0;
+    adb_kbd_id = kbd_id;
+    adb_mouse_id = mouse_id;
+    adb_game_id = game_id;
+    adb_srq = srq ? 1 : 0;
+    adb_collision = collision ? 1 : 0;
+    if (current_screen != DISPLAY_SCREEN_SPLASH)
+        return;
+    /* Redraw only when connection or device IDs change; not on SRQ/collision to avoid
+     * full-screen I2C refresh during mouse movement. S/! are still drawn when we
+     * redraw for other reasons. */
+    if (last_drawn_adb_connected != adb_connected ||
+        last_drawn_adb_kbd != adb_kbd_id ||
+        last_drawn_adb_mouse != adb_mouse_id ||
+        last_drawn_adb_game != adb_game_id) {
+        last_drawn_adb_connected = adb_connected;
+        last_drawn_adb_kbd = adb_kbd_id;
+        last_drawn_adb_mouse = adb_mouse_id;
+        last_drawn_adb_game = adb_game_id;
+        last_drawn_adb_srq = adb_srq;
+        last_drawn_adb_collision = adb_collision;
+        display_show_splash();
+    }
+}
+
 void display_show_splash(void)
 {
+    char line[24];
+
     ssd1306_clear(&disp);
 
-    /* Title: Apple ADB (replacing Amiga) */
-    ssd1306_draw_string(&disp, 15, 0, 2, (char *)"Apple ADB");
+    /* Title: Apple - original font size (scale 2), centered. 5*16=80, (128-80)/2=24 */
+    ssd1306_draw_string(&disp, 24, 0, 2, (char *)"Apple");
 
     ssd1306_draw_string(&disp, 2, 24, 1, (char *)"HIDHopper ADB");
 
     /* Version */
     ssd1306_draw_string(&disp, 35, 40, 1, (char *)"v" HIDHOPPER_ADB_VERSION_STRING);
 
-#if ENABLE_BLUEPAD32
-    bool bt_enabled = bluepad32_is_enabled();
-    if (bt_enabled)
-        ssd1306_draw_string(&disp, 0, 55, 1, (char *)"Mode USB+BT  RST");
-    else
-        ssd1306_draw_string(&disp, 0, 55, 1, (char *)"Mode USB");
-#else
-    ssd1306_draw_string(&disp, 0, 55, 1, (char *)"Mode USB");
-#endif
+    /* ADB status line: K M G, then S=SRQ (service request), !=collision */
+    if (!adb_connected) {
+        ssd1306_draw_string(&disp, 0, 55, 1, (char *)"ADB: --");
+    } else {
+        snprintf(line, sizeof(line), "ADB: K%X M%X G%X%s%s",
+                (unsigned)adb_kbd_id, (unsigned)adb_mouse_id, (unsigned)adb_game_id,
+                adb_srq ? " S" : "", adb_collision ? "!" : "");
+        ssd1306_draw_string(&disp, 0, 55, 1, line);
+    }
 
     ssd1306_show(&disp);
     current_screen = DISPLAY_SCREEN_SPLASH;
+    last_drawn_bt_kb = bt_kb_count;
+    last_drawn_bt_mouse = bt_mouse_count;
+    last_drawn_adb_connected = adb_connected;
+    last_drawn_adb_kbd = adb_kbd_id;
+    last_drawn_adb_mouse = adb_mouse_id;
+    last_drawn_adb_game = adb_game_id;
+    last_drawn_adb_srq = adb_srq;
+    last_drawn_adb_collision = adb_collision;
 }
 
 void display_show_devices(void)
@@ -103,6 +160,10 @@ void display_show_devices(void)
 
     ssd1306_show(&disp);
     current_screen = DISPLAY_SCREEN_DEVICES;
+    last_drawn_usb_kb = usb_kb_count;
+    last_drawn_usb_mouse = usb_mouse_count;
+    last_drawn_bt_kb = bt_kb_count;
+    last_drawn_bt_mouse = bt_mouse_count;
 }
 
 void display_update_devices(void)
@@ -118,7 +179,12 @@ void display_set_usb_counts(uint8_t kb, uint8_t mouse, uint8_t joy)
     (void)joy;
     usb_kb_count = kb;
     usb_mouse_count = mouse;
-    display_update_devices();
+    /* Only redraw when counts changed to avoid hammering I2C every main-loop iteration */
+    if (last_drawn_usb_kb != kb || last_drawn_usb_mouse != mouse) {
+        last_drawn_usb_kb = kb;
+        last_drawn_usb_mouse = mouse;
+        display_update_devices();
+    }
 }
 
 void display_set_bt_counts(uint8_t kb, uint8_t mouse, uint8_t joy)
@@ -126,9 +192,14 @@ void display_set_bt_counts(uint8_t kb, uint8_t mouse, uint8_t joy)
     (void)joy;
     bt_kb_count = kb;
     bt_mouse_count = mouse;
-    display_update_devices();
-    if (current_screen == DISPLAY_SCREEN_SPLASH)
-        display_show_splash();
+    /* Only redraw when counts changed to avoid hammering I2C every main-loop iteration */
+    if (last_drawn_bt_kb != kb || last_drawn_bt_mouse != mouse) {
+        last_drawn_bt_kb = kb;
+        last_drawn_bt_mouse = mouse;
+        display_update_devices();
+        if (current_screen == DISPLAY_SCREEN_SPLASH)
+            display_show_splash();
+    }
 }
 
 void display_show_controller_detected(const char *controller_name, const char *controller_model, uint32_t duration_ms)
@@ -164,15 +235,15 @@ void display_handle_buttons(void)
         button_middle_debounce = 0;
     }
 
-    /* Right: on splash with BT = clear pairings */
+    /* Right: on Bluetooth devices page = clear BT pairings */
     if (!gpio_get(DISPLAY_GPIO_BUTTON_RIGHT)) {
         if (button_right_debounce <= BUTTON_DEBOUNCE_COUNT) {
             if (++button_right_debounce == BUTTON_DEBOUNCE_COUNT) {
-                if (current_screen == DISPLAY_SCREEN_SPLASH) {
+                if (current_screen == DISPLAY_SCREEN_BT_NAMES) {
 #if ENABLE_BLUEPAD32
                     if (bluepad32_is_enabled()) {
                         bluepad32_delete_pairing_keys();
-                        display_show_splash();
+                        display_show_bt_names();
                     }
 #endif
                 }
@@ -214,10 +285,14 @@ void display_show_bt_names(void)
         ssd1306_draw_string(&disp, 0, 18, 1, buf);
     } else
         ssd1306_draw_string(&disp, 0, 18, 1, (char *)"M1: --");
+
+    ssd1306_draw_string(&disp, 0, 55, 1, (char *)"R: clear pairings");
 #else
     ssd1306_draw_string(&disp, 0, 0, 1, (char *)"BT not enabled");
 #endif
 
     ssd1306_show(&disp);
     current_screen = DISPLAY_SCREEN_BT_NAMES;
+    last_drawn_bt_kb = bt_kb_count;
+    last_drawn_bt_mouse = bt_mouse_count;
 }
