@@ -52,19 +52,24 @@
 #define MAX_NR_RFCOMM_MULTIPLEXERS 1
 #define MAX_NR_RFCOMM_SERVICES 1
 #define MAX_NR_SERVICE_RECORD_ITEMS 4
-#define MAX_NR_SM_LOOKUP_ENTRIES 3
+// Security Manager: allow 4 entries so 2+ devices (keyboard + mouse + gamepad) can pair without lookup exhaustion
+#define MAX_NR_SM_LOOKUP_ENTRIES 4
 #define MAX_NR_WHITELIST_ENTRIES 16
 #define MAX_NR_LE_DEVICE_DB_ENTRIES 16
 
+// Limit ACL/SCO buffers to avoid cyw43 shared bus overrun (aligned with amigahid-pico).
+// Use 4 for keyboard + mouse + gamepad (3+ devices).
 #define MAX_NR_CONTROLLER_ACL_BUFFERS 4
 #define MAX_NR_CONTROLLER_SCO_PACKETS 3
 
+// HCI Controller-to-Host flow control; 4 host ACL packets for multiple devices (amigahid-pico).
 #define ENABLE_HCI_CONTROLLER_TO_HOST_FLOW_CONTROL
 #define HCI_HOST_ACL_PACKET_LEN 1024
 #define HCI_HOST_ACL_PACKET_NUM 4
 #define HCI_HOST_SCO_PACKET_LEN 120
 #define HCI_HOST_SCO_PACKET_NUM 3
 
+// NVM for bonding (aligned with amigahid-pico / ultramegausb-atari-st-rpikbd).
 #define NVM_NUM_DEVICE_DB_ENTRIES 16
 #define NVM_NUM_LINK_KEYS 16
 #define MAX_ATT_DB_SIZE 512

@@ -61,6 +61,15 @@ volatile bool collision_detection = false;
 bool mouse_skip_next_listen_reg3 = false;
 bool kbd_skip_next_listen_reg3 = false;
 
+#if ENABLE_BLUEPAD32
+uint8_t game_addr = GAME_DEFAULT_ADDR;
+uint8_t game_handler_id = GAME_DEFAULT_HANDLER_ID;
+uint8_t gamepending = 0;
+uint8_t gamesrq = 0;
+uint8_t game_joystick_packet[ADB_JOYSTICK_PACKET_SIZE] = {0};
+bool game_skip_next_listen_reg3 = false;
+#endif
+
 
 
 extern bool global_debug;
@@ -609,6 +618,93 @@ void AdbInterface::ProcessCommand(int16_t cmd)
     if (kbdpending)
       kbdsrq = 1;
   }
+
+#if ENABLE_BLUEPAD32
+  if (((cmd >> 4) & 0x0F) == game_addr)
+  {
+    switch (cmd & 0x0F)
+    {
+    case 0x1:
+      if (global_debug) Serial.println("GAME: Got FLUSH request");
+      break;
+    case 0x8:
+    case 0x9:
+    case 0xA:
+      break;
+    case 0xB:
+      {
+        int32_t listen_register = Receive16bitRegister();
+        if (listen_register >= 0)
+        {
+          uint8_t listen_addr = (listen_register >> 8) & 0x0F;
+          uint8_t listen_handler_id = listen_register & 0xFF;
+          if (listen_handler_id == 0xFE)
+          {
+            if (game_skip_next_listen_reg3) {
+              game_skip_next_listen_reg3 = false;
+              break;
+            }
+            game_addr = listen_addr;
+          }
+          else if (listen_handler_id != 0xFF)
+          {
+            game_handler_id = listen_handler_id;
+          }
+        }
+      }
+      break;
+    case 0xC:
+      /* Always send 16 bits so host gets a valid response (required for bus enumeration / tattletech). */
+      DetectCollision();
+      if (Send16bitRegister((uint16_t)game_joystick_packet[0] | ((uint16_t)game_joystick_packet[1] << 8)))
+      {
+        ResetCollision();
+        if (gamepending) {
+          gamepending = 0;
+          gamesrq = 0;
+        }
+      }
+      else
+      {
+        ResetCollision();
+        gamesrq = 1;
+      }
+      break;
+    case 0xD:
+      Send16bitRegister((uint16_t)game_joystick_packet[2] | ((uint16_t)game_joystick_packet[3] << 8));
+      break;
+    case 0xE:
+      Send16bitRegister((uint16_t)game_joystick_packet[4] | ((uint16_t)game_joystick_packet[5] << 8));
+      break;
+    case 0xF:
+      {
+        uint16_t gamereg3 = 0;
+        B_UNSET(gamereg3, 15);
+        B_SET(gamereg3, 14);
+        B_UNSET(gamereg3, 13);
+        B_UNSET(gamereg3, 12);
+        gamereg3 |= (game_addr << 8);
+        gamereg3 |= game_handler_id;
+        DetectCollision();
+        if (Send16bitRegister(gamereg3))
+          ResetCollision();
+        else
+        {
+          ResetCollision();
+          game_skip_next_listen_reg3 = true;
+        }
+      }
+      break;
+    default:
+      break;
+    }
+  }
+  else
+  {
+    if (gamepending)
+      gamesrq = 1;
+  }
+#endif
 }
 
 uint16_t AdbInterface::GetAdbRegister3Keyboard()
@@ -663,4 +759,10 @@ void AdbInterface::Reset(void)
   mouse_handler_id = MOUSE_DEFAULT_HANDLER_ID;
   kbd_handler_id = KBD_DEFAULT_HANDLER_ID;
   kbdreg2 = 0xFFFF;
+#if ENABLE_BLUEPAD32
+  game_addr = GAME_DEFAULT_ADDR;
+  game_handler_id = GAME_DEFAULT_HANDLER_ID;
+  gamepending = 0;
+  gamesrq = 0;
+#endif
 }

@@ -29,12 +29,14 @@ static volatile uint8_t usb_kb_count = 0;
 static volatile uint8_t usb_mouse_count = 0;
 static volatile uint8_t bt_kb_count = 0;
 static volatile uint8_t bt_mouse_count = 0;
+static volatile uint8_t bt_joy_count = 0;
 
 /* Last values we actually drew; only refresh display when these change */
 static uint8_t last_drawn_usb_kb = 0xFF;
 static uint8_t last_drawn_usb_mouse = 0xFF;
 static uint8_t last_drawn_bt_kb = 0xFF;
 static uint8_t last_drawn_bt_mouse = 0xFF;
+static uint8_t last_drawn_bt_joy = 0xFF;
 
 /* ADB status for splash (set from main loop) */
 static int adb_connected = 0;
@@ -137,6 +139,7 @@ void display_show_splash(void)
     current_screen = DISPLAY_SCREEN_SPLASH;
     last_drawn_bt_kb = bt_kb_count;
     last_drawn_bt_mouse = bt_mouse_count;
+    last_drawn_bt_joy = bt_joy_count;
     last_drawn_adb_connected = adb_connected;
     last_drawn_adb_kbd = adb_kbd_id;
     last_drawn_adb_mouse = adb_mouse_id;
@@ -158,12 +161,16 @@ void display_show_devices(void)
     sprintf(buf, "Mouse   U %d BT %d", (int)usb_mouse_count, (int)bt_mouse_count);
     ssd1306_draw_string(&disp, 0, 18, 1, buf);
 
+    sprintf(buf, "Gamepad U 0 BT %d", (int)bt_joy_count);
+    ssd1306_draw_string(&disp, 0, 27, 1, buf);
+
     ssd1306_show(&disp);
     current_screen = DISPLAY_SCREEN_DEVICES;
     last_drawn_usb_kb = usb_kb_count;
     last_drawn_usb_mouse = usb_mouse_count;
     last_drawn_bt_kb = bt_kb_count;
     last_drawn_bt_mouse = bt_mouse_count;
+    last_drawn_bt_joy = bt_joy_count;
 }
 
 void display_update_devices(void)
@@ -189,13 +196,14 @@ void display_set_usb_counts(uint8_t kb, uint8_t mouse, uint8_t joy)
 
 void display_set_bt_counts(uint8_t kb, uint8_t mouse, uint8_t joy)
 {
-    (void)joy;
     bt_kb_count = kb;
     bt_mouse_count = mouse;
+    bt_joy_count = joy;
     /* Only redraw when counts changed to avoid hammering I2C every main-loop iteration */
-    if (last_drawn_bt_kb != kb || last_drawn_bt_mouse != mouse) {
+    if (last_drawn_bt_kb != kb || last_drawn_bt_mouse != mouse || last_drawn_bt_joy != joy) {
         last_drawn_bt_kb = kb;
         last_drawn_bt_mouse = mouse;
+        last_drawn_bt_joy = joy;
         display_update_devices();
         if (current_screen == DISPLAY_SCREEN_SPLASH)
             display_show_splash();
@@ -286,6 +294,13 @@ void display_show_bt_names(void)
     } else
         ssd1306_draw_string(&disp, 0, 18, 1, (char *)"M1: --");
 
+    name = bluepad32_get_device_name('G', 0);
+    if (name) {
+        snprintf(buf, sizeof(buf), "G1:%.20s", name);
+        ssd1306_draw_string(&disp, 0, 27, 1, buf);
+    } else
+        ssd1306_draw_string(&disp, 0, 27, 1, (char *)"G1: --");
+
     ssd1306_draw_string(&disp, 0, 55, 1, (char *)"R: clear pairings");
 #else
     ssd1306_draw_string(&disp, 0, 0, 1, (char *)"BT not enabled");
@@ -295,4 +310,5 @@ void display_show_bt_names(void)
     current_screen = DISPLAY_SCREEN_BT_NAMES;
     last_drawn_bt_kb = bt_kb_count;
     last_drawn_bt_mouse = bt_mouse_count;
+    last_drawn_bt_joy = bt_joy_count;
 }

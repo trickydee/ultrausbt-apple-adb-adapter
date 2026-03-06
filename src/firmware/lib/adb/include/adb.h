@@ -38,12 +38,21 @@
 #define KBD_DEFAULT_HANDLER_ID 0x02
 #define MOUSE_DEFAULT_ADDR 0x03
 #define MOUSE_DEFAULT_HANDLER_ID 0x01
+#define GAME_DEFAULT_ADDR 0x04
+#define GAME_DEFAULT_HANDLER_ID 0x05
 #define KDB_EXTENDED_HANDLER_ID 0x3
 
 extern volatile bool adb_collision;
 extern volatile bool collision_detection;
 extern uint8_t kbd_addr;
 extern uint8_t mouse_addr;
+#if ENABLE_BLUEPAD32
+extern uint8_t game_addr;
+extern uint8_t gamepending;
+extern uint8_t gamesrq;
+#define ADB_JOYSTICK_PACKET_SIZE 7
+extern uint8_t game_joystick_packet[ADB_JOYSTICK_PACKET_SIZE];
+#endif
 
 class AdbInterface : public AdbInterfacePlatform {
   public:

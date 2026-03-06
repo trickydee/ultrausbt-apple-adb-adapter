@@ -27,10 +27,17 @@ bool bluepad32_get_mouse(int idx, void* out_mouse);
 // Get count of connected Bluetooth mice
 int bluepad32_get_mouse_count(void);
 
+// Get gamepad data for index (0 .. MAX_BT_GAMEPADS-1). out_gamepad must match uni_gamepad_t layout.
+// Returns true if connected and has new data; clears updated flag.
+bool bluepad32_get_gamepad(int idx, void* out_gamepad);
+
+// Get count of connected Bluetooth gamepads
+int bluepad32_get_gamepad_count(void);
+
 // Delete all stored Bluetooth pairing keys
 void bluepad32_delete_pairing_keys(void);
 
-// Get device name for display. device_type: 'K' keyboard, 'M' mouse. idx 0-based.
+// Get device name for display. device_type: 'K' keyboard, 'M' mouse, 'G' gamepad. idx 0-based.
 const char* bluepad32_get_device_name(char device_type, int idx);
 
 // Platform entry (used by bluepad32_init.c)

@@ -10,7 +10,7 @@ endif ()
 # note: this must happen before project()
 include(pico_sdk_import.cmake)
 
-project(HIDHopper-firmware VERSION 1.0.7)
+project(HIDHopper-firmware VERSION 1.0.10)
 
 # Single source of truth for firmware version (bump when releasing; used in banner and docs)
 add_compile_definitions(HIDHOPPER_ADB_VERSION_STRING=\"${PROJECT_VERSION}\")
@@ -49,7 +49,10 @@ if(ENABLE_BLUEPAD32)
     target_sources(HIDHopper-firmware PRIVATE
         ${CMAKE_SOURCE_DIR}/src/bluepad32_init.c
         ${CMAKE_SOURCE_DIR}/src/bluepad32_platform.c
+        ${CMAKE_SOURCE_DIR}/src/sidewinder_pack.c
     )
+    # bt_pairing_sync in QuokkADB so core1_main (in QuokkADB) resolves the symbols when linking
+    target_sources(QuokkADB PRIVATE ${CMAKE_SOURCE_DIR}/src/bt_pairing_sync.c)
     target_include_directories(HIDHopper-firmware PRIVATE
         ${CMAKE_SOURCE_DIR}/bluepad32/src/components/bluepad32/include
         ${CMAKE_SOURCE_DIR}/src

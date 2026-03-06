@@ -56,6 +56,8 @@
 
 #if ENABLE_BLUEPAD32
 #include "bluepad32_api.h"
+#include "bt_pairing_sync.h"
+#include "sidewinder_pack.h"
 #endif
 #include "display/display.h"
 
@@ -77,6 +79,12 @@ extern bool adb_reset;
 extern uint8_t kbd_addr;
 extern uint8_t mouse_addr;
 extern volatile bool adb_collision;
+#if ENABLE_BLUEPAD32
+extern uint8_t game_addr;
+extern uint8_t gamepending;
+extern uint8_t gamesrq;
+extern uint8_t game_joystick_packet[];
+#endif
 bool usb_reset = false;
 bool global_debug = false;
 
@@ -95,8 +103,20 @@ FlashSettings setting_storage;
 void core1_main() {
   tuh_init(0);
   led_blink(1);
+#if ENABLE_BLUEPAD32
+  // Allow Core 0 (btstack) to coordinate flash access during pairing; avoids hangs (see amigahid-pico).
+  bt_pairing_sync_core1_init();
+#endif
   /*------------ Core1 main loop ------------*/
   while (true) {
+#if ENABLE_BLUEPAD32
+    // Pause during BT pairing so flash/GATT can complete without contention.
+    // Use sleep_ms so Core 1 yields and flash_safe_execute lockout IRQ can run (NVM write on 2nd device).
+    if (bt_pairing_sync_is_core1_paused()) {
+      sleep_ms(1);
+      continue;
+    }
+#endif
     tuh_task(); // tinyusb host task
 
     KeyboardPrs.ChangeUSBKeyboardLEDs();
@@ -111,8 +131,17 @@ void core1_main() {
 
 // core0: handle device events
 int quokkadb(void) {
+  // Clock: 225 MHz for Bluetooth builds (matches Atari adapter / logronoid config).
+  // CYW43 can have issues at very high speeds (270 MHz causes STALL timeouts); 225 MHz is a stable balance.
+#if ENABLE_BLUEPAD32
+  const uint32_t clock_khz = 225000;
+  if (!set_sys_clock_khz(clock_khz, true)) {
+    printf("set_sys_clock_khz(%lu MHz) failed, using default\n", (unsigned long)(clock_khz / 1000));
+  }
+#else
   set_sys_clock_khz(125000, true);
-  
+#endif
+
   led_gpio_init();
   led_blink(1);
   stdio_init_all();
@@ -147,13 +176,19 @@ int quokkadb(void) {
   while (true) {
     int16_t cmd = 0;
 
-    /* Update display ADB status: connected, device IDs, SRQ (kbd or mouse pending), collision */
+    /* Update display ADB status: connected, device IDs (G=gamepad when BT gamepad connected), SRQ, collision */
     {
       uint32_t now = time_us_32();
       int connected = (adb_ever_received_cmd && (now - last_adb_cmd_time) < 2000000u) ? 1 : 0;
       int srq = (kbdsrq || mousesrq) ? 1 : 0;
       int collision = adb_collision ? 1 : 0;
+#if ENABLE_BLUEPAD32
+      if (gamesrq) srq = 1;
+      uint8_t game_id = (bluepad32_get_gamepad_count() > 0) ? game_addr : 0;
+      display_set_adb_status(connected, kbd_addr, mouse_addr, game_id, srq, collision);
+#else
       display_set_adb_status(connected, kbd_addr, mouse_addr, 0, srq, collision);
+#endif
     }
     display_handle_buttons();
 
@@ -161,7 +196,16 @@ int quokkadb(void) {
     bluepad32_poll();
     process_bluepad32_devices();
     display_set_bt_counts((uint8_t)bluepad32_get_keyboard_count(),
-                         (uint8_t)bluepad32_get_mouse_count(), 0);
+                         (uint8_t)bluepad32_get_mouse_count(),
+                         (uint8_t)bluepad32_get_gamepad_count());
+    /* Feed first gamepad to ADB joystick (Sidewinder format) */
+    {
+      uint8_t gp_buf[BLUEPAD32_GAMEPAD_STORAGE_SIZE];
+      if (bluepad32_get_gamepad(0, gp_buf)) {
+        sidewinder_pack_from_gamepad(gp_buf, game_joystick_packet);
+        gamepending = 1;
+      }
+    }
 #endif
 
     if (!kbdpending)
@@ -185,7 +229,11 @@ int quokkadb(void) {
     }
 
     led_off();
+#if ENABLE_BLUEPAD32
+    cmd = adb.ReceiveCommand(mousesrq | kbdsrq | gamesrq);
+#else
     cmd = adb.ReceiveCommand(mousesrq | kbdsrq);
+#endif
     if(setting_storage.settings()->led_on)
     {
       led_on();

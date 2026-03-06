@@ -21,6 +21,10 @@ void bluepad32_disable(void);
 bool bluepad32_is_enabled(void);
 int bluepad32_get_keyboard_count(void);
 int bluepad32_get_mouse_count(void);
+/** Buffer size for bluepad32_get_gamepad() (opaque gamepad copy). */
+#define BLUEPAD32_GAMEPAD_STORAGE_SIZE 128
+bool bluepad32_get_gamepad(int idx, void* out_gamepad);
+int bluepad32_get_gamepad_count(void);
 
 #ifdef __cplusplus
 }
