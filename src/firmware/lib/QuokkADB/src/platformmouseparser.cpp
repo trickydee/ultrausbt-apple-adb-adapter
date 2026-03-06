@@ -29,6 +29,7 @@
 
 #include "platformmouseparser.h"
 #include "tusb.h"
+#include "usb_hid_keys.h"
 
 void PlatformMouseParser::Parse(const hid_mouse_report_t *report){
     static MOUSEINFO mouse_info;
@@ -38,6 +39,7 @@ void PlatformMouseParser::Parse(const hid_mouse_report_t *report){
     mouse_info.bmMiddleButton = !!(report->buttons & MOUSE_BUTTON_MIDDLE);
     mouse_info.dX = report->x;
     mouse_info.dY = report->y;
+    mouse_info.dWheel = report->wheel;
 
     if(mouse_info.dX != 0 || mouse_info.dY != 0) {
         OnMouseMove(&mouse_info);
@@ -68,6 +70,21 @@ void PlatformMouseParser::Parse(const hid_mouse_report_t *report){
         OnMiddleButtonUp(&mouse_info);
     }
 
+    /* Mouse wheel: ADB has no native wheel; emulate as Up/Down arrow key presses. */
+    if (mouse_info.dWheel != 0 && m_keyboard != nullptr) {
+        int8_t scroll = mouse_info.dWheel;
+        if (scroll > 0) {
+            for (; scroll > 0; scroll--) {
+                m_keyboard->OnKeyDown(0, USB_KEY_UP);
+                m_keyboard->OnKeyUp(0, USB_KEY_UP);
+            }
+        } else {
+            for (; scroll < 0; scroll++) {
+                m_keyboard->OnKeyDown(0, USB_KEY_DOWN);
+                m_keyboard->OnKeyUp(0, USB_KEY_DOWN);
+            }
+        }
+    }
 
     prevState.mouseInfo = mouse_info;
 }

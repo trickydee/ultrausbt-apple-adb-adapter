@@ -1,5 +1,15 @@
 # HIDHopper ADB – Release notes
 
+## 1.0.7
+
+- **Mouse wheel support:** Scroll wheel from USB and Bluetooth mice is now supported. ADB has no native wheel, so wheel is emulated as Up/Down arrow key presses (one key event per wheel tick). Works with both USB HID and Bluepad32 Bluetooth mice.
+
+## 1.0.6
+
+- **ADB disconnect display:** When the adapter is unplugged from the ADB bus, the splash now correctly shows `ADB: --` after about 2 seconds (connection state is only updated when a valid command is received from the bus).
+- **Display refresh:** Splash no longer redraws on every SRQ or collision change, only when connection or device IDs change, avoiding full-screen I2C updates during mouse movement and improving responsiveness.
+- **Build script:** `build_all.sh` now auto-sets the Pico SDK: it tries common paths (`~/pico/pico-sdk`, `~/pico-sdk`, etc.) and falls back to `PICO_SDK_FETCH_FROM_GIT=ON` if none are found.
+
 ## 1.0.5
 
 - **ADB status line on splash (OLED):** When connected, the bottom line shows `ADB: K# M# G#` (keyboard, mouse, and gamepad device IDs). Two optional suffixes indicate bus state:

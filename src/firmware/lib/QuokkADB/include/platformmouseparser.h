@@ -51,6 +51,7 @@ struct MOUSEINFO {
         };
         int8_t dX;
         int8_t dY;
+        int8_t dWheel;
 };
 
 class PlatformMouseParser {
