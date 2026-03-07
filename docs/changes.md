@@ -84,3 +84,13 @@ From the project root, `./build_all.sh` builds firmware for all four boards into
 | Pico 2 W | `build-pico2_w`  | `build-pico2_w/src/HIDHopper-firmware.uf2` |
 
 Requires `PICO_SDK_PATH` or `PICO_SDK_FETCH_FROM_GIT=ON` (same as `build.sh`). Submodules are initialized automatically.
+
+---
+
+## Notes for editor / session restart (Mar 2025)
+
+**Git remote:** `origin` was switched to **https://github.com/trickydee/ultramegausb-apple-adb.git** (new private repo). Local **master** was pushed to remote as **main**. These branches were pushed to origin with the same names: **feature/bluetooth**, **feature/improvements**, **feature/joysticks**, **feature/display**. All set to track their `origin/` counterparts.
+
+**Build by branch:** On **feature/bluetooth**, the build script does *not* auto-enable SDK fetch; use `PICO_SDK_FETCH_FROM_GIT=ON ./build_all.sh` if `PICO_SDK_PATH` is not set. On **feature/joysticks** and **feature/display**, the script auto-fetches the SDK from git when not found in common paths.
+
+**Pairing / display experiments (reverted):** On **feature/joysticks** we tried: (1) Reducing pairing delays from 50 ms/50 ms/200 ms to 10 ms; (2) `__not_in_flash_func` on the Core 1 pause path; (3) Optional display off via `ENABLE_DISPLAY_UPDATE` in `display_config.h`. All were reverted; current committed state has original delays and display always on. The doc **docs/pairing-timing-feature-bluetooth-vs-joysticks.md** records timing and code differences between **feature/bluetooth** and **feature/joysticks** for pairing investigation.
