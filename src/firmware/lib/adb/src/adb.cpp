@@ -112,7 +112,8 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
   do 
   {
     lo = wait_data_hi(4000);
-    if (!lo || lo > 820 || lo < 780)
+    // Attention 800µs nominal; IIGS can be ~500–650µs or up to ~650µs (accept 500–950µs)
+    if (!lo || lo > 950 || lo < 500)
     {
       if (lo > 2950) 
       {
@@ -126,12 +127,11 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
         return -100;
       }
       else {
+        // One-line diagnostic for every attention reject (when debug). Use to tune IIGS timing.
         if (global_debug)
         {
-          Serial.print("ALL: Error in attention low time,  wait time was ");
-          Serial.print(lo, DEC);
-          Serial.println("us");
-
+          Serial.print("ADB RX fail: ATTENTION lo=");
+          Serial.println(lo, DEC);
         }
       }
       return -1;
@@ -145,14 +145,15 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
   }
   while(true);
 
-  hi = wait_data_lo(100);
-  if (!hi && hi > 70 && hi < 40)
+  // Sync (high) then start bit low: allow 150µs for IIGS/long sync
+  hi = wait_data_lo(150);
+  // Reject timeout (0) or sync/start outside valid range. IIGS: 25–105µs (was 30–95µs).
+  if (!hi || hi > 105 || hi < 25)
   {
     if (global_debug)
     {
-      Serial.print("Start bit not found, wait time was ");
-      Serial.print(hi, DEC);
-      Serial.println("us");
+      Serial.print("ADB RX fail: SYNC hi=");
+      Serial.println(hi, DEC);
     }
     return -3;
   }
@@ -169,7 +170,8 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
     {
       goto out;
     }
-    if (120 < lo + hi )
+    // Bit cell: allow up to 145µs for IIGS (was 130µs; spec 100µs ±30% device)
+    if (145 < lo + hi)
     {
       goto out;
     }
@@ -196,12 +198,12 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
 out:
   if (global_debug)
   {
-    Serial.print("ALL: Error reading CMD bits, low time ");
+    Serial.print("ADB RX fail: BIT b=");
+    Serial.print(bits, DEC);
+    Serial.print(" lo=");
     Serial.print(lo, DEC);
-    Serial.print(", high time ");
-    Serial.print(hi, DEC);
-    Serial.print(" at bit ");
-    Serial.println(bits, HEX);
+    Serial.print(" hi=");
+    Serial.println(hi, DEC);
   }
   return -4;
 }

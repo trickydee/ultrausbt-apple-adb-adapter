@@ -128,7 +128,8 @@ inline int32_t AdbInterface::Receive16bitRegister(void)
     {
       goto out;
     }
-    if (120 < lo + hi )
+    // Bit cell: allow up to 130µs for IIGS/slow host (spec 100µs ±30% device)
+    if (130 < lo + hi)
     {
       goto out;
     }

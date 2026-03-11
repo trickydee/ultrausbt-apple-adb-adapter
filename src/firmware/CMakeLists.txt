@@ -15,6 +15,15 @@ project(HIDHopper-firmware VERSION 1.0.7)
 # Single source of truth for firmware version (bump when releasing; used in banner and docs)
 add_compile_definitions(HIDHOPPER_ADB_VERSION_STRING=\"${PROJECT_VERSION}\")
 
+# ADB serial debug: set -DADB_DEBUG=ON when configuring to get ADB timing/command messages on UART
+option(ADB_DEBUG "Enable ADB serial debug output (UART)" OFF)
+if(ADB_DEBUG)
+    add_compile_definitions(ADB_DEBUG=1)
+    message(STATUS "ADB debug: ENABLED (serial output)")
+else()
+    message(STATUS "ADB debug: disabled")
+endif()
+
 # initialize the Raspberry Pi Pico SDK
 pico_sdk_init()
 

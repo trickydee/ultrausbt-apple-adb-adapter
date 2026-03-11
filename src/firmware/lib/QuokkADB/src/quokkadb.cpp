@@ -78,7 +78,11 @@ extern uint8_t kbd_addr;
 extern uint8_t mouse_addr;
 extern volatile bool adb_collision;
 bool usb_reset = false;
+#ifdef ADB_DEBUG
+bool global_debug = true;   // ADB timing/command messages on UART (build with -DADB_DEBUG=ON)
+#else
 bool global_debug = false;
+#endif
 
 static uint32_t last_adb_cmd_time = 0;
 static bool adb_ever_received_cmd = false;  /* display "Connected" only after at least one command */
