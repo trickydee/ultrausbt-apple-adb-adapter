@@ -170,8 +170,8 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
     {
       goto out;
     }
-    // Bit cell: allow up to 145µs for IIGS (was 130µs; spec 100µs ±30% device)
-    if (145 < lo + hi)
+    // Bit cell: 70–130 µs (Apple IIgs Hardware Reference)
+    if (lo + hi < 70 || 130 < lo + hi)
     {
       goto out;
     }

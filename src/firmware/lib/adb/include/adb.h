@@ -96,8 +96,8 @@ inline int32_t AdbInterface::Receive16bitRegister(void)
   uint16_t low_time;
 
   hi_time = wait_data_lo(1000);
-  // start-stop time is officially > 140 and < 260
-  if (!hi_time || hi_time < 130 || hi_time > 270 )
+  // Tlt (stop-to-start): officially 140–260 µs
+  if (!hi_time || hi_time < 140 || hi_time > 260)
   {
     return -1;  
   }
@@ -128,8 +128,8 @@ inline int32_t AdbInterface::Receive16bitRegister(void)
     {
       goto out;
     }
-    // Bit cell: allow up to 130µs for IIGS/slow host (spec 100µs ±30% device)
-    if (130 < lo + hi)
+    // Bit cell: 70–130 µs (Apple IIgs Hardware Reference)
+    if (lo + hi < 70 || 130 < lo + hi)
     {
       goto out;
     }
