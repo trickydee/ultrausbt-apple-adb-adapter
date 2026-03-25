@@ -102,16 +102,15 @@ inline int32_t AdbInterface::Receive16bitRegister(void)
     return -1;  
   }
 
-  // start bit 
+  // Start bit (same duty idea as command byte). Legacy 25–45 µs was too tight for IIgs + LISTEN.
   low_time = wait_data_hi(130);
- if (!low_time || low_time > 45 || low_time < 25)
+  if (!low_time || low_time > 55 || low_time < 18)
   {
     return -2;
   }
-  
 
   hi_time = wait_data_lo(130);
-  if (!hi_time || hi_time > 75 || hi_time < 55)
+  if (!hi_time || hi_time > 90 || hi_time < 40)
   {
     return -3;
   }
@@ -128,9 +127,9 @@ inline int32_t AdbInterface::Receive16bitRegister(void)
     {
       goto out;
     }
-    // Bit cell: 70–130 µs (Apple IIgs Hardware Reference)
+    // Bit cell: 70–130 µs (IIgs); ±2 µs sampling slack on long payloads
     uint16_t cell = (uint16_t)(lo + hi);
-    if (cell < 70 || 130 < cell)
+    if (cell < 68 || 132 < cell)
     {
       goto out;
     }
@@ -148,9 +147,9 @@ inline int32_t AdbInterface::Receive16bitRegister(void)
     }
   }
 
-  // stop bit
+  // Stop bit: low must be “short” relative to bit-0 cells; allow IIgs variance
   low_time = wait_data_hi(130);
-  if (!low_time || low_time > 70)
+  if (!low_time || low_time > 85)
   {  
     return -4;
   }

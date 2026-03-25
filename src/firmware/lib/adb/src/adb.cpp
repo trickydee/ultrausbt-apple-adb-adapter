@@ -104,6 +104,7 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
   uint8_t bits; 
   uint16_t lo, hi;
   int16_t data = 0;
+  static uint32_t attention_reject_count = 0;
   
   // find attention & start bit
   hi = wait_data_lo(ADB_START_BIT_DELAY); 
@@ -113,7 +114,9 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
   {
     lo = wait_data_hi(4000);
     // IIgs Hardware Reference (Table 6-8): Attention 560–1040 µs; Global Reset >= 2.8 ms.
-    if (!lo || lo > 1040 || lo < 560)
+    // Measured low on RP2040 often reads ~40–60 µs short of the book minimum; allow 500 µs floor
+    // so valid IIgs frames are not dropped (still rejects noise << ~450 µs in practice).
+    if (!lo || lo > 1040 || lo < 500)
     {
       if (lo >= 2800)
       {
@@ -126,12 +129,21 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
         }
         return -100;
       }
-      else {
-        // One-line diagnostic for every attention reject (when debug). Use to tune IIGS timing.
+      else
+      {
+        // Ignore/noise pulses are expected; avoid flooding debug UART because that can perturb timing.
         if (global_debug)
         {
-          Serial.print("ADB RX fail: ATTENTION lo=");
-          Serial.println(lo, DEC);
+          attention_reject_count++;
+          // Print only occasionally and only when near plausible attention widths.
+          if ((lo >= 400 && lo < 500) || (lo > 1040 && lo <= 1200) || ((attention_reject_count % 512u) == 0u))
+          {
+            Serial.print("ADB RX fail: ATTENTION lo=");
+            Serial.print(lo, DEC);
+            Serial.print(" (count=");
+            Serial.print(attention_reject_count, DEC);
+            Serial.println(")");
+          }
         }
       }
       return -1;
@@ -145,10 +157,11 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
   }
   while(true);
 
-  // Sync (high) then start bit low: allow 150µs for IIGS/long sync
+  // Sync (high) then start bit low: allow 150us for long sync discovery.
   hi = wait_data_lo(150);
-  // Reject timeout (0) or sync/start outside valid range. IIGS: 25–105µs (was 30–95µs).
-  if (!hi || hi > 105 || hi < 25)
+  // IIgs Table 6-8 expresses sync as 60-70% of a 70-130us bit-cell => 42-91us envelope.
+  // Keep a little measurement slack to avoid false rejects at ISR/sample boundaries.
+  if (!hi || hi > 95 || hi < 40)
   {
     if (global_debug)
     {
