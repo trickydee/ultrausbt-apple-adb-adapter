@@ -129,15 +129,26 @@ inline int32_t AdbInterface::Receive16bitRegister(void)
       goto out;
     }
     // Bit cell: 70–130 µs (Apple IIgs Hardware Reference)
-    if (lo + hi < 70 || 130 < lo + hi)
+    uint16_t cell = (uint16_t)(lo + hi);
+    if (cell < 70 || 130 < cell)
     {
       goto out;
     }
 
     data <<= 1;
-    if (lo < 40)
+    // Apple IIgs Hardware Reference: duty-cycle decode.
+    // low < 35% => 1, low > 65% => 0, otherwise invalid.
+    if ((uint32_t)lo * 100u < 35u * (uint32_t)cell)
     {
       data |= 1;
+    }
+    else if ((uint32_t)lo * 100u > 65u * (uint32_t)cell)
+    {
+      /* bit 0: already shifted in */
+    }
+    else
+    {
+      goto out;
     }
   }
 

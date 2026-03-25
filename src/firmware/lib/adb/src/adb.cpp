@@ -171,15 +171,26 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
       goto out;
     }
     // Bit cell: 70–130 µs (Apple IIgs Hardware Reference)
-    if (lo + hi < 70 || 130 < lo + hi)
+    uint16_t cell = (uint16_t)(lo + hi);
+    if (cell < 70 || 130 < cell)
     {
       goto out;
     }
 
     data <<= 1;
-    if (lo < 40)
+    // Apple IIgs Hardware Reference: duty-cycle decode.
+    // low < 35% => 1, low > 65% => 0, otherwise invalid.
+    if ((uint32_t)lo * 100u < 35u * (uint32_t)cell)
     {
       data |= 1;
+    }
+    else if ((uint32_t)lo * 100u > 65u * (uint32_t)cell)
+    {
+      /* bit 0: already shifted in */
+    }
+    else
+    {
+      goto out;
     }
   }
 
@@ -203,7 +214,9 @@ out:
     Serial.print(" lo=");
     Serial.print(lo, DEC);
     Serial.print(" hi=");
-    Serial.println(hi, DEC);
+    Serial.print(hi, DEC);
+    Serial.print(" cell=");
+    Serial.println((unsigned)(lo + hi), DEC);
   }
   return -4;
 }
