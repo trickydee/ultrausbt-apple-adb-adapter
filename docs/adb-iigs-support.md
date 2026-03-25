@@ -9,6 +9,8 @@ Implementation lives in:
 
 For follow-on tuning ideas (fast typing, SRQ, main loop), see `docs/iigs-debugging.md`.
 
+Published **Apple IIgs Hardware Reference** timing (Table 6-8 and Chapter 6) is summarized in `docs/adb-iigs-hardware-reference.md`.
+
 ---
 
 ## 1. Attention pulse (`ReceiveCommand`)
