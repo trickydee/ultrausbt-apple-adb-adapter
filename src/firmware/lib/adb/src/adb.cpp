@@ -178,19 +178,15 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
     }
 
     data <<= 1;
-    // Apple IIgs Hardware Reference: duty-cycle decode.
-    // low < 35% => 1, low > 65% => 0, otherwise invalid.
-    if ((uint32_t)lo * 100u < 35u * (uint32_t)cell)
+    // Duty-cycle decode using measured bit-cell.
+    // Use a midpoint decision to avoid dropping frames in the 40-60% range due to edge jitter.
+    if ((uint32_t)lo * 100u < 50u * (uint32_t)cell)
     {
       data |= 1;
     }
-    else if ((uint32_t)lo * 100u > 65u * (uint32_t)cell)
-    {
-      /* bit 0: already shifted in */
-    }
     else
     {
-      goto out;
+      /* bit 0: already shifted in */
     }
   }
 
