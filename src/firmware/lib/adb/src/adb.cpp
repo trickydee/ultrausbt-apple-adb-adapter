@@ -112,10 +112,10 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
   do 
   {
     lo = wait_data_hi(4000);
-    // Attention 800µs nominal; IIGS can be ~500–650µs or up to ~650µs (accept 500–950µs)
-    if (!lo || lo > 950 || lo < 500)
+    // IIgs Hardware Reference (Table 6-8): Attention 560–1040 µs; Global Reset >= 2.8 ms.
+    if (!lo || lo > 1040 || lo < 560)
     {
-      if (lo > 2950) 
+      if (lo >= 2800)
       {
         adb_reset = true;
         if (global_debug)
@@ -191,7 +191,7 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
   }
   else
   {
-    // Stop bit normal low time is 70uS + can have an SRQ time of 300uS
+    // IIgs Hardware Reference: device SRQ is an extension of stop low (>= 140 µs) and table lists 140–260 µs.
     wait_data_hi(400);
   }
   return data;
