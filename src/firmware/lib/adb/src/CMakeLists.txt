@@ -9,3 +9,4 @@ add_library(adb
 include_directories(../../misc/include)
 target_link_libraries(adb QuokkADB)
 target_include_directories(adb PUBLIC ../include)
+target_compile_definitions(adb PRIVATE ADB_ATTENTION_LO_MIN_US=${ADB_ATTENTION_LO_MIN_US})

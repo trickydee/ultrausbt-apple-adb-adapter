@@ -34,6 +34,10 @@ using rp2040_serial::Serial;
 
 extern bool global_debug;
 
+#ifndef ADB_MOUSE_ACCUMULATE_DELTAS
+#define ADB_MOUSE_ACCUMULATE_DELTAS 1
+#endif
+
 bool MouseRptParser::MouseChanged()
 {
     return ((m_movedx != 0) || (m_movedy != 0) || m_mouse_button_changed);
@@ -67,9 +71,22 @@ void MouseRptParser::OnMouseMove(MOUSEINFO *mi)
         Serial.print(" dy=");
         Serial.println(mi->dY, DEC);
     }
-    m_movedy = mi->dY;
+#if ADB_MOUSE_ACCUMULATE_DELTAS
+    auto saturating_add_i8 = [](int8_t current, int8_t delta) -> int8_t {
+        int16_t sum = static_cast<int16_t>(current) + static_cast<int16_t>(delta);
+        if (sum > 127) return 127;
+        if (sum < -128) return -128;
+        return static_cast<int8_t>(sum);
+    };
+    // Accumulate USB/BLE mouse deltas between ADB polls so movement isn't dropped.
+    m_movedx = saturating_add_i8(m_movedx, mi->dX);
+    m_movedy = saturating_add_i8(m_movedy, mi->dY);
+#else
+    // Legacy behavior: keep only the latest delta between polls.
     m_movedx = mi->dX;
-};
+    m_movedy = mi->dY;
+#endif
+}
 void MouseRptParser::OnLeftButtonUp(MOUSEINFO *mi)
 {
     if (global_debug)

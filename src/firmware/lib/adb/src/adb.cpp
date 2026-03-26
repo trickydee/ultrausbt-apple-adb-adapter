@@ -114,9 +114,8 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
   {
     lo = wait_data_hi(4000);
     // IIgs Hardware Reference (Table 6-8): Attention 560–1040 µs; Global Reset >= 2.8 ms.
-    // RP2040 measures low short of the book minimum; 450 µs floor accepts high-400s captures
-    // that still correlate with valid frames; very short pulses remain noise.
-    if (!lo || lo > 1040 || lo < 450)
+    // Measured low on RP2040 often reads short of the book minimum; ADB_ATTENTION_LO_MIN_US (default 500).
+    if (!lo || lo > 1040 || lo < ADB_ATTENTION_LO_MIN_US)
     {
       if (lo >= 2800)
       {
@@ -136,7 +135,7 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
         {
           attention_reject_count++;
           // Print only occasionally and only when near plausible attention widths.
-          if ((lo >= 380 && lo < 450) || (lo > 1040 && lo <= 1200) || ((attention_reject_count % 512u) == 0u))
+          if ((lo >= 400 && lo < ADB_ATTENTION_LO_MIN_US) || (lo > 1040 && lo <= 1200) || ((attention_reject_count % 512u) == 0u))
           {
             Serial.print("ADB RX fail: ATTENTION lo=");
             Serial.print(lo, DEC);

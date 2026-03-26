@@ -10,7 +10,7 @@ endif ()
 # note: this must happen before project()
 include(pico_sdk_import.cmake)
 
-project(HIDHopper-firmware VERSION 1.0.9)
+project(HIDHopper-firmware VERSION 1.0.10)
 
 # Single source of truth for firmware version (bump when releasing; used in banner and docs)
 add_compile_definitions(HIDHOPPER_ADB_VERSION_STRING=\"${PROJECT_VERSION}\")
@@ -23,6 +23,22 @@ if(ADB_DEBUG)
 else()
     message(STATUS "ADB debug: disabled")
 endif()
+
+# Mouse movement handling between ADB polls:
+# ON  -> accumulate USB/BLE deltas (smoother on some IIgs apps)
+# OFF -> legacy overwrite (latest delta only)
+option(ADB_MOUSE_ACCUMULATE_DELTAS "Accumulate mouse deltas between ADB polls" ON)
+if(ADB_MOUSE_ACCUMULATE_DELTAS)
+    message(STATUS "ADB mouse delta accumulation: ENABLED")
+else()
+    message(STATUS "ADB mouse delta accumulation: disabled")
+endif()
+
+# IIgs Table 6-8 attention 560–1040 µs; default 500 µs adds RP2040 measurement slack.
+# A/B: same firmware version, different floor — e.g. -DADB_ATTENTION_LO_MIN_US=450
+set(ADB_ATTENTION_LO_MIN_US 500 CACHE STRING
+    "Minimum ADB attention low time (microseconds) for ReceiveCommand")
+message(STATUS "ADB_ATTENTION_LO_MIN_US=${ADB_ATTENTION_LO_MIN_US}")
 
 # initialize the Raspberry Pi Pico SDK
 pico_sdk_init()

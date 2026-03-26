@@ -43,6 +43,11 @@ CORES=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 FIRMWARE_SRC=src/firmware
 UF2=src/HIDHopper-firmware.uf2
 UF2_DEBUG=src/HIDHopper-firmware-debug.uf2
+DIST_DIR=dist
+
+mkdir -p "$DIST_DIR"
+# Remove stale artifacts so dist always mirrors latest build.
+rm -f "$DIST_DIR"/HIDHopper-firmware-*.uf2
 
 # Build release firmware for a board (no ADB debug).
 build_for_board() {
@@ -136,6 +141,15 @@ check_uf2_debug() {
     echo ""
 }
 
+collect_dist() {
+    local src_path=$1
+    local dist_name=$2
+    if [ -f "$src_path" ]; then
+        cp "$src_path" "$DIST_DIR/$dist_name"
+        echo "  Dist: $DIST_DIR/$dist_name"
+    fi
+}
+
 check_uf2 "build-pico"      "Pico (RP2040)"
 check_uf2_debug "build-pico-debug" "Pico (RP2040)"
 check_uf2 "build-pico_w"    "Pico W (RP2040 with CYW43)"
@@ -144,6 +158,17 @@ check_uf2 "build-pico2"     "Pico 2 (RP2350)"
 check_uf2_debug "build-pico2-debug" "Pico 2 (RP2350)"
 check_uf2 "build-pico2_w"   "Pico 2 W (RP2350 with CYW43)"
 check_uf2_debug "build-pico2_w-debug" "Pico 2 W (RP2350 with CYW43)"
+
+echo "Collecting UF2 artifacts into $DIST_DIR/ ..."
+collect_dist "build-pico/$UF2" "HIDHopper-firmware-pico.uf2"
+collect_dist "build-pico-debug/$UF2_DEBUG" "HIDHopper-firmware-pico-debug.uf2"
+collect_dist "build-pico_w/$UF2" "HIDHopper-firmware-pico_w.uf2"
+collect_dist "build-pico_w-debug/$UF2_DEBUG" "HIDHopper-firmware-pico_w-debug.uf2"
+collect_dist "build-pico2/$UF2" "HIDHopper-firmware-pico2.uf2"
+collect_dist "build-pico2-debug/$UF2_DEBUG" "HIDHopper-firmware-pico2-debug.uf2"
+collect_dist "build-pico2_w/$UF2" "HIDHopper-firmware-pico2_w.uf2"
+collect_dist "build-pico2_w-debug/$UF2_DEBUG" "HIDHopper-firmware-pico2_w-debug.uf2"
+echo ""
 
 echo "To flash: hold BOOTSEL, connect USB, then copy the .uf2 to the mounted volume:"
 echo "  Release:"
@@ -156,6 +181,9 @@ echo "    - Pico:       build-pico-debug/src/HIDHopper-firmware-debug.uf2"
 echo "    - Pico W:     build-pico_w-debug/src/HIDHopper-firmware-debug.uf2"
 echo "    - Pico 2:     build-pico2-debug/src/HIDHopper-firmware-debug.uf2"
 echo "    - Pico 2 W:   build-pico2_w-debug/src/HIDHopper-firmware-debug.uf2"
+echo "  Dist bundle:"
+echo "    - dist/HIDHopper-firmware-<board>.uf2"
+echo "    - dist/HIDHopper-firmware-<board>-debug.uf2"
 echo ""
 
 if [ "$BUILD_SUCCESS" = false ]; then

@@ -83,12 +83,31 @@ Parameters and ideas to try when the keyboard works when typing slowly but occas
 
 ---
 
+## 9. Mouse delta accumulation mode (IIgs pointer smoothness)
+
+**Observation:** On some IIgs GUIs, the pointer can look jerky or briefly redraw/glitch when USB/BLE mouse reports arrive faster than ADB polls.
+
+**Build-time option:** `ADB_MOUSE_ACCUMULATE_DELTAS`
+- `ON` (default): accumulate mouse `dx/dy` between ADB polls with saturation.
+- `OFF`: legacy behavior that keeps only the latest `dx/dy` between polls.
+
+**Why this helps:** Accumulation reduces dropped micro-movements when host poll cadence is lower than mouse report cadence.
+
+**How to build:**
+- Enable (default): `cmake -B build -S src/firmware -DPICO_BOARD=pico2_w`
+- Disable: `cmake -B build -S src/firmware -DPICO_BOARD=pico2_w -DADB_MOUSE_ACCUMULATE_DELTAS=OFF`
+
+For A/B testing with existing script-driven flows, keep all other options identical and toggle only this setting.
+
+---
+
 ## Suggested order to try
 
 1. **(7)** Disable debug for testing  
 2. **(8)** Compare USB vs BT  
-3. **(2)** Bump Tlt minimum to ~160–200 µs  
-4. **(4)** SRQ to 280–300 µs  
-5. **(3)** Don’t overwrite `kbdreg0` too soon / simple queue  
+3. **(9)** A/B test mouse accumulation ON/OFF (pointer smoothness)  
+4. **(2)** Bump Tlt minimum to ~160–200 µs  
+5. **(4)** SRQ to 280–300 µs  
+6. **(3)** Don’t overwrite `kbdreg0` too soon / simple queue  
 
 The oscilloscope will then help confirm whether the issue is our response timing (Tlt, bit timing) or the host missing our reply.

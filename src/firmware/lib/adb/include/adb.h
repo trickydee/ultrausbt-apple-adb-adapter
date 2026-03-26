@@ -34,6 +34,11 @@
 #define ADB_START_BIT_DELAY 100000
 #endif
 
+/* Minimum attention low time (µs) in ReceiveCommand; CMake may set -DADB_ATTENTION_LO_MIN_US */
+#ifndef ADB_ATTENTION_LO_MIN_US
+#define ADB_ATTENTION_LO_MIN_US 500
+#endif
+
 #define KBD_DEFAULT_ADDR 0x02
 #define KBD_DEFAULT_HANDLER_ID 0x02
 #define MOUSE_DEFAULT_ADDR 0x03
