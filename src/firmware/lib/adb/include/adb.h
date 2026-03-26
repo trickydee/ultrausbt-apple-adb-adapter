@@ -39,6 +39,14 @@
 #define ADB_ATTENTION_LO_MIN_US 500
 #endif
 
+#ifndef ADB_STRICT_DUTY_CYCLE_DECODE
+#define ADB_STRICT_DUTY_CYCLE_DECODE 0
+#endif
+
+#ifndef ADB_STRICT_SYNC_WINDOW
+#define ADB_STRICT_SYNC_WINDOW 0
+#endif
+
 #define KBD_DEFAULT_ADDR 0x02
 #define KBD_DEFAULT_HANDLER_ID 0x02
 #define MOUSE_DEFAULT_ADDR 0x03
@@ -140,8 +148,25 @@ inline int32_t AdbInterface::Receive16bitRegister(void)
     }
 
     data <<= 1;
-    // Duty-cycle decode using measured bit-cell.
-    // Use a midpoint decision to avoid dropping frames in the 40-60% range due to edge jitter.
+#if ADB_STRICT_DUTY_CYCLE_DECODE
+    // Spec-faithful decode: bit 1 if low <35%, bit 0 if low >65%; reject ambiguous middle duty.
+    uint32_t lo_x100 = (uint32_t)lo * 100u;
+    uint32_t cell_x35 = 35u * (uint32_t)cell;
+    uint32_t cell_x65 = 65u * (uint32_t)cell;
+    if (lo_x100 < cell_x35)
+    {
+      data |= 1;
+    }
+    else if (lo_x100 > cell_x65)
+    {
+      /* bit 0: already shifted in */
+    }
+    else
+    {
+      goto out;
+    }
+#else
+    // Tolerant midpoint decode (legacy behavior).
     if ((uint32_t)lo * 100u < 50u * (uint32_t)cell)
     {
       data |= 1;
@@ -150,6 +175,7 @@ inline int32_t AdbInterface::Receive16bitRegister(void)
     {
       /* bit 0: already shifted in */
     }
+#endif
   }
 
   // Stop bit: low must be “short” relative to bit-0 cells; allow IIgs variance

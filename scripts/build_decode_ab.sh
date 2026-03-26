@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build A/B UF2s (release + debug) that differ only in ADB_ATTENTION_LO_MIN_US.
+# Build A/B UF2s (release + debug) that differ only in ADB_STRICT_DUTY_CYCLE_DECODE.
 # Default board: pico2_w (override with PICO_BOARD=pico_w etc.)
 # Requires: PICO_SDK_PATH set, or PICO_SDK_FETCH_FROM_GIT=ON (same discovery as build_all.sh)
 set -euo pipefail
@@ -48,33 +48,33 @@ CORES=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 DIST=dist
 mkdir -p "$DIST"
 
-echo "=== A/B attention floor builds (board=$BOARD) ==="
-echo "  A: ADB_ATTENTION_LO_MIN_US=500 (default)"
-echo "  B: ADB_ATTENTION_LO_MIN_US=450"
+echo "=== A/B duty-cycle decode builds (board=$BOARD) ==="
+echo "  A: ADB_STRICT_DUTY_CYCLE_DECODE=ON"
+echo "  B: ADB_STRICT_DUTY_CYCLE_DECODE=OFF (midpoint legacy)"
 echo "  For each variant: release + debug"
 echo ""
 
-BUILD_A="build-${BOARD}-ab-attn500"
-BUILD_B="build-${BOARD}-ab-attn450"
+BUILD_A="build-${BOARD}-ab-decode-strict-on"
+BUILD_B="build-${BOARD}-ab-decode-strict-off"
 BUILD_A_DBG="${BUILD_A}-debug"
 BUILD_B_DBG="${BUILD_B}-debug"
 
-cmake -B "$BUILD_A" -S "$FIRMWARE_SRC" -DPICO_BOARD="$BOARD" -DADB_ATTENTION_LO_MIN_US=500
+cmake -B "$BUILD_A" -S "$FIRMWARE_SRC" -DPICO_BOARD="$BOARD" -DADB_STRICT_DUTY_CYCLE_DECODE=ON
 ( cd "$BUILD_A" && make -j"$CORES" )
-cmake -B "$BUILD_A_DBG" -S "$FIRMWARE_SRC" -DPICO_BOARD="$BOARD" -DADB_ATTENTION_LO_MIN_US=500 -DADB_DEBUG=ON
+cmake -B "$BUILD_A_DBG" -S "$FIRMWARE_SRC" -DPICO_BOARD="$BOARD" -DADB_STRICT_DUTY_CYCLE_DECODE=ON -DADB_DEBUG=ON
 ( cd "$BUILD_A_DBG" && make -j"$CORES" )
 [ -f "$BUILD_A_DBG/$UF2_REL" ] && cp "$BUILD_A_DBG/$UF2_REL" "$BUILD_A_DBG/$UF2_DBG"
 
-cmake -B "$BUILD_B" -S "$FIRMWARE_SRC" -DPICO_BOARD="$BOARD" -DADB_ATTENTION_LO_MIN_US=450
+cmake -B "$BUILD_B" -S "$FIRMWARE_SRC" -DPICO_BOARD="$BOARD" -DADB_STRICT_DUTY_CYCLE_DECODE=OFF
 ( cd "$BUILD_B" && make -j"$CORES" )
-cmake -B "$BUILD_B_DBG" -S "$FIRMWARE_SRC" -DPICO_BOARD="$BOARD" -DADB_ATTENTION_LO_MIN_US=450 -DADB_DEBUG=ON
+cmake -B "$BUILD_B_DBG" -S "$FIRMWARE_SRC" -DPICO_BOARD="$BOARD" -DADB_STRICT_DUTY_CYCLE_DECODE=OFF -DADB_DEBUG=ON
 ( cd "$BUILD_B_DBG" && make -j"$CORES" )
 [ -f "$BUILD_B_DBG/$UF2_REL" ] && cp "$BUILD_B_DBG/$UF2_REL" "$BUILD_B_DBG/$UF2_DBG"
 
-OUT_A="$DIST/HIDHopper-firmware-${BOARD}-attn500.uf2"
-OUT_B="$DIST/HIDHopper-firmware-${BOARD}-attn450.uf2"
-OUT_A_DBG="$DIST/HIDHopper-firmware-${BOARD}-attn500-debug.uf2"
-OUT_B_DBG="$DIST/HIDHopper-firmware-${BOARD}-attn450-debug.uf2"
+OUT_A="$DIST/HIDHopper-firmware-${BOARD}-decode-strict-on.uf2"
+OUT_B="$DIST/HIDHopper-firmware-${BOARD}-decode-strict-off.uf2"
+OUT_A_DBG="$DIST/HIDHopper-firmware-${BOARD}-decode-strict-on-debug.uf2"
+OUT_B_DBG="$DIST/HIDHopper-firmware-${BOARD}-decode-strict-off-debug.uf2"
 cp "$BUILD_A/$UF2_REL" "$OUT_A"
 cp "$BUILD_B/$UF2_REL" "$OUT_B"
 cp "$BUILD_A_DBG/$UF2_DBG" "$OUT_A_DBG"

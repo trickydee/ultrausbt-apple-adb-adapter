@@ -158,7 +158,12 @@ void loop()
         }
       }
       
+      // Optional IIgs policy: suppress mouse SRQ extension.
+#if ADB_IIGS_MOUSE_SUPPRESS_SRQ
+      cmd = adb.ReceiveCommand(kbdsrq);
+#else
       cmd = adb.ReceiveCommand(mousesrq | kbdsrq);
+#endif
       adb.ProcessCommand(cmd); 
       if (adb_reset)
       {

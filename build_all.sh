@@ -59,7 +59,8 @@ build_for_board() {
     echo ""
 
     echo "Configuring build for $PLATFORM_NAME (release)..."
-    cmake -B "$BUILD_DIR" -S "$FIRMWARE_SRC" -DPICO_BOARD="$BOARD"
+    # IIgs policy: suppress mouse SRQ extension to avoid BASIC slowdown when the mouse moves.
+    cmake -B "$BUILD_DIR" -S "$FIRMWARE_SRC" -DPICO_BOARD="$BOARD" -DADB_IIGS_MOUSE_SUPPRESS_SRQ=ON
     echo ""
 
     echo "Building $PLATFORM_NAME (release)..."
@@ -78,7 +79,8 @@ build_debug_for_board() {
     echo ""
 
     echo "Configuring build for $PLATFORM_NAME (debug, ADB_DEBUG=ON)..."
-    cmake -B "$DEBUG_BUILD_DIR" -S "$FIRMWARE_SRC" -DPICO_BOARD="$BOARD" -DADB_DEBUG=ON
+    # Keep debug enabled, but also apply IIgs policy for mouse SRQ suppression.
+    cmake -B "$DEBUG_BUILD_DIR" -S "$FIRMWARE_SRC" -DPICO_BOARD="$BOARD" -DADB_DEBUG=ON -DADB_IIGS_MOUSE_SUPPRESS_SRQ=ON
     echo ""
 
     echo "Building $PLATFORM_NAME (debug)..."

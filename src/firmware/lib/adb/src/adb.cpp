@@ -159,8 +159,12 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
   // Sync (high) then start bit low: allow 150us for long sync discovery.
   hi = wait_data_lo(150);
   // IIgs Table 6-8 expresses sync as 60-70% of a 70-130us bit-cell => 42-91us envelope.
-  // Keep a little measurement slack to avoid false rejects at ISR/sample boundaries.
+  // Default keeps slight slack (40-95 us); strict mode uses the pure 42-91 us envelope.
+#if ADB_STRICT_SYNC_WINDOW
+  if (!hi || hi > 91 || hi < 42)
+#else
   if (!hi || hi > 95 || hi < 40)
+#endif
   {
     if (global_debug)
     {
@@ -190,8 +194,25 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
     }
 
     data <<= 1;
-    // Duty-cycle decode using measured bit-cell.
-    // Use a midpoint decision to avoid dropping frames in the 40-60% range due to edge jitter.
+#if ADB_STRICT_DUTY_CYCLE_DECODE
+    // Spec-faithful decode: bit 1 if low <35%, bit 0 if low >65%; reject ambiguous middle duty.
+    uint32_t lo_x100 = (uint32_t)lo * 100u;
+    uint32_t cell_x35 = 35u * (uint32_t)cell;
+    uint32_t cell_x65 = 65u * (uint32_t)cell;
+    if (lo_x100 < cell_x35)
+    {
+      data |= 1;
+    }
+    else if (lo_x100 > cell_x65)
+    {
+      /* bit 0: already shifted in */
+    }
+    else
+    {
+      goto out;
+    }
+#else
+    // Tolerant midpoint decode (legacy behavior).
     if ((uint32_t)lo * 100u < 50u * (uint32_t)cell)
     {
       data |= 1;
@@ -200,6 +221,7 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
     {
       /* bit 0: already shifted in */
     }
+#endif
   }
 
   if (srq)

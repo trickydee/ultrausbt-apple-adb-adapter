@@ -28,16 +28,18 @@ These areas already match or sit inside the IIgs table:
 
 **Spec:** Attention low time **560–1040 µs**.
 
-**Current:** `ReceiveCommand` accepts **500–950 µs** (reject if `lo < 500` or `lo > 950`).
+**Current:** `ReceiveCommand` accepts **ADB_ATTENTION_LO_MIN_US–1040 µs**  
+(default `ADB_ATTENTION_LO_MIN_US=500`, reject if `lo < ADB_ATTENTION_LO_MIN_US` or `lo > 1040`).
 
 **Issue:**
 
-- **Low:** Allows **40 µs** shorter than the documented minimum (**500 vs 560**).
-- **High:** Rejects valid attention up to **1040 µs** (anything **951–1040 µs** fails).
+- **Low:** Default floor still allows **60 µs** shorter than the documented minimum (**500 vs 560**) as a deliberate measurement slack.
+- **High:** **No current gap** on high end (accepts up to **1040 µs**).
 
 **Proposed change:**
 
-- Replace bounds with **560–1040 µs**, or **559–1041 µs** if reserving 1 µs slack for sampling jitter (document the slack in code comments).
+- Keep `1040` high bound.
+- Evaluate whether default low floor should move from `500` toward `560` now that cross-host testing (IIgs + Quadra) looks stable; keep `ADB_ATTENTION_LO_MIN_US` configurable for A/B.
 - Re-run validation on **real IIgs** and **68k Macs** after change; if 560 µs is too tight for one host, record measured min in `docs/iigs-debugging.md` and justify a deliberate floor.
 
 **Files:** `src/firmware/lib/adb/src/adb.cpp` (`ReceiveCommand` attention loop).
@@ -48,14 +50,11 @@ These areas already match or sit inside the IIgs table:
 
 **Spec:** Global reset when bus held low **≥ 2.8 ms** (IIgs chapter prose).
 
-**Current:** Global reset when **`lo > 2950`** µs (~2.95 ms).
+**Current:** Global reset when **`lo >= 2800`** µs.
 
-**Issue:** A reset pulse of **~2.8–2.95 ms** may be classified as a failed attention instead of **`-100`** (global reset).
+**Status:** Implemented and aligned with IIgs minimum.
 
-**Proposed change:**
-
-- Treat global reset when **`lo >= 2800`** µs (or **> 2790** if using strict “above 2.8 ms”), consistent with IIgs minimum.
-- Keep a single code path so **attention** (short low) and **reset** (long low) stay mutually exclusive; add a short comment citing **2.8 ms** vs legacy **~3 ms** behavior.
+**Follow-up:** Keep single-path handling so **attention** and **reset** remain mutually exclusive.
 
 **Files:** `src/firmware/lib/adb/src/adb.cpp` (`ReceiveCommand`, same loop as attention).
 
@@ -65,7 +64,7 @@ These areas already match or sit inside the IIgs table:
 
 **Spec:** Sync high duration expressed as **60–70% of bit-cell time** (not only a fixed µs value).
 
-**Current:** After `wait_data_lo(150)`, sync high time validated as **25–105 µs** absolute.
+**Current:** After `wait_data_lo(150)`, sync high time is validated as **40–95 µs** absolute.
 
 **Issue:** Fixed µs is **not** the same test as **60–70% of cell**. For a **70 µs** cell, 60–70% → **42–49 µs**; for **130 µs** → **78–91 µs**. The fixed window overlaps but does not track the spec.
 
@@ -86,18 +85,17 @@ These areas already match or sit inside the IIgs table:
 - Low **&lt; 35%** of bit-cell → **1**
 - Low **&gt; 65%** of bit-cell → **0**
 
-**Current:** After enforcing **70 ≤ lo+hi ≤ 130**, decode with **`lo < 40`** → bit 1.
+**Current:** After enforcing **70 ≤ lo+hi ≤ 130**, decode uses a **50% midpoint**  
+(`lo * 100 < 50 * cell` => bit `1`, else bit `0`).
 
 **Issue:** **40 µs** is a **fixed** threshold; the book uses **fraction of the same bit’s cell** (`lo / (lo+hi)`). At **130 µs** cell, 35% ≈ **45.5 µs**; a fixed **40** biases toward **0** for marginal cells.
 
-**Proposed change:**
+**Current implementation status:**
 
-- Replace with percentage-based decode, e.g.  
-  - `cell = lo + hi` (already constrained)  
-  - If `lo * 100 < 35 * cell` (or fixed-point equivalent) → **1**  
-  - Else if `lo * 100 > 65 * cell` → **0**  
-  - Else → **error** (illegal duty cycle for valid cell)
-- Use integer math only (no float on hot path if that matters for latency).
+- Added build-time option `ADB_STRICT_DUTY_CYCLE_DECODE`:
+  - `ON`: spec-faithful decode: **1** if `<35%`, **0** if `>65%`, reject middle band.
+  - `OFF` (default): midpoint/legacy decode at 50%.
+- Implemented with integer math in both paths below.
 
 **Files:**
 
@@ -110,7 +108,7 @@ These areas already match or sit inside the IIgs table:
 
 **Spec:** Table 6-8 does not list separate numeric sub-windows for the **start bit** edges; decoding is governed by **bit-cell** and **%** rules.
 
-**Current:** Fixed checks: start low **25–45 µs**, following high **55–75 µs** (legacy QuokkADB-style).
+**Current:** Fixed checks: start low **18–55 µs**, following high **40–90 µs**.
 
 **Proposed change:**
 
@@ -125,7 +123,7 @@ These areas already match or sit inside the IIgs table:
 
 **Spec:** Our `adb-iigs-hardware-reference.md` excerpt does **not** duplicate *Guide*’s **70 µs** stop-bit row; IIgs Chapter 6 may still agree in spirit.
 
-**Current:** `wait_data_hi(130)` then reject if stop low **> 70 µs**.
+**Current:** `wait_data_hi(130)` then reject if stop low **> 85 µs**.
 
 **Proposed change:**
 
@@ -151,14 +149,12 @@ These areas already match or sit inside the IIgs table:
 
 **Spec:** IIgs Hardware Reference — **ADB mouse** must **not** issue Service Requests on the IIgs.
 
-**Current:** Firmware tracks `mousesrq` / `kbdsrq` with no host identity.
+**Current / resolved:** Implemented an IIgs-appropriate policy switch `ADB_IIGS_MOUSE_SUPPRESS_SRQ`.
 
-**Proposed change:**
+- When `ADB_IIGS_MOUSE_SUPPRESS_SRQ=ON`, the adapter suppresses the mouse SRQ extension so `ReceiveCommand()` is driven by keyboard SRQ only.
+- `build_all.sh` passes `-DADB_IIGS_MOUSE_SUPPRESS_SRQ=ON`, making this the default for builds created by that script.
 
-- **Documentation:** Describe behavior in `docs/adb-iigs-support.md` (HIDHopper is often kbd+mouse; host may be IIgs or Mac).
-- **Optional product switch:** Build-time or runtime flag **“Assume IIgs host”** to suppress SRQ on the mouse path only—**only if** you confirm with testing that IIgs hosts misbehave otherwise.
-
-**Files:** Design doc + possibly `adb.cpp` / USB bridge—**lower priority** than timing items **2.1–2.4**.
+**Validation:** On your IIgs (Taifun Boot) the BASIC loop slowdown on mouse move is resolved. It also remains good on an ADB Mac Quadra.
 
 ---
 
@@ -166,9 +162,9 @@ These areas already match or sit inside the IIgs table:
 
 ### Phase A — Low risk, high clarity
 
-1. Update **attention** bounds to **560–1040 µs** (with optional ±1 µs slack documented).
-2. Lower **global reset** threshold to **~2800 µs** (align with **2.8 ms**).
-3. Refresh **comments** for SRQ (**140–260 / ≥140**) vs legacy 300 µs.
+1. Re-evaluate **attention** low default (`ADB_ATTENTION_LO_MIN_US=500`) against **560 µs** spec floor using IIgs + Mac A/B data.
+2. Keep **global reset** at **>=2800 µs** (already aligned).
+3. Refresh **comments** for SRQ (**140–260 / >=140**) vs legacy 300 µs.
 
 **Exit criteria:** Build clean; smoke-test on **IIgs** and at least one **68000-era Mac** with ADB.
 
@@ -176,8 +172,8 @@ These areas already match or sit inside the IIgs table:
 
 ### Phase B — Decode correctness
 
-4. Implement **percentage-based** bit decode (**35% / 65%**) for **command** and **16-bit register** receives.
-5. Re-test fast typing / missed keys (`docs/iigs-debugging.md` scenarios).
+4. Implement **percentage-based** bit decode (**35% / 65%**) for **command** and **16-bit register** receives. ✅  
+5. Re-test fast typing / missed keys (`docs/iigs-debugging.md` scenarios) with `ADB_STRICT_DUTY_CYCLE_DECODE` ON vs OFF.
 
 **Exit criteria:** No regression on USB kbd/mouse → ADB on IIgs; UART debug shows no spike in `ADB RX fail: BIT`.
 

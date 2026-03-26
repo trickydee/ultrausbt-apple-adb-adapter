@@ -1,5 +1,10 @@
 # HIDHopper ADB – Release notes
 
+## 1.0.14
+
+- **IIgs mouse SRQ suppression:** `build_all.sh` now enables `ADB_IIGS_MOUSE_SUPPRESS_SRQ=ON` so the mouse path does not extend SRQ on the IIgs. This prevents the BASIC loop slowdown when moving the mouse.
+- **Validation:** confirmed improved behavior on both Apple IIgs (Taifun Boot) and an ADB Mac Quadra.
+
 ## 1.0.10
 
 - **IIgs mouse movement tuning:** Added build-time option `ADB_MOUSE_ACCUMULATE_DELTAS` to control how mouse `dx/dy` is handled between ADB polls.

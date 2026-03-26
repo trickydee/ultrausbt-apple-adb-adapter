@@ -65,6 +65,11 @@ Parameters and ideas to try when the keyboard works when typing slowly but occas
 
 **Parameters to consider:** Slightly relax again (e.g. Tlt 130–270 µs, or bit cell 65–135 µs) only if logs show SYNC/BIT or Receive16bitRegister failures when you type fast.
 
+**Phase-B decode toggle:** `ADB_STRICT_DUTY_CYCLE_DECODE`
+- `ON`: strict 35%/65% decode (reject ambiguous middle duty cycle).
+- `OFF`: tolerant midpoint decode.
+Use A/B testing on real hardware if strict mode increases `ADB RX fail: BIT`.
+
 ---
 
 ## 7. Debug / Serial
@@ -101,13 +106,28 @@ For A/B testing with existing script-driven flows, keep all other options identi
 
 ---
 
+## 10. Mouse SRQ suppression (IIgs BASIC slowdown)
+
+**Observation:** On the IIgs, allowing the mouse path to extend/trigger SRQ can cause the BASIC program loop to slow down massively as soon as mouse movement/buttons begin.
+
+**Build-time option:** `ADB_IIGS_MOUSE_SUPPRESS_SRQ`
+- `ON`: suppress mouse SRQ extension (keyboard SRQ only)
+- `OFF`: legacy behavior (mouse can also extend SRQ)
+
+**Current default in `build_all.sh`:** `ON` (so your normal release + debug bundles should have this behavior enabled).
+
+**Validation:** Confirmed improved BASIC performance on an IIgs (Taifun Boot) and also still works well on a Mac Quadra.
+
+---
+
 ## Suggested order to try
 
 1. **(7)** Disable debug for testing  
 2. **(8)** Compare USB vs BT  
 3. **(9)** A/B test mouse accumulation ON/OFF (pointer smoothness)  
-4. **(2)** Bump Tlt minimum to ~160–200 µs  
-5. **(4)** SRQ to 280–300 µs  
-6. **(3)** Don’t overwrite `kbdreg0` too soon / simple queue  
+4. **(10)** A/B mouse SRQ suppression if you see BASIC slowdown  
+5. **(2)** Bump Tlt minimum to ~160–200 µs  
+6. **(4)** SRQ to 280–300 µs  
+7. **(3)** Don’t overwrite `kbdreg0` too soon / simple queue  
 
 The oscilloscope will then help confirm whether the issue is our response timing (Tlt, bit timing) or the host missing our reply.
