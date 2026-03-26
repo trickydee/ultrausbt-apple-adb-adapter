@@ -13,6 +13,16 @@ Published **Apple IIgs Hardware Reference** timing (Table 6-8 and Chapter 6) is 
 
 ---
 
+## Field validation snapshot
+
+Recent bench testing of the same IIgs-tuned firmware on both:
+- Apple IIgs (Taifun Boot GUI and general keyboard/mouse use), and
+- ADB Mac Quadra,
+
+showed improved behavior versus earlier builds, including smoother overall host interaction. This suggests the current receive-timing robustness changes are broadly compatible with classic ADB hosts and are not IIgs-only regressions.
+
+---
+
 ## 1. Attention pulse (`ReceiveCommand`)
 
 The firmware waits for the **attention** interval (data line held low by the host before the sync period).

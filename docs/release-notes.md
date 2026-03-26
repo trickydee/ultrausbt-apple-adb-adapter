@@ -8,6 +8,7 @@
 - **IIgs attention floor tuning:** Added build-time setting `ADB_ATTENTION_LO_MIN_US` (default `500`) so attention timing can be A/B tested without source edits.
 - **A/B test script:** Added `scripts/build_attention_ab.sh` to build two UF2s with identical firmware except attention floor (`500` vs `450`), now defaulting to `pico2_w` with `PICO_BOARD` override support.
 - **Debugging docs:** Updated `docs/iigs-debugging.md` with mouse accumulation A/B guidance and exact CMake flags.
+- **Cross-host validation:** The same IIgs-tuned firmware has been tested on an ADB Mac Quadra and showed improved behavior there as well, indicating the receive-path robustness changes are beneficial beyond IIgs-only scenarios.
 
 ## 1.0.7
 
