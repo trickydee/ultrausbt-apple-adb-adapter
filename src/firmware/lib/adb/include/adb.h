@@ -34,6 +34,19 @@
 #define ADB_START_BIT_DELAY 100000
 #endif
 
+/* Minimum attention low time (µs) in ReceiveCommand; CMake may set -DADB_ATTENTION_LO_MIN_US */
+#ifndef ADB_ATTENTION_LO_MIN_US
+#define ADB_ATTENTION_LO_MIN_US 500
+#endif
+
+#ifndef ADB_STRICT_DUTY_CYCLE_DECODE
+#define ADB_STRICT_DUTY_CYCLE_DECODE 0
+#endif
+
+#ifndef ADB_STRICT_SYNC_WINDOW
+#define ADB_STRICT_SYNC_WINDOW 0
+#endif
+
 #define KBD_DEFAULT_ADDR 0x02
 #define KBD_DEFAULT_HANDLER_ID 0x02
 #define MOUSE_DEFAULT_ADDR 0x03
@@ -96,22 +109,21 @@ inline int32_t AdbInterface::Receive16bitRegister(void)
   uint16_t low_time;
 
   hi_time = wait_data_lo(1000);
-  // start-stop time is officially > 140 and < 260
-  if (!hi_time || hi_time < 130 || hi_time > 270 )
+  // Tlt (stop-to-start): officially 140–260 µs
+  if (!hi_time || hi_time < 140 || hi_time > 260)
   {
     return -1;  
   }
 
-  // start bit 
+  // Start bit (same duty idea as command byte). Legacy 25–45 µs was too tight for IIgs + LISTEN.
   low_time = wait_data_hi(130);
- if (!low_time || low_time > 45 || low_time < 25)
+  if (!low_time || low_time > 55 || low_time < 18)
   {
     return -2;
   }
-  
 
   hi_time = wait_data_lo(130);
-  if (!hi_time || hi_time > 75 || hi_time < 55)
+  if (!hi_time || hi_time > 90 || hi_time < 40)
   {
     return -3;
   }
@@ -128,21 +140,47 @@ inline int32_t AdbInterface::Receive16bitRegister(void)
     {
       goto out;
     }
-    if (120 < lo + hi )
+    // Bit cell: 70–130 µs (IIgs); ±2 µs sampling slack on long payloads
+    uint16_t cell = (uint16_t)(lo + hi);
+    if (cell < 68 || 132 < cell)
     {
       goto out;
     }
 
     data <<= 1;
-    if (lo < 40)
+#if ADB_STRICT_DUTY_CYCLE_DECODE
+    // Spec-faithful decode: bit 1 if low <35%, bit 0 if low >65%; reject ambiguous middle duty.
+    uint32_t lo_x100 = (uint32_t)lo * 100u;
+    uint32_t cell_x35 = 35u * (uint32_t)cell;
+    uint32_t cell_x65 = 65u * (uint32_t)cell;
+    if (lo_x100 < cell_x35)
     {
       data |= 1;
     }
+    else if (lo_x100 > cell_x65)
+    {
+      /* bit 0: already shifted in */
+    }
+    else
+    {
+      goto out;
+    }
+#else
+    // Tolerant midpoint decode (legacy behavior).
+    if ((uint32_t)lo * 100u < 50u * (uint32_t)cell)
+    {
+      data |= 1;
+    }
+    else
+    {
+      /* bit 0: already shifted in */
+    }
+#endif
   }
 
-  // stop bit
+  // Stop bit: low must be “short” relative to bit-0 cells; allow IIgs variance
   low_time = wait_data_hi(130);
-  if (!low_time || low_time > 70)
+  if (!low_time || low_time > 85)
   {  
     return -4;
   }

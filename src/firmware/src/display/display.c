@@ -115,8 +115,8 @@ void display_show_splash(void)
 
     ssd1306_clear(&disp);
 
-    /* Title: Apple - original font size (scale 2), centered. 5*16=80, (128-80)/2=24 */
-    ssd1306_draw_string(&disp, 24, 0, 2, (char *)"Apple");
+    /* Title: IIGS - original font size (scale 2), centered. 4*16=64, (128-64)/2=32 */
+    ssd1306_draw_string(&disp, 32, 0, 2, (char *)"IIGS");
 
     ssd1306_draw_string(&disp, 2, 24, 1, (char *)"HIDHopper ADB");
 

@@ -10,10 +10,70 @@ endif ()
 # note: this must happen before project()
 include(pico_sdk_import.cmake)
 
-project(HIDHopper-firmware VERSION 1.0.7)
+project(HIDHopper-firmware VERSION 1.0.14)
 
 # Single source of truth for firmware version (bump when releasing; used in banner and docs)
 add_compile_definitions(HIDHOPPER_ADB_VERSION_STRING=\"${PROJECT_VERSION}\")
+
+# ADB serial debug: set -DADB_DEBUG=ON when configuring to get ADB timing/command messages on UART
+option(ADB_DEBUG "Enable ADB serial debug output (UART)" OFF)
+if(ADB_DEBUG)
+    add_compile_definitions(ADB_DEBUG=1)
+    message(STATUS "ADB debug: ENABLED (serial output)")
+else()
+    message(STATUS "ADB debug: disabled")
+endif()
+
+# Mouse movement handling between ADB polls:
+# ON  -> accumulate USB/BLE deltas (smoother on some IIgs apps)
+# OFF -> legacy overwrite (latest delta only)
+option(ADB_MOUSE_ACCUMULATE_DELTAS "Accumulate mouse deltas between ADB polls" ON)
+if(ADB_MOUSE_ACCUMULATE_DELTAS)
+    message(STATUS "ADB mouse delta accumulation: ENABLED")
+else()
+    message(STATUS "ADB mouse delta accumulation: disabled")
+endif()
+
+# IIgs Table 6-8 attention 560–1040 µs; default 500 µs adds RP2040 measurement slack.
+# A/B: same firmware version, different floor — e.g. -DADB_ATTENTION_LO_MIN_US=450
+set(ADB_ATTENTION_LO_MIN_US 500 CACHE STRING
+    "Minimum ADB attention low time (microseconds) for ReceiveCommand")
+message(STATUS "ADB_ATTENTION_LO_MIN_US=${ADB_ATTENTION_LO_MIN_US}")
+
+# Phase-B decode alignment: strict duty-cycle decode per IIgs guide
+# ON  -> bit 1 when low <35% of cell, bit 0 when low >65%, else reject bit
+# OFF -> midpoint decode (legacy/tolerant)
+option(ADB_STRICT_DUTY_CYCLE_DECODE "Use strict 35%/65% duty-cycle decode for ADB receive bits" OFF)
+if(ADB_STRICT_DUTY_CYCLE_DECODE)
+    message(STATUS "ADB strict duty-cycle decode: ENABLED (35%/65%)")
+else()
+    message(STATUS "ADB strict duty-cycle decode: disabled (midpoint)")
+endif()
+
+# Phase-C sync envelope: IIgs spec envelope is 42-91 us (60-70% of 70-130 us cell).
+# OFF keeps the current tolerant 40-95 us window.
+option(ADB_STRICT_SYNC_WINDOW "Use strict sync window (42-91 us) in ReceiveCommand" OFF)
+if(ADB_STRICT_SYNC_WINDOW)
+    message(STATUS "ADB strict sync window: ENABLED (42-91 us)")
+else()
+    message(STATUS "ADB strict sync window: disabled (40-95 us)")
+endif()
+
+# IIgs policy: mouse must not assert SRQ.
+# When enabled, we suppress mouse SRQ extension so the host doesn't spend extra time
+# servicing mouse service requests in some GUIs.
+option(ADB_IIGS_MOUSE_SUPPRESS_SRQ "Suppress ADB SRQ extension for mouse (keyboard only)" OFF)
+if(ADB_IIGS_MOUSE_SUPPRESS_SRQ)
+    message(STATUS "ADB mouse SRQ suppression: ENABLED (keyboard only)")
+else()
+    message(STATUS "ADB mouse SRQ suppression: disabled (kbd or mouse)")
+endif()
+
+if(ADB_IIGS_MOUSE_SUPPRESS_SRQ)
+    add_compile_definitions(ADB_IIGS_MOUSE_SUPPRESS_SRQ=1)
+else()
+    add_compile_definitions(ADB_IIGS_MOUSE_SUPPRESS_SRQ=0)
+endif()
 
 # initialize the Raspberry Pi Pico SDK
 pico_sdk_init()

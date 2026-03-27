@@ -56,11 +56,17 @@ uint16_t ADBKbdRptParser::GetAdbRegister0()
     {
         event = m_keyboard_events.dequeue();
         isKeyUp = event->IsKeyUp();
+        adb_keycode = usb_keycode_to_adb_code(event->GetKeycode());
+        // usb_keycode_to_adb_code uses 0xFF for unmapped keys (same as NO_KEY). Never pair 0xFF
+        // with key-up or we confuse the host / sticky modifiers.
+        if (adb_keycode == ADB_REG_0_NO_KEY)
+        {
+            isKeyUp = false;
+        }
         if (isKeyUp)
         {
             B_SET(kbdreg0, ADB_REG_0_KEY_1_STATUS_BIT);
         }
-        adb_keycode = usb_keycode_to_adb_code(event->GetKeycode());
         kbdreg0 |= (adb_keycode << ADB_REG_0_KEY_1_KEY_CODE);
         free(event);
     }
@@ -84,12 +90,17 @@ uint16_t ADBKbdRptParser::GetAdbRegister0()
             if (event != NULL && usb_keycode_to_adb_code(event->GetKeycode()) != ADB_POWER_KEYCODE)
             {
                 event = m_keyboard_events.dequeue();
-                if (event->IsKeyUp())
+                bool key2_up = event->IsKeyUp();
+                uint8_t key2_code = usb_keycode_to_adb_code(event->GetKeycode());
+                if (key2_code == ADB_REG_0_NO_KEY)
                 {
-                    B_SET(kbdreg0, ADB_REG_0_KEY_2_STATUS_BIT); 
+                    key2_up = false;
                 }
-                adb_keycode = usb_keycode_to_adb_code(event->GetKeycode());
-                kbdreg0 |= (adb_keycode << ADB_REG_0_KEY_2_KEY_CODE);
+                if (key2_up)
+                {
+                    B_SET(kbdreg0, ADB_REG_0_KEY_2_STATUS_BIT);
+                }
+                kbdreg0 |= (key2_code << ADB_REG_0_KEY_2_KEY_CODE);
                 free(event);
             }
             else

@@ -13,17 +13,28 @@ Published **Apple IIgs Hardware Reference** timing (Table 6-8 and Chapter 6) is 
 
 ---
 
+## Field validation snapshot
+
+Recent bench testing of the same IIgs-tuned firmware on both:
+- Apple IIgs (Taifun Boot GUI and general keyboard/mouse use), and
+- ADB Mac Quadra,
+
+showed improved behavior versus earlier builds, including smoother overall host interaction. This suggests the current receive-timing robustness changes are broadly compatible with classic ADB hosts and are not IIgs-only regressions.
+
+It also includes the IIgs mouse policy `ADB_IIGS_MOUSE_SUPPRESS_SRQ` (enabled by `build_all.sh`), which prevents mouse SRQ activity from slowing the BASIC loop when the mouse is moved.
+
+---
 ## 1. Attention pulse (`ReceiveCommand`)
 
 The firmware waits for the **attention** interval (data line held low by the host before the sync period).
 
 | | `feature/display` | `feature/IIGS-Fixes` |
 |---|-------------------|----------------------|
-| Accepted low time | ~780–820 µs (`lo > 820 \|\| lo < 780`) | **500–950 µs** |
+| Accepted low time | ~780–820 µs (`lo > 820 \|\| lo < 780`) | **`ADB_ATTENTION_LO_MIN_US`–1040 µs** (default floor `500`) |
 
-**Why:** The IIgs often presents attention closer to **~500–650 µs** rather than a tight band around 800 µs. Widening the window avoids rejecting valid IIgs frames while still requiring a plausible attention duration.
+**Why:** The IIgs often presents attention closer to **~500–650 µs** rather than a tight band around 800 µs. Widening the window avoids rejecting valid IIgs frames while still requiring a plausible attention duration. The low floor is intentionally configurable for A/B testing (`ADB_ATTENTION_LO_MIN_US`).
 
-Unchanged: very long lows (e.g. **> 2950 µs**) still indicate **global reset** (`return -100`).
+Unchanged behavior intent: very long lows still indicate **global reset** (`return -100`); current threshold is **>= 2800 µs**.
 
 ---
 
@@ -34,9 +45,9 @@ After attention, the host drives **sync** (high) then the **start** bit.
 | | `feature/display` | `feature/IIGS-Fixes` |
 |---|-------------------|----------------------|
 | Wait for high→low | `wait_data_lo(100)` | **`wait_data_lo(150)`** (more time for long sync) |
-| Valid high duration | Buggy check: `if (!hi && hi > 70 && hi < 40)` (never true) | **`25–105 µs`** (`!hi \|\| hi > 105 \|\| hi < 25` rejects) |
+| Valid high duration | Buggy check: `if (!hi && hi > 70 && hi < 40)` (never true) | **`40–95 µs`** (`!hi \|\| hi > 95 \|\| hi < 40` rejects) |
 
-**Why:** IIgs timing for this phase can be shorter or need a longer wait before the edge is seen; the new bounds match an IIgs-oriented range noted in commit history (previously documented as widening from ~30–95 µs to **25–105 µs**).
+**Why:** IIgs timing for this phase can be shorter or need a longer wait before the edge is seen; the current fixed window is an envelope tuned around IIgs-compatible sync timing.
 
 ---
 
@@ -102,4 +113,4 @@ When `global_debug` is true, failed receives log short UART lines instead of old
 | `build_all.sh` | Release + debug tree builds |
 | `docs/iigs-debugging.md` | Further IIgs debugging parameters |
 
-This file (`docs/adb-iigs-support.md`) is a **high-level summary** only; exact thresholds should always be taken from the source on the branch you are building.
+This file (`docs/adb-iigs-support.md`) is a **high-level summary** only; exact thresholds should always be taken from the source on the branch you are building. Current build-time options that affect timing/behavior include `ADB_ATTENTION_LO_MIN_US` and `ADB_MOUSE_ACCUMULATE_DELTAS`.

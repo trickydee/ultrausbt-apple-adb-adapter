@@ -104,6 +104,7 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
   uint8_t bits; 
   uint16_t lo, hi;
   int16_t data = 0;
+  static uint32_t attention_reject_count = 0;
   
   // find attention & start bit
   hi = wait_data_lo(ADB_START_BIT_DELAY); 
@@ -112,9 +113,11 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
   do 
   {
     lo = wait_data_hi(4000);
-    if (!lo || lo > 820 || lo < 780)
+    // IIgs Hardware Reference (Table 6-8): Attention 560–1040 µs; Global Reset >= 2.8 ms.
+    // Measured low on RP2040 often reads short of the book minimum; ADB_ATTENTION_LO_MIN_US (default 500).
+    if (!lo || lo > 1040 || lo < ADB_ATTENTION_LO_MIN_US)
     {
-      if (lo > 2950) 
+      if (lo >= 2800)
       {
         adb_reset = true;
         if (global_debug)
@@ -125,13 +128,21 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
         }
         return -100;
       }
-      else {
+      else
+      {
+        // Ignore/noise pulses are expected; avoid flooding debug UART because that can perturb timing.
         if (global_debug)
         {
-          Serial.print("ALL: Error in attention low time,  wait time was ");
-          Serial.print(lo, DEC);
-          Serial.println("us");
-
+          attention_reject_count++;
+          // Print only occasionally and only when near plausible attention widths.
+          if ((lo >= 400 && lo < ADB_ATTENTION_LO_MIN_US) || (lo > 1040 && lo <= 1200) || ((attention_reject_count % 512u) == 0u))
+          {
+            Serial.print("ADB RX fail: ATTENTION lo=");
+            Serial.print(lo, DEC);
+            Serial.print(" (count=");
+            Serial.print(attention_reject_count, DEC);
+            Serial.println(")");
+          }
         }
       }
       return -1;
@@ -145,14 +156,20 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
   }
   while(true);
 
-  hi = wait_data_lo(100);
-  if (!hi && hi > 70 && hi < 40)
+  // Sync (high) then start bit low: allow 150us for long sync discovery.
+  hi = wait_data_lo(150);
+  // IIgs Table 6-8 expresses sync as 60-70% of a 70-130us bit-cell => 42-91us envelope.
+  // Default keeps slight slack (40-95 us); strict mode uses the pure 42-91 us envelope.
+#if ADB_STRICT_SYNC_WINDOW
+  if (!hi || hi > 91 || hi < 42)
+#else
+  if (!hi || hi > 95 || hi < 40)
+#endif
   {
     if (global_debug)
     {
-      Serial.print("Start bit not found, wait time was ");
-      Serial.print(hi, DEC);
-      Serial.println("us");
+      Serial.print("ADB RX fail: SYNC hi=");
+      Serial.println(hi, DEC);
     }
     return -3;
   }
@@ -169,16 +186,42 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
     {
       goto out;
     }
-    if (120 < lo + hi )
+    // Bit cell: 70–130 µs (Apple IIgs Hardware Reference)
+    uint16_t cell = (uint16_t)(lo + hi);
+    if (cell < 70 || 130 < cell)
     {
       goto out;
     }
 
     data <<= 1;
-    if (lo < 40)
+#if ADB_STRICT_DUTY_CYCLE_DECODE
+    // Spec-faithful decode: bit 1 if low <35%, bit 0 if low >65%; reject ambiguous middle duty.
+    uint32_t lo_x100 = (uint32_t)lo * 100u;
+    uint32_t cell_x35 = 35u * (uint32_t)cell;
+    uint32_t cell_x65 = 65u * (uint32_t)cell;
+    if (lo_x100 < cell_x35)
     {
       data |= 1;
     }
+    else if (lo_x100 > cell_x65)
+    {
+      /* bit 0: already shifted in */
+    }
+    else
+    {
+      goto out;
+    }
+#else
+    // Tolerant midpoint decode (legacy behavior).
+    if ((uint32_t)lo * 100u < 50u * (uint32_t)cell)
+    {
+      data |= 1;
+    }
+    else
+    {
+      /* bit 0: already shifted in */
+    }
+#endif
   }
 
   if (srq)
@@ -189,19 +232,21 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
   }
   else
   {
-    // Stop bit normal low time is 70uS + can have an SRQ time of 300uS
+    // IIgs Hardware Reference: device SRQ is an extension of stop low (>= 140 µs) and table lists 140–260 µs.
     wait_data_hi(400);
   }
   return data;
 out:
   if (global_debug)
   {
-    Serial.print("ALL: Error reading CMD bits, low time ");
+    Serial.print("ADB RX fail: BIT b=");
+    Serial.print(bits, DEC);
+    Serial.print(" lo=");
     Serial.print(lo, DEC);
-    Serial.print(", high time ");
+    Serial.print(" hi=");
     Serial.print(hi, DEC);
-    Serial.print(" at bit ");
-    Serial.println(bits, HEX);
+    Serial.print(" cell=");
+    Serial.println((unsigned)(lo + hi), DEC);
   }
   return -4;
 }

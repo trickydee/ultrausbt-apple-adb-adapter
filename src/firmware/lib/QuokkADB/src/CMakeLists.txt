@@ -13,3 +13,9 @@ add_library(QuokkADB
 
 target_link_libraries(QuokkADB pico_stdlib hardware_pio hardware_flash hardware_clocks pico_multicore adb usb tinyusb_common tinyusb_host)
 target_include_directories(QuokkADB PUBLIC ../include)
+
+if(ADB_IIGS_MOUSE_SUPPRESS_SRQ)
+    target_compile_definitions(QuokkADB PRIVATE ADB_IIGS_MOUSE_SUPPRESS_SRQ=1)
+else()
+    target_compile_definitions(QuokkADB PRIVATE ADB_IIGS_MOUSE_SUPPRESS_SRQ=0)
+endif()

@@ -78,7 +78,11 @@ extern uint8_t kbd_addr;
 extern uint8_t mouse_addr;
 extern volatile bool adb_collision;
 bool usb_reset = false;
+#ifdef ADB_DEBUG
+bool global_debug = true;   // ADB timing/command messages on UART (build with -DADB_DEBUG=ON)
+#else
 bool global_debug = false;
+#endif
 
 static uint32_t last_adb_cmd_time = 0;
 static bool adb_ever_received_cmd = false;  /* display "Connected" only after at least one command */
@@ -151,7 +155,7 @@ int quokkadb(void) {
     {
       uint32_t now = time_us_32();
       int connected = (adb_ever_received_cmd && (now - last_adb_cmd_time) < 2000000u) ? 1 : 0;
-      int srq = (kbdsrq || mousesrq) ? 1 : 0;
+      int srq = (kbdsrq || ((mousesrq && !ADB_IIGS_MOUSE_SUPPRESS_SRQ) ? 1 : 0)) ? 1 : 0;
       int collision = adb_collision ? 1 : 0;
       display_set_adb_status(connected, kbd_addr, mouse_addr, 0, srq, collision);
     }
@@ -185,7 +189,13 @@ int quokkadb(void) {
     }
 
     led_off();
+    // Optionally suppress mouse SRQ extension so the host doesn't spend extra time
+    // servicing mouse service requests on some IIgs apps.
+#if ADB_IIGS_MOUSE_SUPPRESS_SRQ
+    cmd = adb.ReceiveCommand(kbdsrq);
+#else
     cmd = adb.ReceiveCommand(mousesrq | kbdsrq);
+#endif
     if(setting_storage.settings()->led_on)
     {
       led_on();

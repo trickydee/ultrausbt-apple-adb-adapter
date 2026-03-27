@@ -1,5 +1,20 @@
 # HIDHopper ADB – Release notes
 
+## 1.0.14
+
+- **IIgs mouse SRQ suppression:** `build_all.sh` now enables `ADB_IIGS_MOUSE_SUPPRESS_SRQ=ON` so the mouse path does not extend SRQ on the IIgs. This prevents the BASIC loop slowdown when moving the mouse.
+- **Validation:** confirmed improved behavior on both Apple IIgs (Taifun Boot) and an ADB Mac Quadra.
+
+## 1.0.10
+
+- **IIgs mouse movement tuning:** Added build-time option `ADB_MOUSE_ACCUMULATE_DELTAS` to control how mouse `dx/dy` is handled between ADB polls.
+  - `ON` (default): accumulate deltas with saturation (reduces dropped micro-movement and pointer jerk on some IIgs apps).
+  - `OFF`: legacy behavior (latest delta wins between polls).
+- **IIgs attention floor tuning:** Added build-time setting `ADB_ATTENTION_LO_MIN_US` (default `500`) so attention timing can be A/B tested without source edits.
+- **A/B test script:** Added `scripts/build_attention_ab.sh` to build two UF2s with identical firmware except attention floor (`500` vs `450`), now defaulting to `pico2_w` with `PICO_BOARD` override support.
+- **Debugging docs:** Updated `docs/iigs-debugging.md` with mouse accumulation A/B guidance and exact CMake flags.
+- **Cross-host validation:** The same IIgs-tuned firmware has been tested on an ADB Mac Quadra and showed improved behavior there as well, indicating the receive-path robustness changes are beneficial beyond IIgs-only scenarios.
+
 ## 1.0.7
 
 - **Mouse wheel support:** Scroll wheel from USB and Bluetooth mice is now supported. ADB has no native wheel, so wheel is emulated as Up/Down arrow key presses (one key event per wheel tick). Works with both USB HID and Bluepad32 Bluetooth mice.

@@ -131,6 +131,10 @@ uint8_t usb_keycode_to_adb_code(uint8_t usb_code)
         return 0x29;
     case USB_KEY_BACKSLASH:
         return 0x2A;
+    // Non-US #/~ key (common on ISO UK layouts near Enter).
+    // Map to the same ADB physical position as backslash for stable host translation.
+    case USB_KEY_HASHTILDE:
+        return 0x2A;
     case USB_KEY_COMMA:
         return 0x2B;
     case USB_KEY_SLASH:
@@ -147,6 +151,10 @@ uint8_t usb_keycode_to_adb_code(uint8_t usb_code)
         return 0x31;
     case USB_KEY_GRAVE:
         return 0x32;
+    // Non-US \| key (often the extra ISO key near left Shift).
+    // ADB virtual keycode 0x0A is the extra ISO/non-US key position.
+    case USB_KEY_102ND:
+        return 0x0A;
     case USB_KEY_BACKSPACE:
         return 0x33;
     case USB_KEY_ESC:
