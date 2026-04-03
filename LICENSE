@@ -12,8 +12,18 @@ this source code:
     Copyright 2011 Jun WAKO <wakojun@gmail.com>
     Copyright 2013 Shay Green <gblargg@gmail.com>
 
-Other third party components (such as TinyUSB and Simple-Circular-Queue)
-are copyright their respective authors. 
+Other third party components include TinyUSB (USB device/host stack),
+Bluepad32 (Bluetooth HID / controller support on Pico W and Pico 2 W), and
+Simple-Circular-Queue; they are copyright their respective authors.
+
+-----------------------------------------------------
+
+About this fork
+
+This repository is a new fork of the prior HIDHopper ADB–based firmware and
+hardware lineage. It continues that work with new features and aims to provide
+a simple do-it-yourself Bluetooth interface for classic ADB Macintosh systems
+and the Apple IIgs.
 
 -----------------------------------------------------
 
@@ -73,4 +83,3 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
-*/

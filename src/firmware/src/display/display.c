@@ -115,13 +115,15 @@ void display_show_splash(void)
 
     ssd1306_clear(&disp);
 
-    /* Title: IIGS - original font size (scale 2), centered. 4*16=64, (128-64)/2=32 */
-    ssd1306_draw_string(&disp, 32, 0, 2, (char *)"IIGS");
+    /* Title: "Apple ADB" — scale 2 does not fit one line (9*16>128); use two centered lines */
+    ssd1306_draw_string(&disp, 24, 0, 2, (char *)"Apple");
+    ssd1306_draw_string(&disp, 40, 16, 2, (char *)"ADB");
 
-    ssd1306_draw_string(&disp, 2, 24, 1, (char *)"HIDHopper ADB");
+    /* ultramegausb.com — 15*8=120px, centered */
+    ssd1306_draw_string(&disp, 4, 34, 1, (char *)"ultramegausb.com");
 
     /* Version */
-    ssd1306_draw_string(&disp, 35, 40, 1, (char *)"v" HIDHOPPER_ADB_VERSION_STRING);
+    ssd1306_draw_string(&disp, 35, 44, 1, (char *)"v" HIDHOPPER_ADB_VERSION_STRING);
 
     /* ADB status line: K M G, then S=SRQ (service request), !=collision */
     if (!adb_connected) {

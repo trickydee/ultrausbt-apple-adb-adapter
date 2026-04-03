@@ -111,10 +111,11 @@ For A/B testing with existing script-driven flows, keep all other options identi
 **Observation:** On the IIgs, allowing the mouse path to extend/trigger SRQ can cause the BASIC program loop to slow down massively as soon as mouse movement/buttons begin.
 
 **Build-time option:** `ADB_IIGS_MOUSE_SUPPRESS_SRQ`
-- `ON`: suppress mouse SRQ extension (keyboard SRQ only)
-- `OFF`: legacy behavior (mouse can also extend SRQ)
+- `ON` (**default** in `CMakeLists.txt`): suppress mouse SRQ extension (keyboard SRQ only). Recommended for IIgs and validated on ADB Macs.
+- `OFF`: legacy behavior (mouse can also extend SRQ). Pass `-DADB_IIGS_MOUSE_SUPPRESS_SRQ=OFF` if you need to compare or hit an edge case.
 
-**Current default in `build_all.sh`:** `ON` (so your normal release + debug bundles should have this behavior enabled).
+**Disable example:**  
+`cmake -B build -S src/firmware -DPICO_BOARD=pico2_w -DADB_IIGS_MOUSE_SUPPRESS_SRQ=OFF`
 
 **Validation:** Confirmed improved BASIC performance on an IIgs (Taifun Boot) and also still works well on a Mac Quadra.
 

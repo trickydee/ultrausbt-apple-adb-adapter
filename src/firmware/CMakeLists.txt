@@ -10,7 +10,7 @@ endif ()
 # note: this must happen before project()
 include(pico_sdk_import.cmake)
 
-project(HIDHopper-firmware VERSION 1.0.14)
+project(HIDHopper-firmware VERSION 1.0.15)
 
 # Single source of truth for firmware version (bump when releasing; used in banner and docs)
 add_compile_definitions(HIDHOPPER_ADB_VERSION_STRING=\"${PROJECT_VERSION}\")
@@ -61,8 +61,9 @@ endif()
 
 # IIgs policy: mouse must not assert SRQ.
 # When enabled, we suppress mouse SRQ extension so the host doesn't spend extra time
-# servicing mouse service requests in some GUIs.
-option(ADB_IIGS_MOUSE_SUPPRESS_SRQ "Suppress ADB SRQ extension for mouse (keyboard only)" OFF)
+# servicing mouse service requests in some GUIs. Default ON for all builds; use
+# -DADB_IIGS_MOUSE_SUPPRESS_SRQ=OFF for legacy behavior (mouse may extend SRQ).
+option(ADB_IIGS_MOUSE_SUPPRESS_SRQ "Suppress ADB SRQ extension for mouse (keyboard only)" ON)
 if(ADB_IIGS_MOUSE_SUPPRESS_SRQ)
     message(STATUS "ADB mouse SRQ suppression: ENABLED (keyboard only)")
 else()

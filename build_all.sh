@@ -1,47 +1,19 @@
 #!/usr/bin/env bash
 # Build HIDHopper ADB firmware for all supported boards.
 # Outputs: build-<board> (release) and build-<board>-debug (ADB debug) for each board.
-# Requires: PICO_SDK_PATH set, or PICO_SDK_FETCH_FROM_GIT=ON
-
-set -e
+set -euo pipefail
 cd "$(dirname "$0")"
+source "./scripts/lib/build_common.sh"
 
 echo "=== HIDHopper ADB Build (All Boards) ==="
 echo ""
 
-if [ ! -f "src/firmware/CMakeLists.txt" ]; then
-    echo "Error: src/firmware/CMakeLists.txt not found. Run this script from the project root."
-    exit 1
-fi
-
-# Ensure Pico SDK is available: use existing env, else find SDK in common paths, else fetch from git
-if [ -z "$PICO_SDK_PATH" ] && [ -z "$PICO_SDK_FETCH_FROM_GIT" ]; then
-    for candidate in "$HOME/pico/pico-sdk" "$HOME/pico-sdk" "/opt/pico-sdk" "/usr/local/pico-sdk"; do
-        if [ -f "${candidate}/pico_sdk_init.cmake" ] 2>/dev/null; then
-            export PICO_SDK_PATH="$candidate"
-            echo "Using Pico SDK at: $PICO_SDK_PATH"
-            break
-        fi
-    done
-    if [ -z "$PICO_SDK_PATH" ]; then
-        export PICO_SDK_FETCH_FROM_GIT=ON
-        echo "Pico SDK not found in common paths; fetching from git (PICO_SDK_FETCH_FROM_GIT=ON)."
-    fi
-fi
-if [ -z "$PICO_SDK_PATH" ] && [ -z "$PICO_SDK_FETCH_FROM_GIT" ]; then
-    echo "Error: Could not set PICO_SDK_PATH or PICO_SDK_FETCH_FROM_GIT."
-    exit 1
-fi
-
+ensure_firmware_root
+ensure_pico_sdk
 echo "Step 1: Initializing git submodules..."
-if [ -f .gitmodules ] && [ -d .git ]; then
-    git submodule update --init --recursive 2>/dev/null || true
-fi
-echo ""
+init_submodules
 
-CORES=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
-FIRMWARE_SRC=src/firmware
-UF2=src/HIDHopper-firmware.uf2
+UF2="$(build_dir_uf2_rel)"
 UF2_DEBUG=src/HIDHopper-firmware-debug.uf2
 DIST_DIR=dist
 
@@ -59,12 +31,8 @@ build_for_board() {
     echo ""
 
     echo "Configuring build for $PLATFORM_NAME (release)..."
-    # IIgs policy: suppress mouse SRQ extension to avoid BASIC slowdown when the mouse moves.
-    cmake -B "$BUILD_DIR" -S "$FIRMWARE_SRC" -DPICO_BOARD="$BOARD" -DADB_IIGS_MOUSE_SUPPRESS_SRQ=ON
-    echo ""
-
-    echo "Building $PLATFORM_NAME (release)..."
-    ( cd "$BUILD_DIR" && make -j"$CORES" )
+    # Mouse SRQ suppression is default ON in CMakeLists.txt (IIgs / performance).
+    cmake_build_dir "$BUILD_DIR" -DPICO_BOARD="$BOARD"
     echo ""
 }
 
@@ -79,12 +47,8 @@ build_debug_for_board() {
     echo ""
 
     echo "Configuring build for $PLATFORM_NAME (debug, ADB_DEBUG=ON)..."
-    # Keep debug enabled, but also apply IIgs policy for mouse SRQ suppression.
-    cmake -B "$DEBUG_BUILD_DIR" -S "$FIRMWARE_SRC" -DPICO_BOARD="$BOARD" -DADB_DEBUG=ON -DADB_IIGS_MOUSE_SUPPRESS_SRQ=ON
-    echo ""
-
-    echo "Building $PLATFORM_NAME (debug)..."
-    ( cd "$DEBUG_BUILD_DIR" && make -j"$CORES" )
+    # ADB_DEBUG=ON; mouse SRQ suppression remains CMake default ON.
+    cmake_build_dir "$DEBUG_BUILD_DIR" -DPICO_BOARD="$BOARD" -DADB_DEBUG=ON
     echo ""
 
     if [ -f "$DEBUG_BUILD_DIR/$UF2" ]; then

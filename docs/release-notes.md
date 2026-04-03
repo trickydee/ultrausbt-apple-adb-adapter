@@ -1,5 +1,14 @@
 # HIDHopper ADB – Release notes
 
+## 1.0.15
+
+- **Repository cleanup for this fork:** The tree is being focused on this **ultramegausb** Apple ADB adapter firmware (USB + Bluetooth via Pico / Pico 2), not on legacy **ADBuino** Arduino hardware or **HIDHopper** retail hardware design drops.
+- **Removed ADBuino-era firmware paths:** Unused ADBuino/PlatformIO Arduino target sources, the old `adbuino` CI workflow, and related utilities that only applied to that stack.
+- **Removed HIDHopper hardware-design artifacts:** Legacy case CAD, CC–NC KiCad/gerber bundles, and extra product images that were not used by this firmware project. Pinout images useful for DIY wiring (`adb_pinout.png`, Pico pinout) are retained under `images/`.
+- **Documentation layout:** User-facing docs live under `docs/` (including migrated `HIDHopper.md`, `adb.md`, and new notes such as `led-support.md`). The old top-level `doc/` folder is gone; `README` links updated accordingly.
+- **License text:** `LICENSE` now describes this fork’s goals and third-party stack (including TinyUSB and Bluepad32).
+- **Mouse SRQ suppression default:** `ADB_IIGS_MOUSE_SUPPRESS_SRQ` is now **ON** by default in CMake (improves IIgs BASIC and general behavior; use `-DADB_IIGS_MOUSE_SUPPRESS_SRQ=OFF` for legacy mouse SRQ). `build_all.sh` no longer passes this flag explicitly.
+
 ## 1.0.14
 
 - **IIgs mouse SRQ suppression:** `build_all.sh` now enables `ADB_IIGS_MOUSE_SUPPRESS_SRQ=ON` so the mouse path does not extend SRQ on the IIgs. This prevents the BASIC loop slowdown when moving the mouse.

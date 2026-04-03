@@ -31,12 +31,8 @@
 
 #include "usb_hid_keys.h"
 #include <stdint.h>
-#ifdef ADBUINO
-#include <Arduino.h>
-#elif QUOKKADB
 #include "rp2040_serial.h"
 using rp2040_serial::Serial;
-#endif
 
 extern uint8_t kbd_handler_id;
 #define IS_EXTENDED_KEYBOARD() (0x3 == kbd_handler_id)

@@ -21,9 +21,10 @@ Recent bench testing of the same IIgs-tuned firmware on both:
 
 showed improved behavior versus earlier builds, including smoother overall host interaction. This suggests the current receive-timing robustness changes are broadly compatible with classic ADB hosts and are not IIgs-only regressions.
 
-It also includes the IIgs mouse policy `ADB_IIGS_MOUSE_SUPPRESS_SRQ` (enabled by `build_all.sh`), which prevents mouse SRQ activity from slowing the BASIC loop when the mouse is moved.
+It also includes the IIgs mouse policy `ADB_IIGS_MOUSE_SUPPRESS_SRQ` (default **ON** in CMake), which prevents mouse SRQ activity from slowing the BASIC loop when the mouse is moved.
 
 ---
+
 ## 1. Attention pulse (`ReceiveCommand`)
 
 The firmware waits for the **attention** interval (data line held low by the host before the sync period).

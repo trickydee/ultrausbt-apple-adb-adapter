@@ -34,3 +34,6 @@ build-pico/
 build-pico_w/
 build-pico2/
 build-pico2_w/
+# Local CMake build dirs (any board / A/B / debug suffix)
+build-*/
+dist/

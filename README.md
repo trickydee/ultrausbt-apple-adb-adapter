@@ -5,11 +5,8 @@ HIDHopper ADB is a modified (forked) version of adbuino and QuokkADB.  It is a R
 # The Name
 HIDHopper comes from the USB "HID" standard, for Human Interface Device.  Hopper just sounded right after HID.
 
-# Picture
-![HIDHopper_ADB Hardware Image](images/HIDHopper_Front_WithHat.jpg)
-
 # Usage
-See the file [doc/HIDHopper.md](https://github.com/TechByAndroda/HIDHopper_ADB/blob/master/doc/HIDHopper.md) for more full documentation
+See [docs/HIDHopper.md](docs/HIDHopper.md) for more documentation
 
 # Quick Usage
 - For Base HIDHopper without USB Hub, *before* turning on your computer:

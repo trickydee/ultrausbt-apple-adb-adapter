@@ -26,11 +26,6 @@ Every HIDHopper ADB device comes with:
 * An ADB Soft Power-on Button
 * A button for use in entering Firmware Update mode
 
-![HIDHopper ADB Front Picture](../images/HIDHopper_Front_WithHat.jpg)
-![HIDHopper ADB Back Picture](../images/HIDHopper_Back_WithHat.jpg)
-![HIDHopper ADB Back Picture](../images/HIDHopper_ADB_Buttons.jpg)
-
-
 # Compatibility
 HIDHopper ADB has been tested on the following systems that mouse movement and clicks work, as well as keyboard key inputs.
 * Beige G3
