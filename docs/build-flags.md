@@ -38,7 +38,7 @@ This is a **Pico SDK** setting, not defined in our `CMakeLists.txt`, but every b
 
 ## How flags reach the code
 
-- **Global:** `HIDHOPPER_ADB_VERSION_STRING` comes from `project(... VERSION ...)` in `CMakeLists.txt` (not a `-D` flag).
+- **Global:** `BT_USB_ADB_ADAPTER_VERSION_STRING` comes from `project(... VERSION ...)` in `CMakeLists.txt` (not a `-D` flag).
 - **Top-level:** `ADB_DEBUG`, `ADB_IIGS_MOUSE_SUPPRESS_SRQ` → `add_compile_definitions` where applicable.
 - **Library targets:**
   - **`adb`:** `ADB_ATTENTION_LO_MIN_US`, `ADB_STRICT_DUTY_CYCLE_DECODE`, `ADB_STRICT_SYNC_WINDOW` (`src/firmware/lib/adb/src/CMakeLists.txt`).

@@ -1,5 +1,5 @@
 /**
- * bluepad32 custom platform API for HIDHopper ADB (keyboard + mouse only)
+ * bluepad32 custom platform API for BT-USB-ADB-Adapter (keyboard + mouse only)
  */
 
 #ifndef _BLUEPAD32_PLATFORM_H

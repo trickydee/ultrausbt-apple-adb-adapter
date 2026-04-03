@@ -1,5 +1,5 @@
 /**
- * bluepad32 initialization for HIDHopper ADB
+ * bluepad32 initialization for BT-USB-ADB-Adapter
  * Separate from main to avoid HID type conflicts between TinyUSB and btstack
  */
 

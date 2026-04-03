@@ -10,10 +10,10 @@ endif ()
 # note: this must happen before project()
 include(pico_sdk_import.cmake)
 
-project(HIDHopper-firmware VERSION 1.0.15)
+project(BT-USB-ADB-Adapter-firmware VERSION 1.0.16)
 
 # Single source of truth for firmware version (bump when releasing; used in banner and docs)
-add_compile_definitions(HIDHOPPER_ADB_VERSION_STRING=\"${PROJECT_VERSION}\")
+add_compile_definitions(BT_USB_ADB_ADAPTER_VERSION_STRING=\"${PROJECT_VERSION}\")
 
 # ADB serial debug: set -DADB_DEBUG=ON when configuring to get ADB timing/command messages on UART
 option(ADB_DEBUG "Enable ADB serial debug output (UART)" OFF)
@@ -107,11 +107,11 @@ if(ENABLE_BLUEPAD32)
     add_subdirectory(${CMAKE_SOURCE_DIR}/bluepad32/src/components/bluepad32 libbluepad32)
     target_include_directories(bluepad32 PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
-    target_sources(HIDHopper-firmware PRIVATE
+    target_sources(BT-USB-ADB-Adapter-firmware PRIVATE
         ${CMAKE_SOURCE_DIR}/src/bluepad32_init.c
         ${CMAKE_SOURCE_DIR}/src/bluepad32_platform.c
     )
-    target_include_directories(HIDHopper-firmware PRIVATE
+    target_include_directories(BT-USB-ADB-Adapter-firmware PRIVATE
         ${CMAKE_SOURCE_DIR}/bluepad32/src/components/bluepad32/include
         ${CMAKE_SOURCE_DIR}/src
         ${PICO_SDK_PATH}/lib/btstack/src
@@ -119,7 +119,7 @@ if(ENABLE_BLUEPAD32)
     )
     # CYW43 driver expects CYW43_DEFAULT_* from board header; define for pico_w/pico2_w
     if(PICO_BOARD STREQUAL "pico_w" OR PICO_BOARD STREQUAL "pico2_w")
-        target_compile_definitions(HIDHopper-firmware PRIVATE
+        target_compile_definitions(BT-USB-ADB-Adapter-firmware PRIVATE
             CYW43_DEFAULT_PIN_WL_REG_ON=23
             CYW43_DEFAULT_PIN_WL_DATA_OUT=24
             CYW43_DEFAULT_PIN_WL_DATA_IN=24
@@ -130,7 +130,7 @@ if(ENABLE_BLUEPAD32)
         )
     endif()
     target_include_directories(QuokkADB PRIVATE ${CMAKE_SOURCE_DIR}/src)
-    target_link_libraries(HIDHopper-firmware
+    target_link_libraries(BT-USB-ADB-Adapter-firmware
         pico_cyw43_arch_none
         pico_btstack_ble
         pico_btstack_classic

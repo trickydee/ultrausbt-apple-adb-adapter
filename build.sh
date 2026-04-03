@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build HIDHopper ADB Pico firmware from project root.
+# Build BT-USB-ADB-Adapter Pico firmware from project root.
 # Requires: Raspberry Pi Pico SDK, PICO_SDK_PATH set (or PICO_SDK_FETCH_FROM_GIT=ON).
 # Optional: upstream TinyUSB from submodule src/firmware/tinyusb (init with git submodule update --init --recursive).
 
@@ -26,4 +26,4 @@ make
 
 echo ""
 echo "Build complete. Outputs in $BUILD_DIR/src/"
-echo "  UF2 for flashing: $BUILD_DIR/src/HIDHopper-firmware.uf2"
+echo "  UF2 for flashing: $BUILD_DIR/src/BT-USB-ADB-Adapter-firmware.uf2"

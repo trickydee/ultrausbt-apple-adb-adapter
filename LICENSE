@@ -20,7 +20,8 @@ Simple-Circular-Queue; they are copyright their respective authors.
 
 About this fork
 
-This repository is a new fork of the prior HIDHopper ADB–based firmware and
+Firmware in this repository is distributed as **BT-USB-ADB-Adapter** (CMake target
+`BT-USB-ADB-Adapter-firmware`). It is a new fork of the prior HIDHopper ADB–based firmware and
 hardware lineage. It continues that work with new features and aims to provide
 a simple do-it-yourself Bluetooth interface for classic ADB Macintosh systems
 and the Apple IIgs.

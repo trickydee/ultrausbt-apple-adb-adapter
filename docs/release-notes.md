@@ -1,4 +1,10 @@
-# HIDHopper ADB – Release notes
+# BT-USB-ADB-Adapter – Release notes
+
+Lineage: this firmware continues the [HIDHopper ADB](HIDHopper.md) / QuokkADB line. Older notes below still name **HIDHopper** where they describe history or retail hardware.
+
+## 1.0.16
+
+- **Product rename:** CMake project/target **`BT-USB-ADB-Adapter-firmware`**, UF2 outputs (`BT-USB-ADB-Adapter-firmware*.uf2`), boot banner, Bluetooth device name, and top-level docs now use **BT-USB-ADB-Adapter**. [HIDHopper.md](HIDHopper.md), [led-support.md](led-support.md), and provenance text elsewhere still refer to **HIDHopper** where useful.
 
 ## 1.0.15
 

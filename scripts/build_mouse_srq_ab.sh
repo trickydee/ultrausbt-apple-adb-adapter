@@ -46,10 +46,10 @@ cmake_build_dir "$BUILD_A_DBG" "${COMMON_CMAKE[@]}" -DADB_IIGS_MOUSE_SUPPRESS_SR
 
 cmake_build_dir "$BUILD_B_DBG" "${COMMON_CMAKE[@]}" -DADB_IIGS_MOUSE_SUPPRESS_SRQ=ON -DADB_DEBUG=ON
 
-OUT_A="$DIST/HIDHopper-firmware-${BOARD}-mouse-srq-off.uf2"
-OUT_B="$DIST/HIDHopper-firmware-${BOARD}-mouse-srq-on.uf2"
-OUT_A_DBG="$DIST/HIDHopper-firmware-${BOARD}-mouse-srq-off-debug.uf2"
-OUT_B_DBG="$DIST/HIDHopper-firmware-${BOARD}-mouse-srq-on-debug.uf2"
+OUT_A="$DIST/BT-USB-ADB-Adapter-firmware-${BOARD}-mouse-srq-off.uf2"
+OUT_B="$DIST/BT-USB-ADB-Adapter-firmware-${BOARD}-mouse-srq-on.uf2"
+OUT_A_DBG="$DIST/BT-USB-ADB-Adapter-firmware-${BOARD}-mouse-srq-off-debug.uf2"
+OUT_B_DBG="$DIST/BT-USB-ADB-Adapter-firmware-${BOARD}-mouse-srq-on-debug.uf2"
 
 cp "$BUILD_A/$UF2_REL" "$OUT_A"
 cp "$BUILD_B/$UF2_REL" "$OUT_B"

@@ -1,9 +1,9 @@
 /**
- * Display interface for SSD1306 OLED (Apple ADB / HIDHopper ADB)
+ * Display interface for SSD1306 OLED (Apple ADB / BT-USB-ADB-Adapter)
  */
 
-#ifndef HIDHOPPER_DISPLAY_H
-#define HIDHOPPER_DISPLAY_H
+#ifndef BT_USB_ADB_ADAPTER_DISPLAY_H
+#define BT_USB_ADB_ADAPTER_DISPLAY_H
 
 #include <stdint.h>
 
@@ -37,4 +37,4 @@ void display_show_controller_detected(const char *controller_name, const char *c
 }
 #endif
 
-#endif /* HIDHOPPER_DISPLAY_H */
+#endif /* BT_USB_ADB_ADAPTER_DISPLAY_H */

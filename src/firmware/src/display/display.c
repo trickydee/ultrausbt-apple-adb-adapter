@@ -1,5 +1,5 @@
 /**
- * Display interface for SSD1306 OLED – Apple ADB / HIDHopper ADB
+ * Display interface for SSD1306 OLED – Apple ADB / BT-USB-ADB-Adapter
  * Adapted from amigahid-pico display; Amiga references replaced with Apple ADB.
  */
 
@@ -18,8 +18,8 @@
 #endif
 
 /* Version string from CMake (e.g. "1.0.2") */
-#ifndef HIDHOPPER_ADB_VERSION_STRING
-#define HIDHOPPER_ADB_VERSION_STRING "?.?.?"
+#ifndef BT_USB_ADB_ADAPTER_VERSION_STRING
+#define BT_USB_ADB_ADAPTER_VERSION_STRING "?.?.?"
 #endif
 
 static ssd1306_t disp;
@@ -123,7 +123,7 @@ void display_show_splash(void)
     ssd1306_draw_string(&disp, 4, 34, 1, (char *)"ultramegausb.com");
 
     /* Version */
-    ssd1306_draw_string(&disp, 35, 44, 1, (char *)"v" HIDHOPPER_ADB_VERSION_STRING);
+    ssd1306_draw_string(&disp, 35, 44, 1, (char *)"v" BT_USB_ADB_ADAPTER_VERSION_STRING);
 
     /* ADB status line: K M G, then S=SRQ (service request), !=collision */
     if (!adb_connected) {

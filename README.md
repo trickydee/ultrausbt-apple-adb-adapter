@@ -1,34 +1,34 @@
-# HIDHopper ADB
+# BT-USB-ADB-Adapter
 
-HIDHopper ADB is a modified (forked) version of adbuino and QuokkADB.  It is a Raspberry Pi Pico based hardware device which converts USB keyboard and mouse inputs to the Apple Desktop Bus (ADB) standard.
+**BT-USB-ADB-Adapter** is a modified (forked) version of adbuino and QuokkADB. It is a Raspberry Pi Pico based device that converts USB keyboard and mouse inputs (and Bluetooth on Pico W / Pico 2 W) to the Apple Desktop Bus (ADB) standard.
 
-# The Name
-HIDHopper comes from the USB "HID" standard, for Human Interface Device.  Hopper just sounded right after HID.
+## Provenance
+
+This firmware continues the **[HIDHopper ADB](docs/HIDHopper.md)** lineage—the original retail product name, usage notes, and the story behind the *HIDHopper* name (USB “HID” + “Hopper”) are documented there. This repository targets DIY **ultramegausb**–style builds; where `docs/HIDHopper.md` describes hardware-specific behavior (for example LEDs), that document remains the reference.
 
 # Usage
-See [docs/HIDHopper.md](docs/HIDHopper.md) for more documentation
 
-# Quick Usage
-- For Base HIDHopper without USB Hub, *before* turning on your computer:
+See [docs/HIDHopper.md](docs/HIDHopper.md) for extended documentation (written for the HIDHopper hardware line; electrical and usage cautions still apply to ADB adapters built from this firmware).
+
+# Quick usage
+
+- For a base adapter without USB hub, *before* turning on your computer:
    - Plug in your desired USB peripheral (keyboard or mouse)
-   - Plug HIDHopper into the ADB bus
+   - Plug the adapter into the ADB bus
    - Start computer
-   - Hot-plug *is not supported*, don't unplug from the ADB Bus *or* unplug the USB device that is connected while the computer is on
-- For HIDHopper with the USB Hub Hat, *before* turning on your computer:
-   - Ensure the Hub is solidly secured in place with the two mounting screws and top cover plate
-   - Plug HIDHopper into the ADB bus
-   - Plug in your external 5v USB-C power supply to the connector on the Hub
-      - You *must use USB-C External Power* to avoid blowing the ADB Power fuse on your motherboard!
-   - Plug in your desired USB keyboard and mouse
-   - Hot-plug *is not supported*, don't unplug from the ADB Bus *or* unplug USB devices that are connected while the computer is on
-      - Hot-plug of USB devices is finicky, sometimes it works and other times it does not
-      - Best to connect before startup, that always works
+   - Hot-plug *is not supported*; do not unplug from the ADB bus *or* unplug the USB device while the computer is on
+- For setups that use a USB hub hat (see original HIDHopper hub documentation in [docs/HIDHopper.md](docs/HIDHopper.md)), *before* turning on your computer:
+   - Ensure the hub is solidly secured per that documentation
+   - Plug the adapter into the ADB bus
+   - Plug in external 5 V USB-C power to the hub as required (follow the HIDHopper hub notes to avoid ADB power issues)
+   - Plug in your USB keyboard and mouse
+   - Same hot-plug warnings as above
 
 # Background
 
 This is a fork of Difegue's version of the [adbuino](https://github.com/Difegue/Chaotic-Realm), which was a modified version of [bbraun's](http://synack.net/svn/adbduino/) PS/2 to ADB arduino sketch, with some extra code added to alleviate issues with his own PS/2 keyboard.  For Difegue's original write-up, please read more info [here.](https://tvc-16.science/adbuino-ps2.html).
 
-# How to build and flash HIDHopper ADB
+# How to build and flash BT-USB-ADB-Adapter
 
 Note: This software is intended to be compiled in an Ubuntu Linux environment.
 
@@ -46,11 +46,11 @@ Note: This software is intended to be compiled in an Ubuntu Linux environment.
   - `make`
 - The build outputs (.uf2, .bin, .elf, etc) will be placed in:
   - `src/firmware/build/src`
-- Next, plug the micro-USB side of a USB cable into HIDHopper
+- Next, plug the micro-USB side of a USB cable into the Pico running this firmware
 - Press the button which is near the micro-USB port
 - While holding down the button, plug the USB cable into your computer (then release the button after plugging in)
 - You should see an "RPI-RP2" mass storage device appear on your computer
-- Drag the ".uf2" file onto that mass storage device
+- Drag the `.uf2` file onto that mass storage device (release build: `BT-USB-ADB-Adapter-firmware.uf2` under `build/src/`, or the per-board copies under `dist/` from `build_all.sh`)
 - Once the mass storage device disappears, wait 10 seconds and then you are free to unplug
 
 # References

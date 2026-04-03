@@ -1,5 +1,5 @@
 //
-// Bluepad32 SDK configuration for HIDHopper ADB
+// Bluepad32 SDK configuration for BT-USB-ADB-Adapter
 //
 #define CONFIG_BLUEPAD32_MAX_DEVICES 4
 #define CONFIG_BLUEPAD32_MAX_ALLOWLIST 4

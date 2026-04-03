@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Build HIDHopper ADB firmware for all supported boards.
+# Build BT-USB-ADB-Adapter firmware for all supported boards.
 # Outputs: build-<board> (release) and build-<board>-debug (ADB debug) for each board.
 set -euo pipefail
 cd "$(dirname "$0")"
 source "./scripts/lib/build_common.sh"
 
-echo "=== HIDHopper ADB Build (All Boards) ==="
+echo "=== BT-USB-ADB-Adapter Build (All Boards) ==="
 echo ""
 
 ensure_firmware_root
@@ -14,12 +14,12 @@ echo "Step 1: Initializing git submodules..."
 init_submodules
 
 UF2="$(build_dir_uf2_rel)"
-UF2_DEBUG=src/HIDHopper-firmware-debug.uf2
+UF2_DEBUG=src/BT-USB-ADB-Adapter-firmware-debug.uf2
 DIST_DIR=dist
 
 mkdir -p "$DIST_DIR"
 # Remove stale artifacts so dist always mirrors latest build.
-rm -f "$DIST_DIR"/HIDHopper-firmware-*.uf2
+rm -f "$DIST_DIR"/BT-USB-ADB-Adapter-firmware-*.uf2
 
 # Build release firmware for a board (no ADB debug).
 build_for_board() {
@@ -36,7 +36,7 @@ build_for_board() {
     echo ""
 }
 
-# Build debug firmware for a board (ADB_DEBUG=ON, output also as HIDHopper-firmware-debug.uf2).
+# Build debug firmware for a board (ADB_DEBUG=ON, output also as BT-USB-ADB-Adapter-firmware-debug.uf2).
 build_debug_for_board() {
     local BOARD=$1
     local BUILD_DIR=$2
@@ -126,30 +126,30 @@ check_uf2 "build-pico2_w"   "Pico 2 W (RP2350 with CYW43)"
 check_uf2_debug "build-pico2_w-debug" "Pico 2 W (RP2350 with CYW43)"
 
 echo "Collecting UF2 artifacts into $DIST_DIR/ ..."
-collect_dist "build-pico/$UF2" "HIDHopper-firmware-pico.uf2"
-collect_dist "build-pico-debug/$UF2_DEBUG" "HIDHopper-firmware-pico-debug.uf2"
-collect_dist "build-pico_w/$UF2" "HIDHopper-firmware-pico_w.uf2"
-collect_dist "build-pico_w-debug/$UF2_DEBUG" "HIDHopper-firmware-pico_w-debug.uf2"
-collect_dist "build-pico2/$UF2" "HIDHopper-firmware-pico2.uf2"
-collect_dist "build-pico2-debug/$UF2_DEBUG" "HIDHopper-firmware-pico2-debug.uf2"
-collect_dist "build-pico2_w/$UF2" "HIDHopper-firmware-pico2_w.uf2"
-collect_dist "build-pico2_w-debug/$UF2_DEBUG" "HIDHopper-firmware-pico2_w-debug.uf2"
+collect_dist "build-pico/$UF2" "BT-USB-ADB-Adapter-firmware-pico.uf2"
+collect_dist "build-pico-debug/$UF2_DEBUG" "BT-USB-ADB-Adapter-firmware-pico-debug.uf2"
+collect_dist "build-pico_w/$UF2" "BT-USB-ADB-Adapter-firmware-pico_w.uf2"
+collect_dist "build-pico_w-debug/$UF2_DEBUG" "BT-USB-ADB-Adapter-firmware-pico_w-debug.uf2"
+collect_dist "build-pico2/$UF2" "BT-USB-ADB-Adapter-firmware-pico2.uf2"
+collect_dist "build-pico2-debug/$UF2_DEBUG" "BT-USB-ADB-Adapter-firmware-pico2-debug.uf2"
+collect_dist "build-pico2_w/$UF2" "BT-USB-ADB-Adapter-firmware-pico2_w.uf2"
+collect_dist "build-pico2_w-debug/$UF2_DEBUG" "BT-USB-ADB-Adapter-firmware-pico2_w-debug.uf2"
 echo ""
 
 echo "To flash: hold BOOTSEL, connect USB, then copy the .uf2 to the mounted volume:"
 echo "  Release:"
-echo "    - Pico:       build-pico/src/HIDHopper-firmware.uf2"
-echo "    - Pico W:     build-pico_w/src/HIDHopper-firmware.uf2"
-echo "    - Pico 2:     build-pico2/src/HIDHopper-firmware.uf2"
-echo "    - Pico 2 W:   build-pico2_w/src/HIDHopper-firmware.uf2"
+echo "    - Pico:       build-pico/src/BT-USB-ADB-Adapter-firmware.uf2"
+echo "    - Pico W:     build-pico_w/src/BT-USB-ADB-Adapter-firmware.uf2"
+echo "    - Pico 2:     build-pico2/src/BT-USB-ADB-Adapter-firmware.uf2"
+echo "    - Pico 2 W:   build-pico2_w/src/BT-USB-ADB-Adapter-firmware.uf2"
 echo "  Debug (ADB serial output on UART):"
-echo "    - Pico:       build-pico-debug/src/HIDHopper-firmware-debug.uf2"
-echo "    - Pico W:     build-pico_w-debug/src/HIDHopper-firmware-debug.uf2"
-echo "    - Pico 2:     build-pico2-debug/src/HIDHopper-firmware-debug.uf2"
-echo "    - Pico 2 W:   build-pico2_w-debug/src/HIDHopper-firmware-debug.uf2"
+echo "    - Pico:       build-pico-debug/src/BT-USB-ADB-Adapter-firmware-debug.uf2"
+echo "    - Pico W:     build-pico_w-debug/src/BT-USB-ADB-Adapter-firmware-debug.uf2"
+echo "    - Pico 2:     build-pico2-debug/src/BT-USB-ADB-Adapter-firmware-debug.uf2"
+echo "    - Pico 2 W:   build-pico2_w-debug/src/BT-USB-ADB-Adapter-firmware-debug.uf2"
 echo "  Dist bundle:"
-echo "    - dist/HIDHopper-firmware-<board>.uf2"
-echo "    - dist/HIDHopper-firmware-<board>-debug.uf2"
+echo "    - dist/BT-USB-ADB-Adapter-firmware-<board>.uf2"
+echo "    - dist/BT-USB-ADB-Adapter-firmware-<board>-debug.uf2"
 echo ""
 
 if [ "$BUILD_SUCCESS" = false ]; then

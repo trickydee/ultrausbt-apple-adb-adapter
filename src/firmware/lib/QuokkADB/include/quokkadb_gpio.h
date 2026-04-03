@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------
-//  HIDHopper ADB
+//  BT-USB-ADB-Adapter
 //  Copyright 2023 Tech by Androda, LLC
 //  This project is based on adbuino and QuokkADB:
 //

@@ -1,5 +1,5 @@
 /**
- * bluepad32 custom platform for HIDHopper ADB (keyboard + mouse only)
+ * bluepad32 custom platform for BT-USB-ADB-Adapter (keyboard + mouse only)
  */
 
 #if ENABLE_BLUEPAD32
@@ -269,7 +269,7 @@ static void my_platform_on_oob_event(uni_platform_oob_event_t event, void* data)
 
 struct uni_platform* get_my_platform(void) {
     static struct uni_platform plat = {
-        .name = "HIDHopper ADB",
+        .name = "BT-USB-ADB-Adapter",
         .init = my_platform_init,
         .on_init_complete = my_platform_on_init_complete,
         .on_device_discovered = my_platform_on_device_discovered,

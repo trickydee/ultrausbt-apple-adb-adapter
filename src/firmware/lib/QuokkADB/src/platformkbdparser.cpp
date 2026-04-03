@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  HIDHopper ADB
+//  BT-USB-ADB-Adapter
 //  This project is based on adbuino and QuokkADB:
 //
 //  QuokkADB ADB keyboard and mouse adapter

@@ -1,11 +1,13 @@
-# HIDHopper ADB – Changes
+# BT-USB-ADB-Adapter – Changes
+
+Lineage: this tree descends from [HIDHopper ADB](HIDHopper.md) and QuokkADB.
 
 ## Firmware version
 
 The firmware version is defined in one place and used in the serial/boot banner and anywhere the firmware identifies itself (e.g. ADB “version” response).
 
-- **Where to set it:** `src/firmware/CMakeLists.txt` — use `project(HIDHopper-firmware VERSION x.y.z)`. Use semantic-style versions (e.g. `1.0.0`); bump when you release or tag.
-- **Where it appears:** `PLATFORM_FW_VER_STRING` in the QuokkADB `platform_config.h` (product name “HIDHopper ADB” and version from CMake), printed at boot and in response to version queries.
+- **Where to set it:** `src/firmware/CMakeLists.txt` — use `project(BT-USB-ADB-Adapter-firmware VERSION x.y.z)`. Use semantic-style versions (e.g. `1.0.0`); bump when you release or tag.
+- **Where it appears:** `PLATFORM_FW_VER_STRING` in the QuokkADB `platform_config.h` (product name **BT-USB-ADB-Adapter** and version from CMake), printed at boot and in response to version queries.
 
 To bump the version: edit the `VERSION` in that `project()` line and rebuild.
 
@@ -78,10 +80,10 @@ From the project root, `./build_all.sh` builds firmware for all four boards into
 
 | Board     | Build directory  | UF2 path |
 |----------|------------------|----------|
-| Pico     | `build-pico`     | `build-pico/src/HIDHopper-firmware.uf2` |
-| Pico W   | `build-pico_w`   | `build-pico_w/src/HIDHopper-firmware.uf2` |
-| Pico 2   | `build-pico2`    | `build-pico2/src/HIDHopper-firmware.uf2` |
-| Pico 2 W | `build-pico2_w`  | `build-pico2_w/src/HIDHopper-firmware.uf2` |
+| Pico     | `build-pico`     | `build-pico/src/BT-USB-ADB-Adapter-firmware.uf2` |
+| Pico W   | `build-pico_w`   | `build-pico_w/src/BT-USB-ADB-Adapter-firmware.uf2` |
+| Pico 2   | `build-pico2`    | `build-pico2/src/BT-USB-ADB-Adapter-firmware.uf2` |
+| Pico 2 W | `build-pico2_w`  | `build-pico2_w/src/BT-USB-ADB-Adapter-firmware.uf2` |
 
 Requires `PICO_SDK_PATH` or `PICO_SDK_FETCH_FROM_GIT=ON` (same as `build.sh`). Submodules are initialized automatically.
 

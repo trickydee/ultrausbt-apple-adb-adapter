@@ -1,5 +1,5 @@
 /**
- * bluepad32 initialization header for HIDHopper ADB
+ * bluepad32 initialization header for BT-USB-ADB-Adapter
  */
 
 #ifndef _BLUEPAD32_INIT_H

@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------
-//  HIDHopper ADB
+//  BT-USB-ADB-Adapter
 //  This project is based on QuokkADB:
 //
 //	QuokkaADB ADB keyboard and mouse adapter
@@ -26,10 +26,10 @@
 //---------------------------------------------------------------------------
 #pragma once
 
-// Version: HIDHopper ADB uses version from CMake (HIDHOPPER_ADB_VERSION_STRING). Otherwise QuokkADB defaults.
-#ifdef HIDHOPPER_ADB_VERSION_STRING
-#define PLATFORM_FW_VERSION HIDHOPPER_ADB_VERSION_STRING
-#define PRODUCT_NAME "HIDHopper ADB"
+// Version: BT-USB-ADB-Adapter uses version from CMake (BT_USB_ADB_ADAPTER_VERSION_STRING). Otherwise QuokkADB defaults.
+#ifdef BT_USB_ADB_ADAPTER_VERSION_STRING
+#define PLATFORM_FW_VERSION BT_USB_ADB_ADAPTER_VERSION_STRING
+#define PRODUCT_NAME "BT-USB-ADB-Adapter"
 #else
 #define FW_VER_NUM      "0.2.4"
 #define FW_VER_SUFFIX   "beta"

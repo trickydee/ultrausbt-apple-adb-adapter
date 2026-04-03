@@ -15,7 +15,7 @@ echo ""
 
 BOARD="${PICO_BOARD:-pico2_w}"
 UF2_REL="$(build_dir_uf2_rel)"
-UF2_DBG=src/HIDHopper-firmware-debug.uf2
+UF2_DBG=src/BT-USB-ADB-Adapter-firmware-debug.uf2
 DIST=dist
 mkdir -p "$DIST"
 
@@ -38,10 +38,10 @@ cmake_build_dir "$BUILD_B" -DPICO_BOARD="$BOARD" -DADB_STRICT_DUTY_CYCLE_DECODE=
 cmake_build_dir "$BUILD_B_DBG" -DPICO_BOARD="$BOARD" -DADB_STRICT_DUTY_CYCLE_DECODE=OFF -DADB_DEBUG=ON
 [ -f "$BUILD_B_DBG/$UF2_REL" ] && cp "$BUILD_B_DBG/$UF2_REL" "$BUILD_B_DBG/$UF2_DBG"
 
-OUT_A="$DIST/HIDHopper-firmware-${BOARD}-decode-strict-on.uf2"
-OUT_B="$DIST/HIDHopper-firmware-${BOARD}-decode-strict-off.uf2"
-OUT_A_DBG="$DIST/HIDHopper-firmware-${BOARD}-decode-strict-on-debug.uf2"
-OUT_B_DBG="$DIST/HIDHopper-firmware-${BOARD}-decode-strict-off-debug.uf2"
+OUT_A="$DIST/BT-USB-ADB-Adapter-firmware-${BOARD}-decode-strict-on.uf2"
+OUT_B="$DIST/BT-USB-ADB-Adapter-firmware-${BOARD}-decode-strict-off.uf2"
+OUT_A_DBG="$DIST/BT-USB-ADB-Adapter-firmware-${BOARD}-decode-strict-on-debug.uf2"
+OUT_B_DBG="$DIST/BT-USB-ADB-Adapter-firmware-${BOARD}-decode-strict-off-debug.uf2"
 cp "$BUILD_A/$UF2_REL" "$OUT_A"
 cp "$BUILD_B/$UF2_REL" "$OUT_B"
 cp "$BUILD_A_DBG/$UF2_DBG" "$OUT_A_DBG"
