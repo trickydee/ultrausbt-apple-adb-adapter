@@ -2,6 +2,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include/)
 
 add_executable(BT-USB-ADB-Adapter-firmware main.cpp
   display/display.c
+  bt_host_coop.c
   ${CMAKE_SOURCE_DIR}/ssd1306/ssd1306.c
 )
 

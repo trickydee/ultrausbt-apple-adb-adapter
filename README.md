@@ -28,6 +28,10 @@ See [docs/HIDHopper.md](docs/HIDHopper.md) for extended documentation (written f
 
 This is a fork of Difegue's version of the [adbuino](https://github.com/Difegue/Chaotic-Realm), which was a modified version of [bbraun's](http://synack.net/svn/adbduino/) PS/2 to ADB arduino sketch, with some extra code added to alleviate issues with his own PS/2 keyboard.  For Difegue's original write-up, please read more info [here.](https://tvc-16.science/adbuino-ps2.html).
 
+## Project documentation
+
+- [docs/gamepad-support.md](docs/gamepad-support.md) — gamepad support roadmap (Bluetooth / USB, ADB mapping options)
+
 # How to build and flash BT-USB-ADB-Adapter
 
 Note: This software is intended to be compiled in an Ubuntu Linux environment.

@@ -1,5 +1,5 @@
 /**
- * bluepad32 custom platform API for BT-USB-ADB-Adapter (keyboard + mouse only)
+ * bluepad32 custom platform API for BT-USB-ADB-Adapter (keyboard, mouse, gamepad)
  */
 
 #ifndef _BLUEPAD32_PLATFORM_H
@@ -27,10 +27,19 @@ bool bluepad32_get_mouse(int idx, void* out_mouse);
 // Get count of connected Bluetooth mice
 int bluepad32_get_mouse_count(void);
 
+// Get gamepad data for index (0 only; single BT gamepad). out_gamepad must match uni_gamepad_t layout.
+bool bluepad32_get_gamepad(int idx, void* out_gamepad);
+
+// Get count of connected Bluetooth gamepads (0 or 1)
+int bluepad32_get_gamepad_count(void);
+
+// Latest gamepad snapshot for OLED (updated from BT controller data; does not consume "updated" flag).
+void bluepad32_get_gamepad_visual(uint8_t* dpad, uint16_t* buttons, uint8_t* misc, int* connected);
+
 // Delete all stored Bluetooth pairing keys
 void bluepad32_delete_pairing_keys(void);
 
-// Get device name for display. device_type: 'K' keyboard, 'M' mouse. idx 0-based.
+// Get device name for display. device_type: 'K' keyboard, 'M' mouse, 'G' gamepad. idx 0-based.
 const char* bluepad32_get_device_name(char device_type, int idx);
 
 // Platform entry (used by bluepad32_init.c)

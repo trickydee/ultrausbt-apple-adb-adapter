@@ -25,21 +25,46 @@
 //
 //---------------------------------------------------------------------------
 #include "flashsettings.h"
+#include "pico.h"
 #include "pico/multicore.h"
 #include "string.h"
 #define STORAGE_CMD_TOTAL_BYTES 64
 
+/**
+ * Byte offset of the QuokkADB settings sector in external flash.
+ * Must match pico-sdk .../pico_btstack/include/pico/btstack_flash_bank.h:
+ * BTstack TLV banks start at PICO_FLASH_BANK_STORAGE_OFFSET and span
+ * PICO_FLASH_BANK_TOTAL_SIZE (default 2 * FLASH_SECTOR_SIZE).
+ * We use exactly one sector immediately below that region — never the same
+ * sector as the link-key / TLV store.
+ *
+ * RP2040: TLV at end-8KiB → settings at third-from-last sector.
+ * RP2350+A2: TLV starts one sector higher (last sector reserved) → old
+ * "capacity - 3 sectors" overlapped TLV; fixed by using the same formula as BTstack.
+ */
+static uint32_t settings_flash_offset_bytes(void)
+{
+#ifndef PICO_FLASH_BANK_TOTAL_SIZE
+#define PICO_FLASH_BANK_TOTAL_SIZE (FLASH_SECTOR_SIZE * 2u)
+#endif
+#if defined(PICO_RP2350) && defined(PICO_RP2350_A2_SUPPORTED) && PICO_RP2350_A2_SUPPORTED
+    const uint32_t tlv_base = PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE - PICO_FLASH_BANK_TOTAL_SIZE;
+#else
+    const uint32_t tlv_base = PICO_FLASH_SIZE_BYTES - PICO_FLASH_BANK_TOTAL_SIZE;
+#endif
+    return tlv_base - FLASH_SECTOR_SIZE;
+}
+
 void FlashSettings::init(void)
 {
-    // Get Flash info
+    // JEDEC capacity (for diagnostics; flash layout follows PICO_FLASH_SIZE_BYTES / BTstack)
     uint8_t txbuf[STORAGE_CMD_TOTAL_BYTES] = {0x9f};
     uint8_t rxbuf[STORAGE_CMD_TOTAL_BYTES] = {0};
     uint32_t saved_isr_state = save_and_disable_interrupts();
     flash_do_cmd(txbuf, rxbuf, STORAGE_CMD_TOTAL_BYTES);
     restore_interrupts(saved_isr_state);
-    _capacity =  1 << rxbuf[3];
-    // Use the sector 4096 bytes before the BTstack TLV region (last two sectors) to avoid overlap
-    _last_sector = _capacity - (2u * FLASH_SECTOR_SIZE) - FLASH_SECTOR_SIZE;
+    _capacity = 1u << rxbuf[3];
+    _last_sector = settings_flash_offset_bytes();
 
     // Read initial settings
     uint8_t* setting_buffer = read_settings_page();

@@ -21,6 +21,7 @@ void bluepad32_disable(void);
 bool bluepad32_is_enabled(void);
 int bluepad32_get_keyboard_count(void);
 int bluepad32_get_mouse_count(void);
+int bluepad32_get_gamepad_count(void);
 
 #ifdef __cplusplus
 }

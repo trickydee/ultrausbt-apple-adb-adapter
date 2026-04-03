@@ -98,8 +98,8 @@ target_include_directories(tinyusb_common INTERFACE include)
 add_subdirectory(src)
 add_subdirectory(lib/adb/src)
 add_subdirectory(lib/QuokkADB/src)
-# Display (SSD1306) headers for quokkadb.cpp
-target_include_directories(QuokkADB PRIVATE ${CMAKE_SOURCE_DIR}/src)
+# Display (SSD1306) + bt_host_coop.h for quokkadb.cpp
+target_include_directories(QuokkADB PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
 add_subdirectory(lib/usb/src)
 
 # Bluepad32: add init/platform sources, includes, and link (wireless boards only)
@@ -112,6 +112,7 @@ if(ENABLE_BLUEPAD32)
         ${CMAKE_SOURCE_DIR}/src/bluepad32_platform.c
     )
     target_include_directories(BT-USB-ADB-Adapter-firmware PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/bluepad32/src/components/bluepad32/include
         ${CMAKE_SOURCE_DIR}/src
         ${PICO_SDK_PATH}/lib/btstack/src
@@ -130,6 +131,7 @@ if(ENABLE_BLUEPAD32)
         )
     endif()
     target_include_directories(QuokkADB PRIVATE ${CMAKE_SOURCE_DIR}/src)
+    target_include_directories(QuokkADB PRIVATE ${CMAKE_SOURCE_DIR}/bluepad32/src/components/bluepad32/include)
     target_link_libraries(BT-USB-ADB-Adapter-firmware
         pico_cyw43_arch_none
         pico_btstack_ble

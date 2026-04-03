@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //  BT-USB-ADB-Adapter - Bluetooth HID bridge
-//  Feeds Bluepad32 keyboard/mouse data into the same parsers as USB HID.
+//  Feeds Bluepad32 keyboard/mouse/gamepad data into the same parsers as USB HID.
 //  Do not include uni.h here to avoid HID type conflicts with TinyUSB.
 //----------------------------------------------------------------------------
 
@@ -13,6 +13,7 @@
 #if ENABLE_BLUEPAD32
 
 #include "bluepad32_platform.h"
+#include "controller/uni_gamepad.h"
 
 // Opaque data from Bluepad32 (must match uni_keyboard_t / uni_mouse_t layout)
 struct bt_kbd_data_t {
@@ -29,6 +30,10 @@ struct bt_mouse_data_t {
     uint8_t misc_buttons;
 };
 
+// Left stick → mouse: deadzone then scale to at most GP_MOUSE_MAX_DELTA per report (lower = less sensitive).
+static constexpr int GP_MOUSE_DEADZONE = 56;
+static constexpr int GP_MOUSE_MAX_DELTA = 36;
+
 // Fake dev_addr for BT so we don't collide with USB
 static constexpr uint8_t BT_KBD_DEV_ADDR = 0x80;
 static constexpr uint8_t BT_KBD_INSTANCE = 0;
@@ -36,44 +41,159 @@ static constexpr uint8_t BT_KBD_INSTANCE = 0;
 extern ADBKbdRptParser KeyboardPrs;
 extern ADBMouseRptParser MousePrs;
 
-static void process_bluepad32_keyboard(void) {
-    bt_kbd_data_t kbd;
-    if (!bluepad32_get_keyboard(0, &kbd)) return;
-
-    hid_keyboard_report_t report = {};
-    report.modifier = kbd.modifiers;
-    report.reserved = 0;
-    for (int i = 0; i < 6; i++) {
-        report.keycode[i] = kbd.pressed_keys[i];
+static int append_unique_key(uint8_t* keys, int n, uint8_t k) {
+    if (k == 0) return n;
+    for (int i = 0; i < n; i++) {
+        if (keys[i] == k) return n;
     }
-
-    KeyboardPrs.Parse(BT_KBD_DEV_ADDR, BT_KBD_INSTANCE, &report);
+    if (n < 6) keys[n++] = k;
+    return n;
 }
 
-static void process_bluepad32_mouse(void) {
-    bt_mouse_data_t mouse;
-    if (!bluepad32_get_mouse(0, &mouse)) return;
+/** D-pad and buttons only — left stick moves the pointer via mouse deltas, not arrow keys. */
+static int fill_keys_from_gamepad(const uni_gamepad_t* gp, uint8_t keys[6]) {
+    int n = 0;
+    if (gp->dpad & DPAD_UP) n = append_unique_key(keys, n, HID_KEY_ARROW_UP);
+    if (gp->dpad & DPAD_DOWN) n = append_unique_key(keys, n, HID_KEY_ARROW_DOWN);
+    if (gp->dpad & DPAD_LEFT) n = append_unique_key(keys, n, HID_KEY_ARROW_LEFT);
+    if (gp->dpad & DPAD_RIGHT) n = append_unique_key(keys, n, HID_KEY_ARROW_RIGHT);
+    if (gp->buttons & BUTTON_A) n = append_unique_key(keys, n, HID_KEY_SPACE);
+    if (gp->buttons & BUTTON_B) n = append_unique_key(keys, n, HID_KEY_ESCAPE);
+    if (gp->buttons & BUTTON_X) n = append_unique_key(keys, n, HID_KEY_Z);
+    if (gp->buttons & BUTTON_Y) n = append_unique_key(keys, n, HID_KEY_X);
+    /* L1 / R2 → mouse clicks in process_bluepad32_mouse_merged */
+    if (gp->buttons & BUTTON_SHOULDER_R) n = append_unique_key(keys, n, HID_KEY_E);
+    if (gp->buttons & BUTTON_TRIGGER_L) n = append_unique_key(keys, n, HID_KEY_1);
+    if (gp->buttons & BUTTON_THUMB_L) n = append_unique_key(keys, n, HID_KEY_COMMA);
+    if (gp->buttons & BUTTON_THUMB_R) n = append_unique_key(keys, n, HID_KEY_PERIOD);
+    if (gp->misc_buttons & MISC_BUTTON_START) n = append_unique_key(keys, n, HID_KEY_ENTER);
+    if (gp->misc_buttons & MISC_BUTTON_SELECT) n = append_unique_key(keys, n, HID_KEY_TAB);
+    if (gp->misc_buttons & MISC_BUTTON_SYSTEM) n = append_unique_key(keys, n, HID_KEY_F1);
+    if (gp->misc_buttons & MISC_BUTTON_CAPTURE) n = append_unique_key(keys, n, HID_KEY_F12);
+    return n;
+}
 
-    // Clamp deltas to int8_t range for HID boot report
-    int8_t dx = (mouse.delta_x > 127) ? 127 : (mouse.delta_x < -128) ? -128 : (int8_t)mouse.delta_x;
-    int8_t dy = (mouse.delta_y > 127) ? 127 : (mouse.delta_y < -128) ? -128 : (int8_t)mouse.delta_y;
+static bool try_keyboard_report(hid_keyboard_report_t* out) {
+    bt_kbd_data_t kbd;
+    if (!bluepad32_get_keyboard(0, &kbd)) return false;
+    out->modifier = kbd.modifiers;
+    out->reserved = 0;
+    for (int i = 0; i < 6; i++) {
+        out->keycode[i] = kbd.pressed_keys[i];
+    }
+    return true;
+}
+
+static void merge_keyboard_reports(const hid_keyboard_report_t* a, const hid_keyboard_report_t* b,
+                                   hid_keyboard_report_t* merged) {
+    merged->modifier = (uint8_t)(a->modifier | b->modifier);
+    merged->reserved = 0;
+    for (int i = 0; i < 6; i++) merged->keycode[i] = 0;
+    int n = 0;
+    for (int i = 0; i < 6 && a->keycode[i]; i++) n = append_unique_key(merged->keycode, n, a->keycode[i]);
+    for (int i = 0; i < 6 && b->keycode[i]; i++) n = append_unique_key(merged->keycode, n, b->keycode[i]);
+    for (int i = n; i < 6; i++) merged->keycode[i] = 0;
+}
+
+static int8_t clamp_i32_to_i8_mouse(int32_t v) {
+    if (v > 127) return 127;
+    if (v < -128) return -128;
+    return (int8_t)v;
+}
+
+/** Map virtual axis (~±512) to boot HID mouse delta; sign matches Bluepad32 (y negative = stick up). */
+static int8_t scale_left_stick_to_mouse_delta(int32_t axis) {
+    if (axis > -GP_MOUSE_DEADZONE && axis < GP_MOUSE_DEADZONE) return 0;
+    int32_t adj = axis > 0 ? axis - GP_MOUSE_DEADZONE : axis + GP_MOUSE_DEADZONE;
+    const int32_t denom = 512 - GP_MOUSE_DEADZONE;
+    int32_t scaled = (adj * GP_MOUSE_MAX_DELTA) / denom;
+    if (scaled > GP_MOUSE_MAX_DELTA) scaled = GP_MOUSE_MAX_DELTA;
+    if (scaled < -GP_MOUSE_MAX_DELTA) scaled = -GP_MOUSE_MAX_DELTA;
+    return (int8_t)scaled;
+}
+
+/** L1 → left click, R2 (right trigger) → right click (Bluepad32 virtual mask names). */
+static uint8_t gamepad_mouse_button_mask(const uni_gamepad_t* gp) {
+    uint8_t b = 0;
+    if (gp->buttons & BUTTON_SHOULDER_L) b = (uint8_t)(b | MOUSE_BUTTON_LEFT);
+    if (gp->buttons & BUTTON_TRIGGER_R) b = (uint8_t)(b | MOUSE_BUTTON_RIGHT);
+    return b;
+}
+
+static void process_bluepad32_keyboard_and_gamepad(const uni_gamepad_t* gp, bool gp_new) {
+    hid_keyboard_report_t kr = {};
+    hid_keyboard_report_t gr = {};
+    bool k = try_keyboard_report(&kr);
+    bool g = false;
+    if (gp_new) {
+        gr.modifier = 0;
+        gr.reserved = 0;
+        for (int i = 0; i < 6; i++) gr.keycode[i] = 0;
+        fill_keys_from_gamepad(gp, gr.keycode);
+        g = true;
+    }
+    if (k && g) {
+        hid_keyboard_report_t merged;
+        merge_keyboard_reports(&kr, &gr, &merged);
+        KeyboardPrs.Parse(BT_KBD_DEV_ADDR, BT_KBD_INSTANCE, &merged);
+    } else if (k) {
+        KeyboardPrs.Parse(BT_KBD_DEV_ADDR, BT_KBD_INSTANCE, &kr);
+    } else if (g) {
+        KeyboardPrs.Parse(BT_KBD_DEV_ADDR, BT_KBD_INSTANCE, &gr);
+    }
+}
+
+static void process_bluepad32_mouse_merged(const uni_gamepad_t* gp, bool gp_new) {
+    static uint8_t prev_gp_mouse_btn = 0;
+
+    int16_t acc_dx = 0;
+    int16_t acc_dy = 0;
+    uint8_t buttons = 0;
+    int8_t wheel = 0;
+    bool have_bt_mouse = false;
+
+    bt_mouse_data_t mouse;
+    if (bluepad32_get_mouse(0, &mouse)) {
+        have_bt_mouse = true;
+        acc_dx += clamp_i32_to_i8_mouse(mouse.delta_x);
+        acc_dy += clamp_i32_to_i8_mouse(mouse.delta_y);
+        buttons = (uint8_t)(mouse.buttons & 0xFFu);
+        wheel = mouse.scroll_wheel;
+    }
+
+    uint8_t gp_mouse_btn = 0;
+    if (gp_new) {
+        acc_dx += scale_left_stick_to_mouse_delta(gp->axis_x);
+        acc_dy += scale_left_stick_to_mouse_delta(gp->axis_y);
+        gp_mouse_btn = gamepad_mouse_button_mask(gp);
+        buttons = (uint8_t)(buttons | gp_mouse_btn);
+    }
+
+    bool have_movement = (acc_dx != 0 || acc_dy != 0);
+    bool gp_btn_edge = gp_new && (gp_mouse_btn != prev_gp_mouse_btn);
+    bool emit = have_bt_mouse || (gp_new && (have_movement || gp_btn_edge));
+    if (!emit) return;
 
     hid_mouse_report_t report = {};
-    report.buttons = (uint8_t)(mouse.buttons & 0xFFu);  // left, right, middle
-    report.x = dx;
-    report.y = dy;
-    report.wheel = mouse.scroll_wheel;
+    report.buttons = buttons;
+    report.x = clamp_i32_to_i8_mouse(acc_dx);
+    report.y = clamp_i32_to_i8_mouse(acc_dy);
+    report.wheel = wheel;
     report.pan = 0;
-
     MousePrs.Parse(&report);
+
+    if (gp_new) prev_gp_mouse_btn = gp_mouse_btn;
 }
 
 void process_bluepad32_devices(void) {
-    process_bluepad32_keyboard();
-    process_bluepad32_mouse();
+    uni_gamepad_t gp = {};
+    bool gp_new = bluepad32_get_gamepad(0, &gp);
+
+    process_bluepad32_keyboard_and_gamepad(gp_new ? &gp : nullptr, gp_new);
+    process_bluepad32_mouse_merged(gp_new ? &gp : nullptr, gp_new);
 }
 
-#else // !ENABLE_BLUEPAD32
+#else  // !ENABLE_BLUEPAD32
 
 void process_bluepad32_devices(void) {
     (void)0;

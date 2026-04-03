@@ -39,6 +39,7 @@
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
 #include "pico/bootrom.h"
+#include "pico/flash.h"
 #include "hardware/clocks.h"
 
 #include "tusb.h"
@@ -56,6 +57,7 @@
 
 #if ENABLE_BLUEPAD32
 #include "bluepad32_api.h"
+#include "bt_host_coop.h"
 #endif
 #include "display/display.h"
 
@@ -97,10 +99,18 @@ FlashSettings setting_storage;
 
 // core1: handle host events
 void core1_main() {
+  /* Lets Core 0 run BTstack TLV / flash work without XIP conflicts (see amigahid-pico quad_mouse + flash_safe_execute). */
+  flash_safe_execute_core_init();
   tuh_init(0);
   led_blink(1);
   /*------------ Core1 main loop ------------*/
   while (true) {
+#if ENABLE_BLUEPAD32
+    if (bt_host_coop_usb_host_is_paused()) {
+      busy_wait_us(5000);
+      continue;
+    }
+#endif
     tuh_task(); // tinyusb host task
 
     KeyboardPrs.ChangeUSBKeyboardLEDs();
@@ -165,7 +175,9 @@ int quokkadb(void) {
     bluepad32_poll();
     process_bluepad32_devices();
     display_set_bt_counts((uint8_t)bluepad32_get_keyboard_count(),
-                         (uint8_t)bluepad32_get_mouse_count(), 0);
+                         (uint8_t)bluepad32_get_mouse_count(),
+                         (uint8_t)bluepad32_get_gamepad_count());
+    display_poll_bt_gamepad_viz();
 #endif
 
     if (!kbdpending)

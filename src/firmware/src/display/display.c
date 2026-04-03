@@ -15,6 +15,7 @@
 #if ENABLE_BLUEPAD32
 #include "bluepad32_init.h"
 #include "bluepad32_platform.h"  /* bluepad32_delete_pairing_keys, bluepad32_get_device_name */
+#include "controller/uni_gamepad.h"
 #endif
 
 /* Version string from CMake (e.g. "1.0.2") */
@@ -27,14 +28,18 @@ static ssd1306_t disp;
 /* Device counts (set from USB/BT; only core0 reads for drawing) */
 static volatile uint8_t usb_kb_count = 0;
 static volatile uint8_t usb_mouse_count = 0;
+static volatile uint8_t usb_gamepad_count = 0;
 static volatile uint8_t bt_kb_count = 0;
 static volatile uint8_t bt_mouse_count = 0;
+static volatile uint8_t bt_gamepad_count = 0;
 
 /* Last values we actually drew; only refresh display when these change */
 static uint8_t last_drawn_usb_kb = 0xFF;
 static uint8_t last_drawn_usb_mouse = 0xFF;
+static uint8_t last_drawn_usb_game = 0xFF;
 static uint8_t last_drawn_bt_kb = 0xFF;
 static uint8_t last_drawn_bt_mouse = 0xFF;
+static uint8_t last_drawn_bt_game = 0xFF;
 
 /* ADB status for splash (set from main loop) */
 static int adb_connected = 0;
@@ -51,6 +56,35 @@ static int last_drawn_adb_srq = -1;
 static int last_drawn_adb_collision = -1;
 
 static display_screen_t current_screen = DISPLAY_SCREEN_SPLASH;
+
+#if ENABLE_BLUEPAD32
+static uint32_t last_gp_viz_fp = 0xFFFFFFFFu;
+
+/* Compact live gamepad legend: ^v<> d-pad, face + shoulders + triggers + misc (see docs/gamepad-support.md). */
+static void format_bt_gamepad_viz(char* buf, size_t cap, uint8_t dpad, uint16_t buttons, uint8_t misc) {
+    char* p = buf;
+    char* end = buf + cap;
+    if (dpad & DPAD_UP) p += snprintf(p, (size_t)(end - p), "^");
+    if (dpad & DPAD_DOWN) p += snprintf(p, (size_t)(end - p), "v");
+    if (dpad & DPAD_LEFT) p += snprintf(p, (size_t)(end - p), "<");
+    if (dpad & DPAD_RIGHT) p += snprintf(p, (size_t)(end - p), ">");
+    if (buttons & BUTTON_A) p += snprintf(p, (size_t)(end - p), "a");
+    if (buttons & BUTTON_B) p += snprintf(p, (size_t)(end - p), "b");
+    if (buttons & BUTTON_X) p += snprintf(p, (size_t)(end - p), "x");
+    if (buttons & BUTTON_Y) p += snprintf(p, (size_t)(end - p), "y");
+    if (buttons & BUTTON_SHOULDER_L) p += snprintf(p, (size_t)(end - p), "L");
+    if (buttons & BUTTON_SHOULDER_R) p += snprintf(p, (size_t)(end - p), "R");
+    if (buttons & BUTTON_TRIGGER_L) p += snprintf(p, (size_t)(end - p), "1");
+    if (buttons & BUTTON_TRIGGER_R) p += snprintf(p, (size_t)(end - p), "2");
+    if (buttons & BUTTON_THUMB_L) p += snprintf(p, (size_t)(end - p), ",");
+    if (buttons & BUTTON_THUMB_R) p += snprintf(p, (size_t)(end - p), ".");
+    if (misc & MISC_BUTTON_SELECT) p += snprintf(p, (size_t)(end - p), "s");
+    if (misc & MISC_BUTTON_START) p += snprintf(p, (size_t)(end - p), "t");
+    if (misc & MISC_BUTTON_SYSTEM) p += snprintf(p, (size_t)(end - p), "y");
+    if (misc & MISC_BUTTON_CAPTURE) p += snprintf(p, (size_t)(end - p), "c");
+    if (p == buf) snprintf(buf, cap, "--");
+}
+#endif
 
 #define BUTTON_DEBOUNCE_COUNT 10
 static uint8_t button_middle_debounce = 0;
@@ -139,6 +173,7 @@ void display_show_splash(void)
     current_screen = DISPLAY_SCREEN_SPLASH;
     last_drawn_bt_kb = bt_kb_count;
     last_drawn_bt_mouse = bt_mouse_count;
+    last_drawn_bt_game = bt_gamepad_count;
     last_drawn_adb_connected = adb_connected;
     last_drawn_adb_kbd = adb_kbd_id;
     last_drawn_adb_mouse = adb_mouse_id;
@@ -160,12 +195,32 @@ void display_show_devices(void)
     sprintf(buf, "Mouse   U %d BT %d", (int)usb_mouse_count, (int)bt_mouse_count);
     ssd1306_draw_string(&disp, 0, 18, 1, buf);
 
+    sprintf(buf, "Gamepad U %d BT %d", (int)usb_gamepad_count, (int)bt_gamepad_count);
+    ssd1306_draw_string(&disp, 0, 27, 1, buf);
+
+#if ENABLE_BLUEPAD32
+    if (bt_gamepad_count > 0) {
+        uint8_t dpad;
+        uint16_t buttons;
+        uint8_t misc;
+        int conn;
+        bluepad32_get_gamepad_visual(&dpad, &buttons, &misc, &conn);
+        (void)conn;
+        char viz[24];
+        format_bt_gamepad_viz(viz, sizeof(viz), dpad, buttons, misc);
+        snprintf(buf, sizeof(buf), "BT GP: %s", viz);
+        ssd1306_draw_string(&disp, 0, 36, 1, buf);
+    }
+#endif
+
     ssd1306_show(&disp);
     current_screen = DISPLAY_SCREEN_DEVICES;
     last_drawn_usb_kb = usb_kb_count;
     last_drawn_usb_mouse = usb_mouse_count;
+    last_drawn_usb_game = usb_gamepad_count;
     last_drawn_bt_kb = bt_kb_count;
     last_drawn_bt_mouse = bt_mouse_count;
+    last_drawn_bt_game = bt_gamepad_count;
 }
 
 void display_update_devices(void)
@@ -178,31 +233,64 @@ void display_update_devices(void)
 
 void display_set_usb_counts(uint8_t kb, uint8_t mouse, uint8_t joy)
 {
-    (void)joy;
     usb_kb_count = kb;
     usb_mouse_count = mouse;
+    usb_gamepad_count = joy;
     /* Only redraw when counts changed to avoid hammering I2C every main-loop iteration */
-    if (last_drawn_usb_kb != kb || last_drawn_usb_mouse != mouse) {
+    if (last_drawn_usb_kb != kb || last_drawn_usb_mouse != mouse || last_drawn_usb_game != joy) {
         last_drawn_usb_kb = kb;
         last_drawn_usb_mouse = mouse;
+        last_drawn_usb_game = joy;
         display_update_devices();
     }
 }
 
 void display_set_bt_counts(uint8_t kb, uint8_t mouse, uint8_t joy)
 {
-    (void)joy;
     bt_kb_count = kb;
     bt_mouse_count = mouse;
+    bt_gamepad_count = joy;
     /* Only redraw when counts changed to avoid hammering I2C every main-loop iteration */
-    if (last_drawn_bt_kb != kb || last_drawn_bt_mouse != mouse) {
+    if (last_drawn_bt_kb != kb || last_drawn_bt_mouse != mouse || last_drawn_bt_game != joy) {
         last_drawn_bt_kb = kb;
         last_drawn_bt_mouse = mouse;
+        last_drawn_bt_game = joy;
+#if ENABLE_BLUEPAD32
+        last_gp_viz_fp = 0xFFFFFFFFu;
+#endif
         display_update_devices();
         if (current_screen == DISPLAY_SCREEN_SPLASH)
             display_show_splash();
     }
 }
+
+#if ENABLE_BLUEPAD32
+void display_poll_bt_gamepad_viz(void)
+{
+    if (bt_gamepad_count == 0) {
+        if (last_gp_viz_fp != 0xFFFFFFFFu) {
+            last_gp_viz_fp = 0xFFFFFFFFu;
+            if (current_screen == DISPLAY_SCREEN_DEVICES || current_screen == DISPLAY_SCREEN_BT_NAMES)
+                display_update_devices();
+        }
+        return;
+    }
+    uint8_t dpad;
+    uint16_t buttons;
+    uint8_t misc;
+    int conn;
+    bluepad32_get_gamepad_visual(&dpad, &buttons, &misc, &conn);
+    uint32_t fp = (uint32_t)dpad | ((uint32_t)buttons << 8) | ((uint32_t)misc << 24);
+    if (conn) fp |= (1u << 31);
+    if (fp != last_gp_viz_fp) {
+        last_gp_viz_fp = fp;
+        if (current_screen == DISPLAY_SCREEN_DEVICES || current_screen == DISPLAY_SCREEN_BT_NAMES)
+            display_update_devices();
+    }
+}
+#else
+void display_poll_bt_gamepad_viz(void) {}
+#endif
 
 void display_show_controller_detected(const char *controller_name, const char *controller_model, uint32_t duration_ms)
 {
@@ -288,6 +376,26 @@ void display_show_bt_names(void)
     } else
         ssd1306_draw_string(&disp, 0, 18, 1, (char *)"M1: --");
 
+    name = bluepad32_get_device_name('G', 0);
+    if (name) {
+        snprintf(buf, sizeof(buf), "G1:%.20s", name);
+        ssd1306_draw_string(&disp, 0, 27, 1, buf);
+    } else
+        ssd1306_draw_string(&disp, 0, 27, 1, (char *)"G1: --");
+
+    if (bt_gamepad_count > 0) {
+        uint8_t dpad;
+        uint16_t buttons;
+        uint8_t misc;
+        int conn;
+        bluepad32_get_gamepad_visual(&dpad, &buttons, &misc, &conn);
+        (void)conn;
+        char viz[24];
+        format_bt_gamepad_viz(viz, sizeof(viz), dpad, buttons, misc);
+        snprintf(buf, sizeof(buf), "BT GP: %s", viz);
+        ssd1306_draw_string(&disp, 0, 36, 1, buf);
+    }
+
     ssd1306_draw_string(&disp, 0, 55, 1, (char *)"R: clear pairings");
 #else
     ssd1306_draw_string(&disp, 0, 0, 1, (char *)"BT not enabled");
@@ -297,4 +405,5 @@ void display_show_bt_names(void)
     current_screen = DISPLAY_SCREEN_BT_NAMES;
     last_drawn_bt_kb = bt_kb_count;
     last_drawn_bt_mouse = bt_mouse_count;
+    last_drawn_bt_game = bt_gamepad_count;
 }
