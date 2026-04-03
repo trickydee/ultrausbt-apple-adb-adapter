@@ -13,7 +13,7 @@ To bump the version: edit the `VERSION` in that `project()` line and rebuild.
 
 ## SDK and TinyUSB versions
 
-- **Pico SDK:** 2.2.0 (latest stable). When using fetch-from-git (`PICO_SDK_FETCH_FROM_GIT=ON`), the default tag is `2.2.0`. Override with `PICO_SDK_FETCH_FROM_GIT_TAG` (e.g. `master` or `2.1.1`).
+- **Pico SDK:** 2.2.0 (latest stable). **`build_all.sh`**, **`./build.sh`**, and **`make`** use **`scripts/lib/build_common.sh`**: if **`PICO_SDK_PATH`** is not set, the SDK is cloned **once** into **`.pico-sdk/pico-sdk`** (default tag **`PICO_SDK_TAG=2.2.0`**, aligned with `pico_sdk_import.cmake`). That path is reused for every `build-pico`, `build-pico_w`, etc., instead of fetching a separate SDK per build directory. **`PICOTOOL_FETCH_FROM_GIT_PATH`** defaults to **`.pico-sdk`** so the pico-sdk **picotool** helper is built there once as well. You can still set **`PICO_SDK_PATH`** yourself to skip the clone. To remove the cache, run **`./scripts/cleanup_build_artifacts.sh --include-sdk-cache`**.
 - **TinyUSB:** Supplied by the Pico SDK (submodule at `lib/tinyusb`). SDK 2.2.0 includes the TinyUSB version tested with that release (e.g. 0.18.x). No separate TinyUSB update is required.
 
 **Upstream TinyUSB (implemented).** The project optionally uses upstream [hathach/tinyusb](https://github.com/hathach/tinyusb) when the submodule is present:

@@ -1,21 +1,25 @@
 #!/usr/bin/env bash
 # Lightweight cleanup for local build artifacts (safe defaults).
 # - Removes build-* directories and dist/*.uf2 by default.
+# - Does not remove .pico-sdk/ (SDK + picotool cache) unless you ask — keeps rebuilds fast.
 # - Use --dry-run to preview.
 # - Use --include-deps to also remove *_deps caches inside build dirs.
+# - Use --include-sdk-cache to also remove .pico-sdk/ (forces full SDK re-clone on next build).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 DRY_RUN=0
 INCLUDE_DEPS=0
+INCLUDE_SDK_CACHE=0
 
 for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY_RUN=1 ;;
     --include-deps) INCLUDE_DEPS=1 ;;
+    --include-sdk-cache) INCLUDE_SDK_CACHE=1 ;;
     *)
       echo "Unknown option: $arg"
-      echo "Usage: $0 [--dry-run] [--include-deps]"
+      echo "Usage: $0 [--dry-run] [--include-deps] [--include-sdk-cache]"
       exit 1
       ;;
   esac
@@ -34,6 +38,10 @@ for f in dist/*.uf2; do
     to_remove+=("$f")
   fi
 done
+
+if [ "$INCLUDE_SDK_CACHE" -eq 1 ] && [ -d ".pico-sdk" ]; then
+  to_remove+=(".pico-sdk")
+fi
 
 if [ "${#to_remove[@]}" -eq 0 ]; then
   echo "Nothing to clean."
@@ -63,3 +71,6 @@ if [ "$INCLUDE_DEPS" -eq 1 ]; then
 fi
 
 echo "Cleanup complete."
+if [ "$INCLUDE_SDK_CACHE" -eq 0 ] && [ -d ".pico-sdk" ]; then
+  echo "Note: .pico-sdk/ was kept (Pico SDK + picotool cache). Use --include-sdk-cache to remove it."
+fi

@@ -1,28 +1,20 @@
 #!/usr/bin/env bash
 # Build BT-USB-ADB-Adapter Pico firmware from project root.
-# Requires: Raspberry Pi Pico SDK, PICO_SDK_PATH set (or PICO_SDK_FETCH_FROM_GIT=ON).
 # Optional: upstream TinyUSB from submodule src/firmware/tinyusb (init with git submodule update --init --recursive).
 
-set -e
+set -euo pipefail
 cd "$(dirname "$0")"
+source "./scripts/lib/build_common.sh"
 
 FIRMWARE_DIR=src/firmware
 BUILD_DIR=$FIRMWARE_DIR/build
 
-# Initialize submodules (e.g. upstream TinyUSB at src/firmware/tinyusb) if present
-if [ -f .gitmodules ] && [ -d .git ]; then
-  git submodule update --init --recursive 2>/dev/null || true
-fi
-
-if [ -z "$PICO_SDK_PATH" ] && [ -z "$PICO_SDK_FETCH_FROM_GIT" ]; then
-  echo "Error: Set PICO_SDK_PATH to your pico-sdk directory, or set PICO_SDK_FETCH_FROM_GIT=ON"
-  exit 1
-fi
+init_submodules
+ensure_firmware_root
+ensure_pico_sdk
 
 mkdir -p "$BUILD_DIR"
-cd "$BUILD_DIR"
-cmake ..
-make
+cmake_build_dir "$BUILD_DIR"
 
 echo ""
 echo "Build complete. Outputs in $BUILD_DIR/src/"

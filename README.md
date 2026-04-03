@@ -32,18 +32,14 @@ This is a fork of Difegue's version of the [adbuino](https://github.com/Difegue/
 
 Note: This software is intended to be compiled in an Ubuntu Linux environment.
 
-- Install the Raspberry Pi Pico SDK (https://github.com/raspberrypi/pico-sdk)
-- Set the `$PICO_SDK_PATH` environment variable to your pico-sdk directory
+- **Pico SDK:** Either install [pico-sdk](https://github.com/raspberrypi/pico-sdk) somewhere and set **`PICO_SDK_PATH`**, or leave it unset. **`build_all.sh`**, **`./build.sh`**, and **`make`** run `scripts/lib/build_common.sh`, which clones the SDK **once** into **`.pico-sdk/pico-sdk`** (gitignored) and sets **`PICOTOOL_FETCH_FROM_GIT_PATH`** to **`.pico-sdk`** so picotool is also built in that single tree—avoiding repeated downloads for every `build-*` directory. Override the tag with **`PICO_SDK_TAG`** (default **`2.2.0`**, keep in sync with `src/firmware/pico_sdk_import.cmake`).
 - **From the top level of this project** you can build with:
   - `make` (or `./build.sh`)
 - To use **upstream TinyUSB** (optional), initialize the submodule first:  
   `git submodule update --init --recursive`  
   Then build as above; the firmware will use the TinyUSB at `src/firmware/tinyusb`. See [docs/changes.md](docs/changes.md).
-- Or build manually from `src/firmware`:
-  - `mkdir build`
-  - `cd build`
-  - `cmake ..`
-  - `make`
+- Or configure manually with the same environment as the scripts:  
+  `./scripts/cmake_with_pico_sdk.sh -B src/firmware/build -S src/firmware` then `cmake --build src/firmware/build -j$(nproc)`
 - The build outputs (.uf2, .bin, .elf, etc) will be placed in:
   - `src/firmware/build/src`
 - Next, plug the micro-USB side of a USB cable into the Pico running this firmware

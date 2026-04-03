@@ -2,6 +2,10 @@
 
 Lineage: this firmware continues the [HIDHopper ADB](HIDHopper.md) / QuokkADB line. Older notes below still name **HIDHopper** where they describe history or retail hardware.
 
+## 1.0.17
+
+- **Build speed:** `build_all.sh`, `./build.sh`, and `make` now share a **single** Pico SDK checkout under **`.pico-sdk/pico-sdk`** (and **picotool** under **`.pico-sdk`**) when **`PICO_SDK_PATH`** is not set—avoiding repeated SDK/picotool downloads for each `build-*` directory. See `scripts/lib/build_common.sh` and `./scripts/cmake_with_pico_sdk.sh`. **`./scripts/cleanup_build_artifacts.sh --include-sdk-cache`** removes **`.pico-sdk`** when you need a full reset.
+
 ## 1.0.16
 
 - **Product rename:** CMake project/target **`BT-USB-ADB-Adapter-firmware`**, UF2 outputs (`BT-USB-ADB-Adapter-firmware*.uf2`), boot banner, Bluetooth device name, and top-level docs now use **BT-USB-ADB-Adapter**. [HIDHopper.md](HIDHopper.md), [led-support.md](led-support.md), and provenance text elsewhere still refer to **HIDHopper** where useful.
