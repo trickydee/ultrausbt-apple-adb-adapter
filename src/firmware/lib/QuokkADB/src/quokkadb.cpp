@@ -234,7 +234,7 @@ int quokkadb(void) {
     if(setting_storage.settings()->led_on)
     {
       led_on();
-    }  
+    }
     adb.ProcessCommand(cmd);
     /* Only refresh "connected" when we actually received a command from the bus (cmd >= 0).
      * When unplugged from ADB, ReceiveCommand returns -1 and we must not update the time,

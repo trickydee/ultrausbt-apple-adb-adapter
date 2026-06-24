@@ -44,6 +44,8 @@ public:
     int32_t GetDeltaY();
     void ResetMouseMovement();
     bool MouseButtonIsPressed();
+    /** Apply boot-HID button mask without edge callbacks (for BLE state sync). */
+    void ApplyButtonMask(uint8_t button_mask);
 
 protected:
     void OnMouseMove(MOUSEINFO *mi) override;

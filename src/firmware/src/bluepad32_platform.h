@@ -27,6 +27,9 @@ int bluepad32_get_keyboard_count(void);
 // Returns true if connected and has new data; clears updated flag.
 bool bluepad32_get_mouse(int idx, void* out_mouse);
 
+// Last mouse snapshot (buttons + deltas from most recent report). Does not clear updated.
+bool bluepad32_peek_mouse(int idx, void* out_mouse);
+
 // Get count of connected Bluetooth mice
 int bluepad32_get_mouse_count(void);
 

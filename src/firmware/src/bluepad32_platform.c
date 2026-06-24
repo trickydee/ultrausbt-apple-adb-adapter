@@ -433,6 +433,13 @@ bool bluepad32_get_mouse(int idx, void* out_mouse) {
     return false;
 }
 
+bool bluepad32_peek_mouse(int idx, void* out_mouse) {
+    if (idx < 0 || idx >= MAX_BT_MICE || !out_mouse) return false;
+    if (!bt_mice[idx].connected) return false;
+    *(uni_mouse_t*)out_mouse = bt_mice[idx].mouse;
+    return true;
+}
+
 int bluepad32_get_mouse_count(void) {
     int n = 0;
     for (int i = 0; i < MAX_BT_MICE; i++) {

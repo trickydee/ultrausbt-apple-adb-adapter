@@ -13,6 +13,7 @@
 #if ENABLE_BLUEPAD32
 
 #include "bluepad32_platform.h"
+#include "bluepad32_api.h"
 #include "controller/uni_gamepad.h"
 
 // Opaque data from Bluepad32 (must match uni_keyboard_t / uni_mouse_t layout)
@@ -127,25 +128,6 @@ static int8_t scale_left_stick_to_mouse_delta(int32_t axis) {
     return (int8_t)scaled;
 }
 
-/** BLE mice often omit buttons on movement-only reports; latch per slot. */
-static uint8_t bt_mouse_buttons_with_latch(int slot, const bt_mouse_data_t* mouse) {
-    static uint8_t latched[BLUEPAD32_MAX_BT_MICE];
-    if (slot < 0 || slot >= BLUEPAD32_MAX_BT_MICE) return 0;
-
-    uint8_t reported = (uint8_t)(mouse->buttons & 0xFFu);
-    bool motion = (mouse->delta_x != 0 || mouse->delta_y != 0);
-    bool scroll = (mouse->scroll_wheel != 0);
-
-    if (reported != 0) {
-        latched[slot] = reported;
-    } else if (motion || scroll) {
-        reported = latched[slot];
-    } else {
-        latched[slot] = 0;
-    }
-    return reported;
-}
-
 /** L1 → left click, R2 (right trigger) → right click (Bluepad32 virtual mask names). */
 static uint8_t gamepad_mouse_button_mask(const uni_gamepad_t* gp) {
     uint8_t b = 0;
@@ -177,26 +159,50 @@ static void process_bluepad32_keyboard_and_gamepad(const uni_gamepad_t* gp, bool
     }
 }
 
+/** Last-known BT mouse button mask (movement-only BLE reports omit buttons). */
+static uint8_t peek_merged_bt_buttons(void) {
+    bt_mouse_data_t mouse;
+    uint8_t merged = 0;
+    for (int i = 0; i < BLUEPAD32_MAX_BT_MICE; i++) {
+        if (!bluepad32_peek_mouse(i, &mouse)) continue;
+        merged = (uint8_t)(merged | (mouse.buttons & 0xFFu));
+    }
+    return merged;
+}
+
 static void process_bluepad32_mouse_merged(const uni_gamepad_t* gp, bool gp_new) {
     static uint8_t prev_gp_mouse_btn = 0;
     static uint8_t prev_buttons = 0;
+    static uint8_t s_bt_buttons_latched = 0;
+    static bool gp_stick_was_moving = false;
 
     int16_t acc_dx = 0;
     int16_t acc_dy = 0;
-    uint8_t buttons = 0;
+    uint8_t buttons = peek_merged_bt_buttons();
     int8_t wheel = 0;
 
     bt_mouse_data_t mouse;
     for (int i = 0; i < BLUEPAD32_MAX_BT_MICE; i++) {
-        if (!bluepad32_get_mouse(i, &mouse)) continue;
-        if (mouse.delta_x != 0 || mouse.delta_y != 0) {
-            acc_dx += clamp_i32_to_i8_mouse(mouse.delta_x);
-            acc_dy += clamp_i32_to_i8_mouse(mouse.delta_y);
+        while (bluepad32_get_mouse(i, &mouse)) {
+            if (mouse.delta_x != 0 || mouse.delta_y != 0) {
+                acc_dx += clamp_i32_to_i8_mouse(mouse.delta_x);
+                acc_dy += clamp_i32_to_i8_mouse(mouse.delta_y);
+            }
+            uint8_t mb = (uint8_t)(mouse.buttons & 0xFFu);
+            if (mb != 0) {
+                buttons = (uint8_t)(buttons | mb);
+            }
+            if (mouse.scroll_wheel != 0) {
+                wheel = mouse.scroll_wheel;
+            }
         }
-        buttons = (uint8_t)(buttons | bt_mouse_buttons_with_latch(i, &mouse));
-        if (mouse.scroll_wheel != 0) {
-            wheel = mouse.scroll_wheel;
-        }
+    }
+
+    bool bt_motion = (acc_dx != 0 || acc_dy != 0);
+    if (buttons != 0) {
+        s_bt_buttons_latched = buttons;
+    } else if (peek_merged_bt_buttons() == 0 && !bt_motion) {
+        s_bt_buttons_latched = 0;
     }
 
     uint8_t gp_mouse_btn = 0;
@@ -209,19 +215,25 @@ static void process_bluepad32_mouse_merged(const uni_gamepad_t* gp, bool gp_new)
         buttons = (uint8_t)(buttons | gp_mouse_btn);
     }
 
-    bool bt_motion = (acc_dx != 0 || acc_dy != 0);
+    buttons = (uint8_t)(buttons | s_bt_buttons_latched);
+
     bool gp_motion = (gx != 0 || gy != 0);
 
-    /* Stick centred: clear pending movement so the cursor stops immediately. */
-    if (gp_new && !gp_motion && !bt_motion) {
+    /* Only clear stick-sourced movement when the stick returns to centre. */
+    if (gp_new && gp_motion) {
+        gp_stick_was_moving = true;
+    } else if (gp_new && !gp_motion && gp_stick_was_moving) {
         MousePrs.ResetMouseMovement();
+        gp_stick_was_moving = false;
     }
 
     bool have_movement = bt_motion || gp_motion;
     bool gp_btn_edge = gp_new && (gp_mouse_btn != prev_gp_mouse_btn);
     bool btn_change = buttons != prev_buttons;
     bool emit = have_movement || (wheel != 0) || btn_change || gp_btn_edge;
-    if (!emit) return;
+    if (!emit) {
+        return;
+    }
 
     hid_mouse_report_t report = {};
     report.buttons = buttons;

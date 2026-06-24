@@ -61,6 +61,20 @@ bool MouseRptParser::MouseButtonIsPressed()
     return m_mouse_left_button_is_pressed || m_mouse_right_button_is_pressed;
 }
 
+void MouseRptParser::ApplyButtonMask(uint8_t button_mask)
+{
+    bool left = (button_mask & MOUSE_BUTTON_LEFT) != 0;
+    bool right = (button_mask & MOUSE_BUTTON_RIGHT) != 0;
+    if (left != m_mouse_left_button_is_pressed) {
+        m_mouse_left_button_is_pressed = left;
+        m_mouse_button_changed = true;
+    }
+    if (right != m_mouse_right_button_is_pressed) {
+        m_mouse_right_button_is_pressed = right;
+        m_mouse_button_changed = true;
+    }
+}
+
 
 void MouseRptParser::OnMouseMove(MOUSEINFO *mi)
 {

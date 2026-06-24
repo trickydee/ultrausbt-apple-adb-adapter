@@ -83,7 +83,9 @@ Gamepad stick uses **replace** semantics (not `ADB_MOUSE_ACCUMULATE_DELTAS`). US
 
 ### Bluetooth mouse buttons during drag
 
-BLE mice often send **movement-only** HID reports with no button field. Bluepad32 clears button state at the start of each report, so a drag can look like repeated button-up events. `bt_hid_bridge.cpp` **latches** each BT mouse slot’s last non-zero button mask and re-applies it on movement-only reports; an all-quiet report (no motion, no buttons) clears the latch.
+BLE mice often send **movement-only** HID reports with no button field. Stock Bluepad32 cleared button state at the start of each report, which broke drags. We patch `uni_hid_parser_mouse.c` to **persist buttons** across reports and to clear each button bit when its usage arrives with `value == 0`. `bt_hid_bridge.cpp` keeps a button latch OR'd into each synthetic HID report so movement frames cannot spuriously release the button (without overwriting USB button state).
+
+**ADB timing — do not service BLE during a transaction.** The adapter must answer Talk register 0 within the ADB Tlt (stop-to-start) window of ~140–260 µs, and bit cells are 70–130 µs. Running `bluepad32_poll()` (BTstack) during `ReceiveCommand()` bit waits or between receiving Talk R0 and sending the register blows these timings, so the host drops the response — felt as jerky movement and lost slow-drag motion (only large/fast deltas survived). BLE is serviced **once per main-loop pass** (like the original main branch); when connected to a Mac the host polls frequently, so the loop stays responsive without per-bit cooperative polling.
 
 ## OLED legend (`BT GP:` line)
 
@@ -113,4 +115,4 @@ Characters are appended only while the control is active: `^` `v` `<` `>` (D-pad
 
 ## Version
 
-Document aligned with firmware **1.0.17+**; bump `docs/release-notes.md` when gamepad output ships to users.
+Document aligned with firmware **1.0.18+**; bump `docs/release-notes.md` when gamepad output ships to users.

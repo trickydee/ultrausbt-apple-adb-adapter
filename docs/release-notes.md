@@ -6,6 +6,12 @@ Lineage: this firmware continues the [HIDHopper ADB](HIDHopper.md) / QuokkADB li
 
 - **Bluetooth gamepad:** One BT gamepad slot in Bluepad32 (`uni_gamepad_t`, `bluepad32_get_gamepad` / `bluepad32_get_gamepad_count`). **Phase B:** gamepad → **HID keyboard** (D-pad/buttons) and **left stick → mouse** via `bt_hid_bridge` / `KeyboardPrs` + `MousePrs` (see [gamepad-support.md](gamepad-support.md)). OLED **Devices** / **Bluetooth names:** BT gamepad **count**, **G1** name, and optional live **`BT GP:`** legend when a pad is connected.
 
+## 1.0.18
+
+- **Bluetooth mouse drag:** Patch Bluepad32 `uni_hid_parser_mouse.c` to persist button state across movement-only BLE reports; `bt_hid_bridge.cpp` ORs a button latch into synthetic HID reports so drags do not spuriously release the button.
+- **USB + BT mouse movement:** Restore the main-branch ADB register-0 snapshot model (`GetAdbRegister0()` on `MouseChanged()`); avoid servicing BLE during ADB bit timing, which had caused jerky movement and broken clicks.
+- **Multi-BT mouse:** `bluepad32_peek_mouse()` and merged mouse processing retained; USB button state is no longer overwritten by Bluetooth sync.
+
 ## 1.0.17
 
 - **Build speed:** `build_all.sh`, `./build.sh`, and `make` now share a **single** Pico SDK checkout under **`.pico-sdk/pico-sdk`** (and **picotool** under **`.pico-sdk`**) when **`PICO_SDK_PATH`** is not set—avoiding repeated SDK/picotool downloads for each `build-*` directory. See `scripts/lib/build_common.sh` and `./scripts/cmake_with_pico_sdk.sh`. **`./scripts/cleanup_build_artifacts.sh --include-sdk-cache`** removes **`.pico-sdk`** when you need a full reset.
