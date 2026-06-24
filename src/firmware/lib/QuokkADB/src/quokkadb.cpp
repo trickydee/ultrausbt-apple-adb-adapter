@@ -60,6 +60,9 @@
 #include "bt_host_coop.h"
 #endif
 #include "display/display.h"
+extern "C" {
+#include "usb_device_map.h"
+}
 
 using rp2040_serial::Serial;
 
@@ -171,13 +174,20 @@ int quokkadb(void) {
     }
     display_handle_buttons();
 
+    {
+      uint8_t ukb = 0;
+      uint8_t um = 0;
+      uint8_t ujoy = 0;
+      usb_map_get_counts(&ukb, &um, &ujoy);
+      display_set_usb_counts(ukb, um, ujoy);
+    }
+
 #if ENABLE_BLUEPAD32
     bluepad32_poll();
     process_bluepad32_devices();
     display_set_bt_counts((uint8_t)bluepad32_get_keyboard_count(),
                          (uint8_t)bluepad32_get_mouse_count(),
                          (uint8_t)bluepad32_get_gamepad_count());
-    display_poll_bt_gamepad_viz();
 #endif
 
     if (!kbdpending)

@@ -36,6 +36,10 @@
 #include "usbmouseparser.h"
 #include "adbkbdparser.h"
 
+extern "C" {
+#include "usb_device_map.h"
+}
+
 #define kModCmd 1
 #define kModOpt 2
 #define kModShift 4
@@ -82,10 +86,12 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_re
       if(itf_protocol == HID_ITF_PROTOCOL_KEYBOARD) 
       {
         KeyboardPrs.AddKeyboard(dev_addr, instance);
+        usb_map_on_keyboard_mount();
         led_blink(2);
       } 
       else // protocol is mouse
       {
+        usb_map_set_mouse("USB Mouse");
         led_blink(3);
       }
     }
@@ -95,7 +101,16 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_re
 // Invoked when device with hid interface is un-mounted
 void tuh_hid_umount_cb(uint8_t dev_addr, uint8_t instance)
 {
-  KeyboardPrs.RemoveKeyboard(dev_addr, instance);
+  uint8_t const itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
+
+  if (itf_protocol == HID_ITF_PROTOCOL_KEYBOARD) {
+    KeyboardPrs.RemoveKeyboard(dev_addr, instance);
+    usb_map_on_keyboard_umount();
+  } else if (itf_protocol == HID_ITF_PROTOCOL_MOUSE) {
+    usb_map_clear_mouse();
+  }
+
+  usb_map_unregister_gamepad(dev_addr);
   led_blink(1);
 }
 

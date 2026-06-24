@@ -9,6 +9,20 @@ This document tracks **BT-USB-ADB-Adapter** gamepad work: goals, mapping options
 - **Status UI:** The **Devices** screen shows how many gamepads are connected on **USB** vs **Bluetooth** (the `BT` number in `Gamepad U … BT …` is a **count**, 0 or 1). **`G1`** on the Bluetooth names screen is the first gamepad’s **name slot**, not a separate counter. The **`BT GP:`** line is **not** a count: it is a **live legend** of which controls are active (for debugging). You can hide or simplify it later if you prefer a cleaner UI.
 - **ADB output (Phase B):** D-pad and buttons → **HID keyboard** via `KeyboardPrs`; **left stick** → **mouse** via `MousePrs` (see default map below).
 
+## Switchable modes (implementation plan)
+
+Behavior follows the **real Gravis MouseStick II** split documented in `docs/gravis_mousestick_ii.md` and `docs/adb_device_list.md` (address **0x3**, handler **0x01** initially, **0x23** after the Gravis cdev switches).
+
+| Mode | When it applies | Behavior |
+|------|-----------------|----------|
+| **1 – MouseStick-like (0x01)** | Default; adapter presents as a relative device with **handler ID 0x01** | **Mouse-style movement** and **buttons** mapped through the existing Phase B path: keyboard keys + `MousePrs` (see default map below). Matches “stick as mouse + keys” before any joystick driver runs. **Status: implemented (Phase B).** |
+| **2 – Native MouseStick II (0x23)** | **Host-driven:** the Mac loads the **Gravis cdev** and performs the **ADB handler switch** from **0x01** to **0x23** | Firmware responds with **MouseStick II** register data: **Talk 1** protocol id (`0x03 0x00` / `0x04 0x00`) and **Talk 0** in **7-byte** or **3-byte** form per `docs/gravis_mousestick_ii.md` (all five buttons, axes as specified). **Not** selected from the OLED—only when the host actually switches the handler. **Status: planned.** |
+| **3 – Custom keymap (“non–MouseStick II”)** | **User toggle** (e.g. OLED/settings), persisted in `FlashSettings` | User-defined **keys** for sticks/D-pad/buttons instead of emulating MouseStick II / Gravis layouts. For users **without** the cdev, or who prefer keyboard-style control. Policy TBD: e.g. ignore or refuse **0x23** while this mode is active so behavior stays predictable. **Status: planned.** |
+
+**Suggested implementation order:** keep **mode 1** stable → implement **mode 2** (detect handler switch, implement Talk 0/1 payloads, SRQ) → add **mode 3** (toggle + keymap storage + UI).
+
+**Later USB gamepads** should feed the same logical layer so all three modes apply regardless of BT vs USB source.
+
 ## Reference: amigahid-pico
 
 The tree at `/Users/rich/Documents/Code/3rd party/amigahid-pico` (local clone) implements:
@@ -33,9 +47,9 @@ The tree at `/Users/rich/Documents/Code/3rd party/amigahid-pico` (local clone) i
 |--------|-------------|--------|--------|
 | **1 – Keyboard** | Map D-pad / buttons to **USB HID keycodes** → existing `KeyboardPrs` / ADB keyboard. | **Low** | Good MVP; no analog; key rollover rules apply. |
 | **2 – Mouse** | Map sticks to **mouse deltas** → `MousePrs`. | **Medium** | Useful for pointer control; conflicts if a real mouse is active—needs policy. |
-| **3 – ADB joystick** | Emulate an **ADB joystick** (e.g. Gravis Mousestick–class behavior). | **High** | Today’s firmware models **keyboard + mouse** ADB devices only; this needs **new device address**, registers, and testing on real Macs / IIgs. |
+| **3 – ADB joystick** | Emulate an **ADB joystick** (e.g. Gravis MouseStick II at handler **0x23**). | **High** | Covered by **Switchable modes** above: **mode 2** (native protocol) + **mode 3** (custom keys). Needs handler switch detection, Talk 0/1, and testing on real Macs / IIgs with the Gravis cdev where applicable. |
 
-**Recommendation:** Ship **(1)** first, add **(2)** as an optional profile, treat **(3)** as a dedicated milestone after MVP.
+**Recommendation:** **Mode 1** is shipped as Phase B. **Mode 2** is the next major milestone for Gravis-accurate games; **Mode 3** follows for users who want remapping without the cdev.
 
 ## Default keyboard map (Phase B)
 
@@ -75,10 +89,12 @@ Characters are appended only while the control is active: `^` `v` `<` `>` (D-pad
 - `bluepad32_get_gamepad_visual()` exposes the latest sticks/buttons for the OLED without consuming the `updated` flag used for input.
 - `display_poll_bt_gamepad_viz()` redraws **Devices** / **Bluetooth names** only when the live snapshot changes (avoids hammering I2C).
 
-### Later
+### Planned (Phase C – switchable modes)
 
-- USB HID gamepads via TinyUSB → same bridge.
-- Optional **Core 1 pause / deferred display** if a specific BT controller misbehaves during pairing (port patterns from amigahid-pico).
+- **Mode 2:** Detect ADB **handler switch** to **0x23**; implement **Talk 0 / Talk 1** per `docs/gravis_mousestick_ii.md`; map Bluetooth gamepad axes/buttons into 7-byte / 3-byte reports as appropriate.
+- **Mode 3:** User **toggle** + persisted **custom keymap** (extend `FlashSettings` carefully; re-verify flash layout).
+- USB HID gamepads via TinyUSB → same bridge as Bluetooth.
+- **Core 1 pause / pairing stability** — see [`FUTURE_WORK.md`](FUTURE_WORK.md) §1, [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md), [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md). Partial `bt_host_coop` exists today; full Atari v22.1.0 recipe not yet ported.
 
 ## Version
 

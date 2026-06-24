@@ -87,6 +87,15 @@ From the project root, `./build_all.sh` builds firmware for all four boards into
 
 Requires `PICO_SDK_PATH` or `PICO_SDK_FETCH_FROM_GIT=ON` (same as `build.sh`). Submodules are initialized automatically.
 
+## Bluetooth pairing stability (planned work)
+
+Random BLE pairing hangs on Pico W / Pico 2 W are tracked in [`docs/FUTURE_WORK.md`](FUTURE_WORK.md) §1 and detailed in:
+
+- [`docs/BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) — canonical fix recipe (copied from ultramegausb-atari-st-rpikbd v22.1.0).
+- [`docs/BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) — this repo’s gap analysis, file map, test matrix, and prior experiments.
+
+Firmware port **not started**; see companion doc for checklist vs current code.
+
 ---
 
 ## Notes for editor / session restart (Mar 2025)

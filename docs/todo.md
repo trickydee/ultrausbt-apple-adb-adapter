@@ -2,6 +2,8 @@
 
 This document tracks upcoming development work for HIDHopper ADB.
 
+For a prioritized future-work list (including **Bluetooth pairing stability**), see [`FUTURE_WORK.md`](FUTURE_WORK.md).
+
 ## 1) Add Gravis Flightstick support (Bluetooth + USB)
 
 ### Goal

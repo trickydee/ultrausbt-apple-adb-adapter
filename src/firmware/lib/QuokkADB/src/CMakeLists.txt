@@ -9,6 +9,7 @@ add_library(QuokkADB
     quokkadb.cpp
     rp2040_serial.cpp
     usbhost.cpp
+    ${CMAKE_SOURCE_DIR}/src/usb_device_map.c
 )
 
 target_link_libraries(QuokkADB pico_stdlib hardware_pio hardware_flash hardware_clocks pico_multicore adb usb tinyusb_common tinyusb_host)
