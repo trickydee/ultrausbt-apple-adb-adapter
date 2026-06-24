@@ -13,14 +13,17 @@
 extern "C" {
 #endif
 
-// Get keyboard data for index (0 .. MAX_BT_KEYBOARDS-1). out_keyboard must match uni_keyboard_t layout.
+#define BLUEPAD32_MAX_BT_KEYBOARDS 2
+#define BLUEPAD32_MAX_BT_MICE 2
+
+// Get keyboard data for index (0 .. BLUEPAD32_MAX_BT_KEYBOARDS-1). out_keyboard must match uni_keyboard_t layout.
 // Returns true if connected and has new data; clears updated flag.
 bool bluepad32_get_keyboard(int idx, void* out_keyboard);
 
 // Get count of connected Bluetooth keyboards
 int bluepad32_get_keyboard_count(void);
 
-// Get mouse data for index (0 .. MAX_BT_MICE-1). out_mouse must match uni_mouse_t layout.
+// Get mouse data for index (0 .. BLUEPAD32_MAX_BT_MICE-1). out_mouse must match uni_mouse_t layout.
 // Returns true if connected and has new data; clears updated flag.
 bool bluepad32_get_mouse(int idx, void* out_mouse);
 

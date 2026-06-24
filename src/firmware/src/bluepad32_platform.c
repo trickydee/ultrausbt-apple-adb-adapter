@@ -13,6 +13,7 @@
 #include <uni.h>
 
 #include "sdkconfig.h"
+#include "bluepad32_platform.h"
 #include "bt_host_coop.h"
 #include "controller/uni_controller_type.h"
 #include "uni_hid_device.h"
@@ -21,8 +22,8 @@
 #error "Must use CONFIG_BLUEPAD32_PLATFORM_CUSTOM"
 #endif
 
-#define MAX_BT_KEYBOARDS 2
-#define MAX_BT_MICE 2
+#define MAX_BT_KEYBOARDS BLUEPAD32_MAX_BT_KEYBOARDS
+#define MAX_BT_MICE BLUEPAD32_MAX_BT_MICE
 #define MAX_BT_GAMEPADS 1
 
 typedef struct {

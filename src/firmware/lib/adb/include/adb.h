@@ -34,6 +34,11 @@
 #define ADB_START_BIT_DELAY 100000
 #endif
 
+/** Short wait when no ADB host is connected (USB-only); keeps UI/button polling responsive. */
+#ifndef ADB_START_BIT_DELAY_IDLE
+#define ADB_START_BIT_DELAY_IDLE 2000
+#endif
+
 /* Minimum attention low time (µs) in ReceiveCommand; CMake may set -DADB_ATTENTION_LO_MIN_US */
 #ifndef ADB_ATTENTION_LO_MIN_US
 #define ADB_ATTENTION_LO_MIN_US 500
@@ -57,6 +62,9 @@ extern volatile bool adb_collision;
 extern volatile bool collision_detection;
 extern uint8_t kbd_addr;
 extern uint8_t mouse_addr;
+
+/** Microseconds to wait for attention on an idle bus (ReceiveCommand). Tunable at runtime. */
+extern uint32_t adb_start_bit_wait_us;
 
 class AdbInterface : public AdbInterfacePlatform {
   public:

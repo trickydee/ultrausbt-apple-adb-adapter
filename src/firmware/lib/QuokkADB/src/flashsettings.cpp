@@ -25,6 +25,7 @@
 //
 //---------------------------------------------------------------------------
 #include "flashsettings.h"
+#include "adb_hub.h"
 #include "pico.h"
 #include "pico/multicore.h"
 #include "string.h"
@@ -72,12 +73,21 @@ void FlashSettings::init(void)
     if (((uint16_t*)setting_buffer)[0] == QUOKKADB_SETTINGS_MAGIC_NUMBER) 
     {
         memcpy((void*)&_settings, setting_buffer, FLASH_PAGE_SIZE);
+#if ADB_PASSTHROUGH_HUB_DEFAULT
+        if (!_settings.reserved_bytes[ADB_SETTINGS_IDX_HUB_MODE]) {
+            _settings.reserved_bytes[ADB_SETTINGS_IDX_HUB_MODE] = 1;
+            save();
+        }
+#endif
     }
     else
     {
         // set default values
         _settings.magic_number = QUOKKADB_SETTINGS_MAGIC_NUMBER;
         _settings.led_on = 1;
+#if ADB_PASSTHROUGH_HUB_DEFAULT
+        _settings.reserved_bytes[ADB_SETTINGS_IDX_HUB_MODE] = 1;
+#endif
     }
 
 }

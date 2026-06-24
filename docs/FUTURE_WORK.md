@@ -65,10 +65,22 @@ Reverted on `feature/joysticks` with no improvement: shorter pairing delays (10 
 ## 3. UI / OLED alignment
 
 **Priority:** Medium  
-**Status:** In progress on `feature/ui-alignment` (splash / devices / map devices per ULTRAMEGAUSB spec)
+**Status:** Implemented on `feature/ui-alignment` (splash / devices / map devices per ULTRAMEGAUSB spec)
 
-- [ ] Finish and merge UI alignment branch
-- [ ] Verify on hardware (Pico W / Pico 2 W with buttons + display)
+- [x] Three-screen flow, USB map, L+R pairing clear
+- [ ] Merge branch; verify on hardware
+
+---
+
+## 7. ADB passthrough hub — Phase 2 (active repeater)
+
+**Priority:** Medium  
+**Status:** Phase 1 done — relocated addresses; see [`adb-passthrough-hub.md`](adb-passthrough-hub.md)
+
+- [x] Hub mode: spec enumeration (defaults **0x02/0x03**, host Listen **0xFE**, collision); OLED footer
+- [ ] OLED / button toggle for hub mode and custom addresses
+- [ ] PIO bit-level repeater if hardware uses split host/device segments
+- [ ] Optional proxy: forward Talk to downstream when adapter is passive listener
 
 ---
 
@@ -96,6 +108,26 @@ Pico-native ADB bus monitor, timing capture, diagnostic interposer PCB. Useful f
 **Reference:** [`todo.md`](todo.md) §3, [`wacom.md`](wacom.md)
 
 Absolute positioning, pressure, Wacom-style ADB register packing.
+
+---
+
+## 8. Multiple ADB pointing devices (separate cursors)
+
+**Priority:** Lower  
+**Status:** Not started — today all USB/BT mice, trackballs, and gamepad stick input are **merged** into one ADB mouse address (spec collision/relocation on the passthrough hub).
+
+### Current behaviour
+
+- One `mouse_addr` on the bus; `bt_hid_bridge` sums deltas from up to two BT mice plus gamepad stick into a single `MousePrs` stream.
+- Chained physical ADB devices (trackball, Gravis stick) are separate bus participants with their own addresses after host enumeration.
+
+### Future option
+
+- [ ] Expose **second (and third) ADB mouse instances** at unique addresses (e.g. **0x03**, **0x04**, **0x06**) for multi-cursor scenarios on classic Mac / IIgs
+- [ ] Per-device routing: USB port / BT slot / gamepad stick → dedicated ADB address
+- [ ] Hub mode: coordinate with downstream **0x03** trackball so adapter USB/BT mice relocate without stealing the downstream default
+- [ ] OLED map screen: show which logical device maps to which ADB address
+- [ ] Mac OS limits: document which systems support multiple pointing devices vs a single “primary” mouse
 
 ---
 

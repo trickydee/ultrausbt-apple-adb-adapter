@@ -32,6 +32,7 @@
 //----------------------------------------------------------------------------
 
 #include "adb.h"
+#include "adb_hub.h"
 #include "bithacks.h"
 #include "math.h"
 
@@ -42,6 +43,7 @@ using rp2040_serial::Serial;
 
 uint8_t mouse_addr = MOUSE_DEFAULT_ADDR;
 uint8_t kbd_addr = KBD_DEFAULT_ADDR;
+uint32_t adb_start_bit_wait_us = ADB_START_BIT_DELAY;
 uint8_t mouse_handler_id = MOUSE_DEFAULT_HANDLER_ID;
 uint8_t kbd_handler_id = KBD_DEFAULT_HANDLER_ID;
 uint8_t mousepending = 0;
@@ -107,7 +109,7 @@ int16_t AdbInterface::ReceiveCommand(uint8_t srq)
   static uint32_t attention_reject_count = 0;
   
   // find attention & start bit
-  hi = wait_data_lo(ADB_START_BIT_DELAY); 
+  hi = wait_data_lo(adb_start_bit_wait_us); 
   if (!hi)
     return -1;
   do 
@@ -345,6 +347,7 @@ void AdbInterface::ProcessCommand(int16_t cmd)
               break;
             }
             mouse_addr = listen_addr;
+            adb_hub_on_host_address_assigned(true);
             if (global_debug)
             {
               Serial.print("MOUSE: address change to 0x");
@@ -432,6 +435,7 @@ void AdbInterface::ProcessCommand(int16_t cmd)
       {
         ResetCollision();
         mouse_skip_next_listen_reg3 = true;
+        adb_hub_note_reg3_collision(true);
         if (global_debug)
         {
           Serial.print("MOUSE: Collision TALK register 3 at 0x");
@@ -521,6 +525,7 @@ void AdbInterface::ProcessCommand(int16_t cmd)
               break;
             }
             kbd_addr = listen_addr;
+            adb_hub_on_host_address_assigned(false);
             if (global_debug)
             {
               Serial.print("KBD: address change to 0x");
@@ -659,43 +664,29 @@ void AdbInterface::ProcessCommand(int16_t cmd)
 uint16_t AdbInterface::GetAdbRegister3Keyboard()
 {
   uint16_t kbdreg3 = 0;
-  // using random address 
-  uint8_t random_address = rand() & 0xF;
-  // Bit 15 Reserved; must be 0
+  uint8_t addr_field = adb_hub_is_host_assigned(false)
+                           ? (uint8_t)(kbd_addr & 0x0F)
+                           : adb_hub_propose_reg3_address(kbd_addr, false);
   B_UNSET(kbdreg3, 15);
-  // 14      Exceptional event, device specific; always 1 if not used
   B_SET(kbdreg3, 14);
-  // 13      Service Request enable; 1 = enabled
   B_UNSET(kbdreg3, 13);
-  // 12      Reserved; must be 0
   B_UNSET(kbdreg3, 12);
-  // 11-8      Device address
-  // "ADB - The Untold Story: Space Aliens Ate My Mouse"
-  // specifies that a random value should be returned as the address for register 3
-  kbdreg3 |=  random_address << 8;
-  // 7-0       Device Handler ID
+  kbdreg3 |= (uint16_t)addr_field << 8;
   kbdreg3 |= kbd_handler_id;
-  
+
   return kbdreg3;
 }
 uint16_t AdbInterface::GetAdbRegister3Mouse()
 {
   uint16_t mousereg3 = 0;
-  // using random address in 0x8 to 0xE addresses
-  uint8_t random_address =  rand() & 0xF;
-  // Bit 15 Reserved; must be 0
+  uint8_t addr_field = adb_hub_is_host_assigned(true)
+                           ? (uint8_t)(mouse_addr & 0x0F)
+                           : adb_hub_propose_reg3_address(mouse_addr, true);
   B_UNSET(mousereg3, 15);
-  // 14      Exceptional event, device specific; always 1 if not used
   B_SET(mousereg3, 14);
-  // 13      Service Request enable; 1 = enabled
   B_UNSET(mousereg3, 13);
-  // 12      Reserved; must be 0
   B_UNSET(mousereg3, 12);
-  // 11-8      Device address 
-  // "ADB - The Untold Story: Space Aliens Ate My Mouse"
-  // specifies that a random value should be returned as the address for register 3
-  mousereg3 |= random_address << 8;  
-  // 7-0       Device Handler ID
+  mousereg3 |= (uint16_t)addr_field << 8;
   mousereg3 |= mouse_handler_id;
 
   return mousereg3;
@@ -703,8 +694,7 @@ uint16_t AdbInterface::GetAdbRegister3Mouse()
 
 void AdbInterface::Reset(void)
 {
-  mouse_addr = MOUSE_DEFAULT_ADDR;
-  kbd_addr = KBD_DEFAULT_ADDR;
+  adb_hub_restore_addresses();
   mouse_handler_id = MOUSE_DEFAULT_HANDLER_ID;
   kbd_handler_id = KBD_DEFAULT_HANDLER_ID;
   kbdreg2 = 0xFFFF;

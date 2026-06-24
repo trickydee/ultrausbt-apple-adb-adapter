@@ -87,6 +87,11 @@ void MouseRptParser::OnMouseMove(MOUSEINFO *mi)
     m_movedy = mi->dY;
 #endif
 }
+void MouseRptParser::OnMouseMoveReplace(MOUSEINFO *mi)
+{
+    m_movedx = mi->dX;
+    m_movedy = mi->dY;
+}
 void MouseRptParser::OnLeftButtonUp(MOUSEINFO *mi)
 {
     if (global_debug)

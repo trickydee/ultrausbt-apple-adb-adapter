@@ -62,10 +62,13 @@ class PlatformMouseParser {
         } prevState;
 
 public:
-        void Parse(const hid_mouse_report_t* report);
+        void Parse(const hid_mouse_report_t* report, bool replace_movement = false);
 protected:
 
         virtual void OnMouseMove(MOUSEINFO *mi __attribute__((unused))) {
+        };
+
+        virtual void OnMouseMoveReplace(MOUSEINFO *mi __attribute__((unused))) {
         };
 
         virtual void OnLeftButtonUp(MOUSEINFO *mi __attribute__((unused))) {

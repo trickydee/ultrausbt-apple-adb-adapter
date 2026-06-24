@@ -66,9 +66,24 @@ Implemented in `bt_hid_bridge.cpp` (merged with BT keyboard reports when both up
 | Thumb L / R | Comma / Period |
 | Start / Select / System / Capture | Enter / Tab / F1 / F12 |
 
-**Left stick (analog):** X/Y drive **mouse pointer deltas** via `MousePrs`. Sensitivity is set by **`GP_MOUSE_MAX_DELTA`** (max per axis per report) and **`GP_MOUSE_DEADZONE`** in `bt_hid_bridge.cpp` (lower max = slower cursor). Deltas are **added** to a connected **Bluetooth mouse** in the same poll if both move. D-pad still sends arrow keys only.
+**Left stick (analog):** X/Y drive **mouse pointer deltas** via `MousePrs`. Each gamepad report **replaces** the pending stick delta (USB/BT mice still **accumulate** between ADB polls). Releasing the stick to centre clears pending movement immediately. D-pad still sends arrow keys only.
+
+### Tuning: gamepad stick → mouse (`bt_hid_bridge.cpp`)
+
+Constants at the top of `bt_hid_bridge.cpp` (rebuild required after change):
+
+| Constant | Default | Effect |
+|----------|---------|--------|
+| **`GP_MOUSE_MAX_DELTA`** | `40` | Maximum pointer delta **per axis per gamepad report** (after deadzone). Higher = faster cursor per stick deflection. Range is clamped to boot-HID ±127 before ADB encoding (7-bit movement is halved again in `adbmouseparser.cpp`). |
+| **`GP_MOUSE_DEADZONE`** | `64` | Stick deflection below this (Bluepad32 virtual axis ±512) is treated as centred. Wider deadzone reduces drift and slow creep when the stick springs back; too wide feels sluggish near centre. |
+
+Gamepad stick uses **replace** semantics (not `ADB_MOUSE_ACCUMULATE_DELTAS`). USB and Bluetooth **mice** still accumulate between ADB host polls — see `ADB_MOUSE_ACCUMULATE_DELTAS` in [`iigs-debugging.md`](iigs-debugging.md).
 
 **Mouse clicks (gamepad):** **L1** (`BUTTON_SHOULDER_L`) → **left button**; **R2** / right trigger (`BUTTON_TRIGGER_R`) → **right button**. These are not sent as keyboard keys. Edge transitions are tracked so **button release** is delivered to the host.
+
+### Bluetooth mouse buttons during drag
+
+BLE mice often send **movement-only** HID reports with no button field. Bluepad32 clears button state at the start of each report, so a drag can look like repeated button-up events. `bt_hid_bridge.cpp` **latches** each BT mouse slot’s last non-zero button mask and re-applies it on movement-only reports; an all-quiet report (no motion, no buttons) clears the latch.
 
 ## OLED legend (`BT GP:` line)
 

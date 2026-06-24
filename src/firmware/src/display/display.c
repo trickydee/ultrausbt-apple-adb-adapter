@@ -7,6 +7,7 @@
 #include "display/display_config.h"
 #include "ssd1306.h"
 #include "usb_device_map.h"
+#include "adb_hub.h"
 #include <hardware/i2c.h>
 #include <hardware/gpio.h>
 #include <pico/time.h>
@@ -55,7 +56,7 @@ static int last_drawn_adb_collision = -1;
 
 static display_screen_t current_screen = DISPLAY_SCREEN_SPLASH;
 
-#define BUTTON_DEBOUNCE_COUNT 10
+#define BUTTON_DEBOUNCE_COUNT 3
 static uint8_t button_middle_debounce = 0;
 static uint8_t button_left_debounce = 0;
 static uint8_t button_right_debounce = 0;
@@ -196,6 +197,12 @@ void display_show_devices(void)
         ssd1306_draw_string(&disp, 0, 36, 1, (char *)"GP: Kbd+Mouse");
     }
 #endif
+
+    if (adb_hub_is_enabled()) {
+        snprintf(buf, sizeof(buf), "Hub K%X M%X", (unsigned)adb_hub_effective_kbd_addr(),
+                (unsigned)adb_hub_effective_mouse_addr());
+        ssd1306_draw_string(&disp, 0, 55, 1, buf);
+    }
 
     ssd1306_show(&disp);
     current_screen = DISPLAY_SCREEN_DEVICES;

@@ -62,6 +62,7 @@
 #include "display/display.h"
 extern "C" {
 #include "usb_device_map.h"
+#include "adb_hub.h"
 }
 
 using rp2040_serial::Serial;
@@ -141,6 +142,11 @@ int quokkadb(void) {
   
   setting_storage.init();
 
+  {
+    QuokkADBSettings* cfg = setting_storage.settings();
+    adb_hub_configure(cfg->reserved_bytes[ADB_SETTINGS_IDX_HUB_MODE] != 0);
+  }
+
   display_init();
 
   //  Block this core when the core1 is writing to flash
@@ -173,6 +179,13 @@ int quokkadb(void) {
       display_set_adb_status(connected, kbd_addr, mouse_addr, 0, srq, collision);
     }
     display_handle_buttons();
+
+    {
+      uint32_t now = time_us_32();
+      int bus_active = (adb_ever_received_cmd && (now - last_adb_cmd_time) < 2000000u) ? 1 : 0;
+      adb_start_bit_wait_us = bus_active ? (uint32_t)ADB_START_BIT_DELAY
+                                         : (uint32_t)ADB_START_BIT_DELAY_IDLE;
+    }
 
     {
       uint8_t ukb = 0;

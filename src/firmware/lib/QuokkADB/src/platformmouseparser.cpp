@@ -31,7 +31,7 @@
 #include "tusb.h"
 #include "usb_hid_keys.h"
 
-void PlatformMouseParser::Parse(const hid_mouse_report_t *report){
+void PlatformMouseParser::Parse(const hid_mouse_report_t *report, bool replace_movement){
     static MOUSEINFO mouse_info;
 
     mouse_info.bmLeftButton = !!(report->buttons & MOUSE_BUTTON_LEFT);
@@ -42,7 +42,11 @@ void PlatformMouseParser::Parse(const hid_mouse_report_t *report){
     mouse_info.dWheel = report->wheel;
 
     if(mouse_info.dX != 0 || mouse_info.dY != 0) {
-        OnMouseMove(&mouse_info);
+        if (replace_movement) {
+            OnMouseMoveReplace(&mouse_info);
+        } else {
+            OnMouseMove(&mouse_info);
+        }
     }
 
     // change to mouse left button down

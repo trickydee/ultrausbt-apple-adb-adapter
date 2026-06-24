@@ -46,7 +46,8 @@ public:
     bool MouseButtonIsPressed();
 
 protected:
-    void OnMouseMove(MOUSEINFO *mi);
+    void OnMouseMove(MOUSEINFO *mi) override;
+    void OnMouseMoveReplace(MOUSEINFO *mi) override;
     void OnLeftButtonUp(MOUSEINFO *mi);
     void OnLeftButtonDown(MOUSEINFO *mi);
     void OnRightButtonUp(MOUSEINFO *mi);

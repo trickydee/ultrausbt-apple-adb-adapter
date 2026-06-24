@@ -76,6 +76,14 @@ else()
     add_compile_definitions(ADB_IIGS_MOUSE_SUPPRESS_SRQ=0)
 endif()
 
+# Passthrough hub: host-driven enumeration with collision bias for daisy-chained devices
+option(ADB_PASSTHROUGH_HUB_DEFAULT "Default-enable ADB hub mode (spec enumeration + collision bias) on fresh flash" ON)
+if(ADB_PASSTHROUGH_HUB_DEFAULT)
+    message(STATUS "ADB passthrough hub: default ON (spec enumeration)")
+else()
+    message(STATUS "ADB passthrough hub: default OFF (classic single-device)")
+endif()
+
 # initialize the Raspberry Pi Pico SDK
 pico_sdk_init()
 
@@ -130,7 +138,7 @@ if(ENABLE_BLUEPAD32)
             CYW43_WL_GPIO_LED_PIN=0
         )
     endif()
-    target_include_directories(QuokkADB PRIVATE ${CMAKE_SOURCE_DIR}/src)
+    target_include_directories(QuokkADB PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
     target_include_directories(QuokkADB PRIVATE ${CMAKE_SOURCE_DIR}/bluepad32/src/components/bluepad32/include)
     target_link_libraries(BT-USB-ADB-Adapter-firmware
         pico_cyw43_arch_none
