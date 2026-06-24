@@ -170,6 +170,8 @@ int quokkadb(void) {
   while (true) {
     int16_t cmd = 0;
 
+    display_handle_buttons();
+
     /* Update display ADB status: connected, device IDs, SRQ (kbd or mouse pending), collision */
     {
       uint32_t now = time_us_32();
@@ -178,7 +180,6 @@ int quokkadb(void) {
       int collision = adb_collision ? 1 : 0;
       display_set_adb_status(connected, kbd_addr, mouse_addr, 0, srq, collision);
     }
-    display_handle_buttons();
 
     {
       uint32_t now = time_us_32();

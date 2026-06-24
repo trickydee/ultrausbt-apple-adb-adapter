@@ -79,7 +79,9 @@ Constants at the top of `bt_hid_bridge.cpp` (rebuild required after change):
 
 Gamepad stick uses **replace** semantics (not `ADB_MOUSE_ACCUMULATE_DELTAS`). USB and Bluetooth **mice** still accumulate between ADB host polls — see `ADB_MOUSE_ACCUMULATE_DELTAS` in [`iigs-debugging.md`](iigs-debugging.md).
 
-**Mouse clicks (gamepad):** **L1** (`BUTTON_SHOULDER_L`) → **left button**; **R2** / right trigger (`BUTTON_TRIGGER_R`) → **right button**. These are not sent as keyboard keys. Edge transitions are tracked so **button release** is delivered to the host.
+**Mouse clicks (gamepad):** **L1** (`BUTTON_SHOULDER_L`) → **left button**; **R2** / right trigger (`BUTTON_TRIGGER_R`) → **right button**. These are not sent as keyboard keys. A button latch keeps L1/R2 pressed across stick-movement frames (same idea as BLE mice). While L1/R2 is held, each gamepad report refreshes button state even if the stick is centred.
+
+**USB mouse wheel:** Boot-protocol HID is buttons + X + Y only; a few mice add a 4th wheel byte and `usbhost.cpp` reads it when `len >= 4`. Most wheel mice need report-protocol parsing (not implemented yet — switching protocol broke movement, so wheel is deferred). Bluetooth mice use Bluepad32’s `scroll_wheel` field. Wheels are emulated as Up/Down arrow keys in `platformmouseparser.cpp`.
 
 ### Bluetooth mouse buttons during drag
 

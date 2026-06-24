@@ -64,7 +64,6 @@ bool set_hid_report_ready = true;
 // therefore report_desc = NULL, desc_len = 0
 void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_report, uint16_t desc_len)
 {
-  
   (void)desc_report;
   (void)desc_len;
 
@@ -130,15 +129,20 @@ static void process_kbd_report(uint8_t dev_addr, uint8_t instance, hid_keyboard_
   KeyboardPrs.Parse(dev_addr, instance, report);
 }
 
-static void process_mouse_report(uint8_t dev_addr, hid_mouse_report_t const * report)
+static void process_mouse_report(uint8_t const* report, uint16_t len)
 {
-    MousePrs.Parse(report);
+    hid_mouse_report_t hr = {};
+    hr.buttons = report[0];
+    if (len >= 2) hr.x = (int8_t)report[1];
+    if (len >= 3) hr.y = (int8_t)report[2];
+    /* Boot HID is officially 3 bytes; some wheel mice add a 4th byte in boot mode. */
+    if (len >= 4) hr.wheel = (int8_t)report[3];
+    MousePrs.Parse(&hr);
 }
 
 // Invoked when received report from device via interrupt endpoint
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* report, uint16_t len)
 {
-  (void) len;
   uint8_t const itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
 
   switch(itf_protocol)
@@ -148,7 +152,7 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t cons
     break;
 
     case HID_ITF_PROTOCOL_MOUSE:
-      process_mouse_report(dev_addr, (hid_mouse_report_t const*) report );
+      process_mouse_report(report, len);
     break;
 
     default: break;
@@ -163,5 +167,10 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t cons
 
 void tuh_hid_set_report_complete_cb(uint8_t dev_addr, uint8_t instance, uint8_t report_id, uint8_t report_type, uint16_t len)
 {
+  (void)dev_addr;
+  (void)instance;
+  (void)report_id;
+  (void)report_type;
+  (void)len;
   set_hid_report_ready = true;
 }

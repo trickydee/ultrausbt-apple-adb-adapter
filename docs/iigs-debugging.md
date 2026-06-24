@@ -112,6 +112,7 @@ For A/B testing with existing script-driven flows, keep all other options identi
 
 **Build-time option:** `ADB_IIGS_MOUSE_SUPPRESS_SRQ`
 - `ON` (**default** in `CMakeLists.txt`): suppress mouse SRQ extension (keyboard SRQ only). Recommended for IIgs and validated on ADB Macs.
+- **Hub mode + chained trackball:** mouse SRQ is not enabled on the wire (hub SRQ workaround reverted). After trackball idle, USB/BT mouse may need a keyboard event to wake the bus until §9 intelligent detection lands.
 - `OFF`: legacy behavior (mouse can also extend SRQ). Pass `-DADB_IIGS_MOUSE_SUPPRESS_SRQ=OFF` if you need to compare or hit an edge case.
 
 **Disable example:**  

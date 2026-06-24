@@ -174,6 +174,7 @@ static void process_bluepad32_mouse_merged(const uni_gamepad_t* gp, bool gp_new)
     static uint8_t prev_gp_mouse_btn = 0;
     static uint8_t prev_buttons = 0;
     static uint8_t s_bt_buttons_latched = 0;
+    static uint8_t s_gp_buttons_latched = 0;
     static bool gp_stick_was_moving = false;
 
     int16_t acc_dx = 0;
@@ -201,7 +202,7 @@ static void process_bluepad32_mouse_merged(const uni_gamepad_t* gp, bool gp_new)
     bool bt_motion = (acc_dx != 0 || acc_dy != 0);
     if (buttons != 0) {
         s_bt_buttons_latched = buttons;
-    } else if (peek_merged_bt_buttons() == 0 && !bt_motion) {
+    } else if (peek_merged_bt_buttons() == 0 && !bt_motion && s_gp_buttons_latched == 0) {
         s_bt_buttons_latched = 0;
     }
 
@@ -212,10 +213,15 @@ static void process_bluepad32_mouse_merged(const uni_gamepad_t* gp, bool gp_new)
         gx = scale_left_stick_to_mouse_delta(gp->axis_x);
         gy = scale_left_stick_to_mouse_delta(gp->axis_y);
         gp_mouse_btn = gamepad_mouse_button_mask(gp);
+        if (gp_mouse_btn != 0) {
+            s_gp_buttons_latched = gp_mouse_btn;
+        } else {
+            s_gp_buttons_latched = 0;
+        }
         buttons = (uint8_t)(buttons | gp_mouse_btn);
     }
 
-    buttons = (uint8_t)(buttons | s_bt_buttons_latched);
+    buttons = (uint8_t)(buttons | s_bt_buttons_latched | s_gp_buttons_latched);
 
     bool gp_motion = (gx != 0 || gy != 0);
 
@@ -230,7 +236,9 @@ static void process_bluepad32_mouse_merged(const uni_gamepad_t* gp, bool gp_new)
     bool have_movement = bt_motion || gp_motion;
     bool gp_btn_edge = gp_new && (gp_mouse_btn != prev_gp_mouse_btn);
     bool btn_change = buttons != prev_buttons;
-    bool emit = have_movement || (wheel != 0) || btn_change || gp_btn_edge;
+    bool gp_btn_held = (s_gp_buttons_latched != 0);
+    bool emit = have_movement || (wheel != 0) || btn_change || gp_btn_edge
+                || (gp_new && gp_btn_held);
     if (!emit) {
         return;
     }
@@ -241,8 +249,8 @@ static void process_bluepad32_mouse_merged(const uni_gamepad_t* gp, bool gp_new)
     report.y = clamp_i32_to_i8_mouse((int32_t)acc_dy + gy);
     report.wheel = wheel;
     report.pan = 0;
-    /* Gamepad samples replace pending delta; USB/BT mice still accumulate. */
-    MousePrs.Parse(&report, gp_new);
+    /* Replace pending delta only when the stick moved; USB/BT still accumulate. */
+    MousePrs.Parse(&report, gp_motion);
 
     prev_buttons = buttons;
     if (gp_new) prev_gp_mouse_btn = gp_mouse_btn;
