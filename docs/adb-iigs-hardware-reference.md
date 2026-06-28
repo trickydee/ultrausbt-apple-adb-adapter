@@ -4,7 +4,7 @@ This document records **Apple Desktop Bus** timing and related rules from **Appl
 
 **Source PDF:** `Apple IIgs Hardware Reference_HiRes.pdf` (local reference copy). That edition is **bitmap-only** (no text layer); values below were taken from the printed **Table 6-8** and surrounding sections via OCR and cross-checked against figure captions. Minor OCR artifacts (e.g. “Syne” for Sync) are normalized here.
 
-For how this relates to **HIDHopper** branches, see `docs/adb-iigs-support.md`.
+For how this relates to firmware branches, see `docs/adb-iigs-support.md`.
 
 ---
 

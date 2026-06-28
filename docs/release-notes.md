@@ -1,6 +1,6 @@
 # BT-USB-ADB-Adapter – Release notes
 
-Lineage: this firmware continues the [HIDHopper ADB](HIDHopper.md) / QuokkADB line. Older notes below still name **HIDHopper** where they describe history or retail hardware.
+Lineage: this firmware descends from QuokkADB and adbuino. Target hardware: [`hardware.md`](hardware.md).
 
 ## feature/gamepad (in progress)
 
@@ -18,14 +18,14 @@ Lineage: this firmware continues the [HIDHopper ADB](HIDHopper.md) / QuokkADB li
 
 ## 1.0.16
 
-- **Product rename:** CMake project/target **`BT-USB-ADB-Adapter-firmware`**, UF2 outputs (`BT-USB-ADB-Adapter-firmware*.uf2`), boot banner, Bluetooth device name, and top-level docs now use **BT-USB-ADB-Adapter**. [HIDHopper.md](HIDHopper.md), [led-support.md](led-support.md), and provenance text elsewhere still refer to **HIDHopper** where useful.
+- **Product rename:** CMake project/target **`BT-USB-ADB-Adapter-firmware`**, UF2 outputs (`BT-USB-ADB-Adapter-firmware*.uf2`), boot banner, Bluetooth device name, and top-level docs now use **BT-USB-ADB-Adapter**.
 
 ## 1.0.15
 
-- **Repository cleanup for this fork:** The tree is being focused on this **ultramegausb** Apple ADB adapter firmware (USB + Bluetooth via Pico / Pico 2), not on legacy **ADBuino** Arduino hardware or **HIDHopper** retail hardware design drops.
+- **Repository cleanup for this fork:** The tree is focused on the **ultramegausb** DIY Apple ADB adapter firmware (USB + Bluetooth via Pico / Pico 2), not on legacy **ADBuino** Arduino hardware or third-party retail adapter PCBs.
 - **Removed ADBuino-era firmware paths:** Unused ADBuino/PlatformIO Arduino target sources, the old `adbuino` CI workflow, and related utilities that only applied to that stack.
-- **Removed HIDHopper hardware-design artifacts:** Legacy case CAD, CC–NC KiCad/gerber bundles, and extra product images that were not used by this firmware project. Pinout images useful for DIY wiring (`adb_pinout.png`, Pico pinout) are retained under `images/`.
-- **Documentation layout:** User-facing docs live under `docs/` (including migrated `HIDHopper.md`, `adb.md`, and new notes such as `led-support.md`). The old top-level `doc/` folder is gone; `README` links updated accordingly.
+- **Removed third-party hardware-design artifacts:** Legacy case CAD, KiCad/gerber bundles, and extra product images not used by this firmware project. Pinout images useful for DIY wiring (`adb_pinout.png`, Pico pinout) are retained under `images/`.
+- **Documentation layout:** User-facing docs live under `docs/` (including [`hardware.md`](hardware.md), `adb.md`, and notes such as `led-support.md`). The old top-level `doc/` folder is gone; `README` links updated accordingly.
 - **License text:** `LICENSE` now describes this fork’s goals and third-party stack (including TinyUSB and Bluepad32).
 - **Mouse SRQ suppression default:** `ADB_IIGS_MOUSE_SUPPRESS_SRQ` is now **ON** by default in CMake (improves IIgs BASIC and general behavior; use `-DADB_IIGS_MOUSE_SUPPRESS_SRQ=OFF` for legacy mouse SRQ). `build_all.sh` no longer passes this flag explicitly.
 
@@ -68,7 +68,7 @@ Lineage: this firmware continues the [HIDHopper ADB](HIDHopper.md) / QuokkADB li
 
 ## 1.0.1
 
-- Firmware version numbering: single source of truth in `CMakeLists.txt`; banner and identity show “HIDHopper ADB” and version.
+- Firmware version numbering: single source of truth in `CMakeLists.txt`; banner and identity show product name and version.
 - Flash settings sector moved to avoid overlap with BTstack TLV region on wireless builds.
 
 ## 1.0.0

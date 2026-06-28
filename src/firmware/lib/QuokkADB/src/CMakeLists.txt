@@ -14,6 +14,12 @@ add_library(QuokkADB
 )
 
 target_link_libraries(QuokkADB pico_stdlib hardware_pio hardware_flash hardware_clocks pico_multicore adb usb tinyusb_common tinyusb_host)
+if(ADB_HOST_MODE)
+    target_link_libraries(QuokkADB tinyusb_device)
+    target_compile_definitions(QuokkADB PRIVATE ADB_HOST_MODE=1)
+else()
+    target_compile_definitions(QuokkADB PRIVATE ADB_HOST_MODE=0)
+endif()
 target_include_directories(QuokkADB PUBLIC ../include)
 
 if(ADB_IIGS_MOUSE_SUPPRESS_SRQ)

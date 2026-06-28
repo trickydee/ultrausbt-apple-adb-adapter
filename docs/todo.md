@@ -1,6 +1,6 @@
 # Project TODO
 
-This document tracks upcoming development work for HIDHopper ADB.
+This document tracks upcoming development work for the BT-USB-ADB-Adapter firmware.
 
 For a prioritized future-work list (including **Bluetooth pairing stability**), see [`FUTURE_WORK.md`](FUTURE_WORK.md).
 

@@ -37,24 +37,24 @@
 #include "hardware/uart.h"
 
 
-// Status LED GPIOs
-#define LED_GPIO     15
+// Status LED GPIOs (external D1 via R1 — apple-adb.kicad_sch)
+#define LED_GPIO     25
 #define LED_ON()    sio_hw->gpio_set = 1 << LED_GPIO
 #define LED_OFF()   sio_hw->gpio_clr = 1 << LED_GPIO
 #define LED_SET(x)  (x ? sio_hw->gpio_set = 1 << LED_GPIO : sio_hw->gpio_clr = 1 << LED_GPIO)
 
-// ADB GPIOs
-#define ADB_PWR_GPIO  21
-#define ADB_IN_GPIO   19
+// ADB GPIOs — BSS138 module Uc1 (apple-adb.kicad_sch; see docs/hardware.md)
 #define ADB_OUT_GPIO  18
+#define ADB_IN_GPIO   19
 #define ADB_OUT_HIGH() sio_hw->gpio_set = 1 << ADB_OUT_GPIO
 #define ADB_OUT_LOW()  sio_hw->gpio_clr = 1 << ADB_OUT_GPIO
 #define ADB_IN_GET() (gpio_get(ADB_IN_GPIO))
 
 #define GPIO_TEST 22
 
-// UART out messaging
-#define UART_TX_GPIO    16
+// UART out messaging (Pico header pin 1 = GP0 TX, pin 2 = GND, pin 3 = GP1 RX)
+#define UART_TX_GPIO    0
+#define UART_RX_GPIO    1
 #define UART_TX_BAUD    115200
 #define UART_PORT       uart0
 

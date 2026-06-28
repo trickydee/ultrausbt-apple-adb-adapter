@@ -192,28 +192,37 @@ Absolute positioning, pressure, Wacom-style ADB register packing.
 ## 10. ADB Host mode (ADB accessories → USB host)
 
 **Priority:** Medium  
-**Status:** Not started — **inverse** of today’s primary role (adapter as ADB **device** emulating keyboard/mouse from USB/BT).
+**Status:** MVP on `feature/adb-host-mode` — manual OLED switch, ADB poll @ 0x02/0x03, USB HID device
 
 ### Use case
 
-Plug **real ADB accessories** (keyboard, mouse, trackball, joystick) into the adapter and present them to a **USB host** (Mac/PC/PI) as standard USB HID — e.g. use a vintage ADB keyboard on a modern machine, or chain a trackball through the adapter’s device port while the USB-C port is the upstream host.
+Plug **real ADB accessories** (keyboard, mouse, trackball) into the adapter and present them to a **USB host** (Mac/PC/Pi) as standard USB HID — e.g. use a vintage ADB keyboard on a modern machine.
+
+**Mode selection is manual:** user picks **ADB → Mac** (default, today’s USB/BT bridge) or **ADB → USB** on the OLED before changing wiring. See [`adb-host-mode.md`](adb-host-mode.md).
 
 ### Architecture sketch
 
 | Today (device mode) | Host mode (proposed) |
 |---------------------|----------------------|
 | USB/BT → emulated ADB kbd/mouse | ADB Talk/Listen → USB HID reports |
-| Core 1: TinyUSB **host** (input devices) | Core 1: TinyUSB **device** (to PC) or dual-role |
+| Core 1: TinyUSB **host** (input devices) | Core 1: TinyUSB **device** (to PC) |
 | Core 0: ADB **device** GPIO bit-bang | Core 0: ADB **host** — issue Talk/Listen, enumerate bus |
+
+Modes are **mutually exclusive** — user switches explicitly; one USB stack active at a time.
 
 ### Open questions
 
-- [ ] Electrical topology: HIDHopper dual-port — which port is ADB host vs downstream chain?
-- [ ] Dual-role USB: device to PC while still hosting USB HID peripherals, or mutually exclusive modes?
-- [ ] Enumeration: implement host-side ADB reset, Talk R3, Listen **0xFE** relocation for multiple bus devices
-- [ ] Map ADB register 0 keyboard/mouse/joystick formats to USB HID (inverse of current parsers)
-- [ ] OLED mode indicator: **ADB device** vs **ADB host** vs **monitor**
-- [ ] Coexistence with hub passthrough and BT bridge (likely separate flash profile or runtime mode switch)
+- [ ] OLED mode screen UX (placement, confirm, “remember default”)
+- [ ] Electrical / bus power in ADB host mode
+- [ ] Hub hat support matrix in `ADB → USB` mode
+- [ ] Enumeration: host-side ADB reset, Talk R3, Listen **0xFE** for multiple bus devices
+- [ ] Map ADB register 0 keyboard/mouse formats to USB HID (inverse of current parsers)
+- [ ] Coexistence with passthrough hub logic when Pico is bus master
+
+### Decided
+
+- [x] **Manual mode switch** — no auto-detect from VBUS or ADB traffic (v1)
+- [x] **Mutually exclusive USB roles** — cannot host USB-A peripherals and present HID to PC simultaneously on native USB
 
 ### References
 
@@ -226,7 +235,7 @@ Plug **real ADB accessories** (keyboard, mouse, trackball, joystick) into the ad
 
 **Priority:** Medium (after §2 Phase C foundations and ideally §5 ADBMON)  
 **Status:** Not started — Phase B ships MouseStick-**like** handler **0x01** (stick → mouse + keys); native **0x23** not implemented  
-**Reference:** [`gamepad-support.md`](gamepad-support.md) mode 2, [`gravis_mousestick_ii.md`](gravis_mousestick_ii.md), [`adb_device_list.md`](adb_device_list.md)
+**Reference:** [`gamepad-support.md`](gamepad-support.md) mode 2, [`gravis_mousestick_ii.md`](gravis_mousestick_ii.md), [`gravis-mousestick-ii-plan.md`](gravis-mousestick-ii-plan.md), [`adb_device_list.md`](adb_device_list.md)
 
 ### Use case
 

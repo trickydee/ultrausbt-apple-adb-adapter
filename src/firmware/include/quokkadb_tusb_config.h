@@ -48,6 +48,15 @@
 // Enable host stack 
 #define CFG_TUH_ENABLED     1
 
+#if defined(ADB_HOST_MODE) && ADB_HOST_MODE
+#define CFG_TUD_ENABLED     1
+#define CFG_TUD_HID         1
+#define CFG_TUD_ENDPOINT0_SIZE 64
+#define CFG_TUD_HID_EP_BUFSIZE 64
+#else
+#define CFG_TUD_ENABLED     0
+#endif
+
 // CFG_TUSB_DEBUG is defined by compiler in DEBUG build
 #define CFG_TUSB_DEBUG 0
 //#define CFG_TUSB_DEBUG 3

@@ -15,6 +15,10 @@ typedef enum {
     DISPLAY_SCREEN_SPLASH = 0,
     DISPLAY_SCREEN_DEVICES = 1,
     DISPLAY_SCREEN_MAP_DEVICES = 2,
+#if ADB_HOST_MODE
+    DISPLAY_SCREEN_ADB_BUS = 3,
+    DISPLAY_SCREEN_MODE = 4,
+#endif
 } display_screen_t;
 
 void display_init(void);
@@ -25,6 +29,12 @@ void display_update_devices(void);
 
 void display_set_usb_counts(uint8_t kb, uint8_t mouse, uint8_t joy);
 void display_set_bt_counts(uint8_t kb, uint8_t mouse, uint8_t joy);
+
+#if ADB_HOST_MODE
+#include "adb_host_status.h"
+void display_set_adb_host_status(const adb_host_status_t *status);
+void display_show_adb_bus(void);
+#endif
 
 /** Set ADB status for splash: connected, device IDs (K/M/G), srq (service request), collision. */
 void display_set_adb_status(int connected, uint8_t kbd_id, uint8_t mouse_id, uint8_t game_id, int srq, int collision);

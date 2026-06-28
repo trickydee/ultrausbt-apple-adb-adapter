@@ -21,6 +21,8 @@ Behavior follows the **real Gravis MouseStick II** split documented in `docs/gra
 
 **Suggested implementation order:** keep **mode 1** stable → implement **mode 2** (detect handler switch, implement Talk 0/1 payloads, SRQ) → add **mode 3** (toggle + keymap storage + UI).
 
+**Detailed plan (real MouseStick II + adbmon fixtures → BT implementation):** [`gravis-mousestick-ii-plan.md`](gravis-mousestick-ii-plan.md).
+
 **Later USB gamepads** should feed the same logical layer so all three modes apply regardless of BT vs USB source.
 
 ## Reference: amigahid-pico

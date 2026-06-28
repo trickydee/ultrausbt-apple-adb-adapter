@@ -63,6 +63,10 @@
 extern "C" {
 #include "usb_device_map.h"
 #include "adb_hub.h"
+#if ADB_HOST_MODE
+#include "adb_mode.h"
+#include "usb_hid_device.h"
+#endif
 }
 
 using rp2040_serial::Serial;
@@ -95,6 +99,12 @@ static bool adb_ever_received_cmd = false;  /* display "Connected" only after at
 
 AdbInterface adb;
 
+#if ADB_HOST_MODE
+#include "adb_host.h"
+static AdbHost adb_host;
+static bool adb_host_was_active = false;
+#endif
+
 ADBKbdRptParser KeyboardPrs;
 ADBMouseRptParser MousePrs(KeyboardPrs);
 FlashSettings setting_storage;
@@ -105,10 +115,23 @@ FlashSettings setting_storage;
 void core1_main() {
   /* Lets Core 0 run BTstack TLV / flash work without XIP conflicts (see amigahid-pico quad_mouse + flash_safe_execute). */
   flash_safe_execute_core_init();
+#if ADB_HOST_MODE
+  adb_mode_usb_sync();
+#else
   tuh_init(0);
+#endif
   led_blink(1);
   /*------------ Core1 main loop ------------*/
   while (true) {
+#if ADB_HOST_MODE
+    adb_mode_usb_sync();
+    if (adb_mode_usb_is_device()) {
+      tud_task();
+      usb_hid_device_task();
+      busy_wait_us(500);
+      continue;
+    }
+#endif
 #if ENABLE_BLUEPAD32
     if (bt_host_coop_usb_host_is_paused()) {
       busy_wait_us(5000);
@@ -147,6 +170,10 @@ int quokkadb(void) {
     adb_hub_configure(cfg->reserved_bytes[ADB_SETTINGS_IDX_HUB_MODE] != 0);
   }
 
+#if ADB_HOST_MODE
+  adb_mode_init(&setting_storage);
+#endif
+
   display_init();
 
   //  Block this core when the core1 is writing to flash
@@ -157,6 +184,9 @@ int quokkadb(void) {
   multicore_lockout_victim_init();
   
   printf("%s\n", PLATFORM_FW_VER_STRING);
+#ifdef ADB_DEBUG
+  Serial.println("ADB UART debug ON (GP0 / pin 1 @ 115200)");
+#endif
   display_show_splash();
   srand(time_us_32());
 
@@ -171,6 +201,32 @@ int quokkadb(void) {
     int16_t cmd = 0;
 
     display_handle_buttons();
+
+#if ADB_HOST_MODE
+    bool host_active = adb_mode_host_active();
+    if (host_active != adb_host_was_active) {
+      if (host_active) {
+        if (global_debug) {
+          Serial.println("ADB host: mode switch -> ADB>USB (bus master)");
+        }
+        adb_host.on_enter_mode();
+      } else {
+        if (global_debug) {
+          Serial.println("ADB host: mode switch -> ADB>Mac (bus device)");
+        }
+        adb_host.leave_mode();
+      }
+      adb_host_was_active = host_active;
+    }
+    if (host_active) {
+      adb_host.poll();
+      adb_host_status_t host_status;
+      adb_host.fill_status(&host_status);
+      display_set_adb_host_status(&host_status);
+      sleep_ms(10);
+      continue;
+    }
+#endif
 
     /* Update display ADB status: connected, device IDs, SRQ (kbd or mouse pending), collision */
     {

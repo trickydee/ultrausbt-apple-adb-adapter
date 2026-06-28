@@ -6,6 +6,10 @@ add_library(adb
     usbtoadb.cpp
     )
 
+if(ADB_HOST_MODE)
+    target_sources(adb PRIVATE adb_host.cpp)
+endif()
+
 include_directories(../../misc/include)
 target_link_libraries(adb QuokkADB)
 target_include_directories(adb PUBLIC ../include)

@@ -1,8 +1,8 @@
 /**
  * SSD1306 OLED display configuration for BT-USB-ADB-Adapter
  *
- * I2C pins chosen to avoid collision with existing GPIOs:
- *   ADB: 18 (out), 19 (in); LED: 15; UART: 16; ADB PWR: 21; GPIO_TEST: 22
+ * I2C pins on Display1 header (GP2–GP9 per schematic); chosen to avoid ADB GPIOs:
+ *   ADB: 18 (out), 19 (in); LED: 25; UART: 0/1; Reset button: on RUN header
  *   Display I2C: 4 (SDA), 5 (SCL) on i2c0 — no collision.
  *   Buttons: 6 (left), 7 (middle), 8 (right) — no collision.
  */

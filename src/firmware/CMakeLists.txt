@@ -16,6 +16,7 @@ project(BT-USB-ADB-Adapter-firmware VERSION 1.0.18)
 add_compile_definitions(BT_USB_ADB_ADAPTER_VERSION_STRING=\"${PROJECT_VERSION}\")
 
 # ADB serial debug: set -DADB_DEBUG=ON when configuring to get ADB timing/command messages on UART
+# (device-mode ReceiveCommand and host-mode bus scan/poll on GP0 / Pico pin 1 @ 115200)
 option(ADB_DEBUG "Enable ADB serial debug output (UART)" OFF)
 if(ADB_DEBUG)
     add_compile_definitions(ADB_DEBUG=1)
@@ -82,6 +83,16 @@ if(ADB_PASSTHROUGH_HUB_DEFAULT)
     message(STATUS "ADB passthrough hub: default ON (spec enumeration)")
 else()
     message(STATUS "ADB passthrough hub: default OFF (classic single-device)")
+endif()
+
+# ADB host mode: ADB accessories → USB HID to PC (manual OLED switch)
+option(ADB_HOST_MODE "Enable ADB host → USB HID mode (runtime manual switch)" OFF)
+if(ADB_HOST_MODE)
+    add_compile_definitions(ADB_HOST_MODE=1)
+    message(STATUS "ADB host mode: ENABLED (manual switch)")
+else()
+    add_compile_definitions(ADB_HOST_MODE=0)
+    message(STATUS "ADB host mode: disabled")
 endif()
 
 # initialize the Raspberry Pi Pico SDK

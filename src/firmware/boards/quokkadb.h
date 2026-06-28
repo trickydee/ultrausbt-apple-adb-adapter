@@ -34,7 +34,8 @@
 // --- UART ---
 
 #define PICO_DEFAULT_UART 0
-#define PICO_DEFAULT_UART_TX_PIN 16
+#define PICO_DEFAULT_UART_TX_PIN 0
+#define PICO_DEFAULT_UART_RX_PIN 1
 
 
 // --- FLASH ---

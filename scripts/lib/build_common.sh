@@ -97,3 +97,18 @@ cmake_build_dir() {
   cmake -B "$build_dir" -S "src/firmware" "$@"
   cmake --build "$build_dir" -j"$(host_cores)"
 }
+
+adbmon_uf2_rel() {
+  echo "adbmon.uf2"
+}
+
+cmake_build_adbmon_dir() {
+  local build_dir=$1
+  shift
+  if [ ! -f "src/adbmon/CMakeLists.txt" ]; then
+    echo "Error: src/adbmon/CMakeLists.txt not found."
+    exit 1
+  fi
+  cmake -B "$build_dir" -S "src/adbmon" "$@"
+  cmake --build "$build_dir" -j"$(host_cores)"
+}

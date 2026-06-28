@@ -65,12 +65,15 @@ class AdbInterfacePlatform
 
 inline void AdbInterfacePlatform::data_lo()
 {
+    gpio_set_dir(ADB_OUT_GPIO, GPIO_OUT);
     ADB_OUT_LOW();
 }
 
 inline void AdbInterfacePlatform::data_hi()
 {
-    ADB_OUT_HIGH();
+    // Release the open-collector bus (adbuino / host pattern); external R2 pulls DATA high.
+    gpio_set_dir(ADB_OUT_GPIO, GPIO_IN);
+    gpio_disable_pulls(ADB_OUT_GPIO);
 }
 inline uint8_t AdbInterfacePlatform::data_in()
 {
@@ -79,9 +82,14 @@ inline uint8_t AdbInterfacePlatform::data_in()
 
 inline void AdbInterfacePlatform::adb_pin_out()
 {
+    gpio_set_dir(ADB_OUT_GPIO, GPIO_OUT);
+    gpio_put(ADB_OUT_GPIO, true);
 }
+
 inline void AdbInterfacePlatform::adb_pin_in()
 {
+    gpio_set_dir(ADB_OUT_GPIO, GPIO_IN);
+    gpio_disable_pulls(ADB_OUT_GPIO);
 }
 
 inline uint16_t AdbInterfacePlatform::wait_data_lo(uint32_t us)

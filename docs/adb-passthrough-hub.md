@@ -1,6 +1,6 @@
 # ADB passthrough hub
 
-Dual-port HIDHopper-style hardware connects **two ADB sockets to one open-collector bus**. Downstream devices (trackball, joystick, second keyboard) see the same traffic as the host.
+Dual-port hardware connects **two ADB sockets to one open-collector bus**. Downstream devices (trackball, joystick, second keyboard) see the same traffic as the host.
 
 ## Problem
 
@@ -93,7 +93,7 @@ No single fix is implemented yet beyond Phase 1 relocation and suppressed mouse 
 
 - [`adb_device_list.md`](adb_device_list.md) — handler IDs at address 0x3
 - [`gravis_mousestick_ii.md`](gravis_mousestick_ii.md) — Gravis stick protocol
-- [`HIDHopper.md`](HIDHopper.md) — dual ADB ports
+- [`hardware.md`](hardware.md) — dual ADB ports, BSS138, power
 - [`FUTURE_WORK.md`](FUTURE_WORK.md) §7 (hub Phase 2), §8 (multiple pointing devices), §9 (intelligent mouse SRQ)
 - [`iigs-debugging.md`](iigs-debugging.md) §10 — mouse SRQ suppression
 - [`adb-iigs-hardware-reference.md`](adb-iigs-hardware-reference.md) — SRQ timing; IIgs mouse SRQ policy

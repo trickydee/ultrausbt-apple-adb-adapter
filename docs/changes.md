@@ -1,6 +1,6 @@
 # BT-USB-ADB-Adapter – Changes
 
-Lineage: this tree descends from [HIDHopper ADB](HIDHopper.md) and QuokkADB.
+Lineage: this tree descends from QuokkADB and adbuino. Target hardware is documented in [`hardware.md`](hardware.md).
 
 ## Firmware version
 
@@ -26,26 +26,25 @@ Configured in `src/firmware/CMakeLists.txt` and `src/firmware/pico_sdk_import.cm
 
 ## GPIO configuration
 
-### ADB pins (updated)
+### ADB pins
 
 | Signal    | GPIO | Direction | Description           |
 |----------|------|-----------|-----------------------|
-| ADB out  | **18** | Output  | ADB data line to host |
-| ADB in   | **19** | Input   | ADB data line from host |
+| ADB out  | **18** | Output  | Uc1 → ADB DATA (TX) |
+| ADB in   | **19** | Input   | Uc1 → ADB DATA (RX) |
+| Status LED | **25** | Output | D1 via R1 |
 
-Defined in `src/firmware/lib/QuokkADB/include/quokkadb_gpio.h` as `ADB_OUT_GPIO` and `ADB_IN_GPIO`.
+Defined in `src/firmware/lib/QuokkADB/include/quokkadb_gpio.h`. Schematic: **apple-adb.kicad_sch** — see [`hardware.md`](hardware.md).
 
-### Other GPIOs (unchanged)
+### Other GPIOs
 
 | GPIO | Name / use        | Direction | Description                    |
 |------|-------------------|-----------|--------------------------------|
-| 15   | LED_GPIO          | Output    | Status LED                     |
-| 16   | UART_TX_GPIO      | UART TX   | Debug UART (115200 baud)       |
-| 21   | ADB_PWR_GPIO      | —         | ADB power (defined, not used in init) |
+| 0    | UART_TX_GPIO      | UART TX   | Debug UART TX (Pico **pin 1**, 115200 baud) |
+| 1    | UART_RX_GPIO      | UART RX   | Debug UART RX (Pico **pin 3**, optional)   |
+| 2–9  | Display1 header   | —         | Optional OLED / UI (see `display_config.h`) |
 | 22   | GPIO_TEST         | —         | Test pin (defined only)        |
 | 23   | PICO_SMPS_MODE_PIN | —       | SMPS mode (board default)     |
-
-Ensure hardware is wired for ADB data out on **GPIO 18** and ADB data in on **GPIO 19**.
 
 ### SSD1306 OLED display (optional)
 

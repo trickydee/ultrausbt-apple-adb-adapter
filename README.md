@@ -4,25 +4,20 @@
 
 ## Provenance
 
-This firmware continues the **[HIDHopper ADB](docs/HIDHopper.md)** lineage—the original retail product name, usage notes, and the story behind the *HIDHopper* name (USB “HID” + “Hopper”) are documented there. This repository targets DIY **ultramegausb**–style builds; where `docs/HIDHopper.md` describes hardware-specific behavior (for example LEDs), that document remains the reference.
+This firmware is a fork of [adbuino](https://github.com/Difegue/Chaotic-Realm) and [QuokkADB](https://github.com/rabbitholecomputing/QuokkADB-firmware), extended for USB + Bluetooth on Raspberry Pi Pico boards. It targets the **ultramegausb DIY ADB adapter** — see [`docs/hardware.md`](docs/hardware.md).
 
 # Usage
 
-See [docs/HIDHopper.md](docs/HIDHopper.md) for extended documentation (written for the HIDHopper hardware line; electrical and usage cautions still apply to ADB adapters built from this firmware).
+See [`docs/hardware.md`](docs/hardware.md) for board wiring, power, and setup. **ADB device mode** (USB/BT → vintage Mac) is the default.
 
 # Quick usage
 
-- For a base adapter without USB hub, *before* turning on your computer:
-   - Plug in your desired USB peripheral (keyboard or mouse)
+- **Device mode** (default), *before* turning on the Mac:
+   - Plug in your USB keyboard and/or mouse (or pair Bluetooth on Pico W / Pico 2 W)
    - Plug the adapter into the ADB bus
-   - Start computer
-   - Hot-plug *is not supported*; do not unplug from the ADB bus *or* unplug the USB device while the computer is on
-- For setups that use a USB hub hat (see original HIDHopper hub documentation in [docs/HIDHopper.md](docs/HIDHopper.md)), *before* turning on your computer:
-   - Ensure the hub is solidly secured per that documentation
-   - Plug the adapter into the ADB bus
-   - Plug in external 5 V USB-C power to the hub as required (follow the HIDHopper hub notes to avoid ADB power issues)
-   - Plug in your USB keyboard and mouse
-   - Same hot-plug warnings as above
+   - Power on the Mac
+   - **No hot-plug** — do not unplug from ADB or remove USB devices while the Mac is running
+- **Host mode** (experimental, `-DADB_HOST_MODE=ON` builds): Mac **off and disconnected**; power the Pico from USB (see hardware doc for bus power); connect ADB keyboard/mouse to the pass-through ports; Pico USB to a modern PC
 
 # Background
 

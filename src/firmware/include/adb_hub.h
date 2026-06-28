@@ -1,7 +1,7 @@
 /**
  * ADB passthrough hub — dual-port / daisy-chain address management.
  *
- * HIDHopper-style hardware connects two ADB sockets to one open-collector bus.
+ * Dual-port hardware connects two ADB sockets to one open-collector bus.
  * Hub mode does not hard-code addresses; it enables host-driven ADB enumeration
  * (Talk/Listen register 3, collision detection) with a bias to relocate the
  * USB mouse off 0x03 after a register-3 collision so chained trackballs can

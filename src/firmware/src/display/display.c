@@ -8,6 +8,10 @@
 #include "ssd1306.h"
 #include "usb_device_map.h"
 #include "adb_hub.h"
+#if ADB_HOST_MODE
+#include "adb_mode.h"
+#include "adb_host_status.h"
+#endif
 #include <hardware/i2c.h>
 #include <hardware/gpio.h>
 #include <pico/time.h>
@@ -55,6 +59,12 @@ static int last_drawn_adb_srq = -1;
 static int last_drawn_adb_collision = -1;
 
 static display_screen_t current_screen = DISPLAY_SCREEN_SPLASH;
+
+#if ADB_HOST_MODE
+static adb_operating_mode_t mode_ui_selection = ADB_MODE_DEVICE;
+static adb_host_status_t adb_host_status;
+static adb_host_status_t last_drawn_adb_host_status;
+#endif
 
 #define BUTTON_DEBOUNCE_COUNT 3
 static uint8_t button_middle_debounce = 0;
@@ -154,6 +164,26 @@ void display_show_splash(void)
     snprintf(line, sizeof(line), "v%s", BT_USB_ADB_ADAPTER_VERSION_STRING);
     ssd1306_draw_string(&disp, 40, 40, 1, line);
 
+#if ADB_HOST_MODE
+    snprintf(line, sizeof(line), "Mode: %s", adb_mode_is_host() ? "ADB>USB" : "ADB>Mac");
+    ssd1306_draw_string(&disp, 0, 48, 1, line);
+#endif
+
+#if ADB_HOST_MODE
+    if (adb_mode_host_active()) {
+        snprintf(line, sizeof(line), "Bus K%u/%u M%u/%u",
+                 (unsigned)adb_host_status.kbd_working, (unsigned)adb_host_status.kbd_configured,
+                 (unsigned)adb_host_status.mouse_working, (unsigned)adb_host_status.mouse_configured);
+        ssd1306_draw_string(&disp, 0, 55, 1, line);
+    } else if (!adb_connected) {
+        ssd1306_draw_string(&disp, 0, 55, 1, (char *)"ADB: --");
+    } else {
+        snprintf(line, sizeof(line), "ADB: K%X M%X G%X%s%s",
+                (unsigned)adb_kbd_id, (unsigned)adb_mouse_id, (unsigned)adb_game_id,
+                adb_srq ? " S" : "", adb_collision ? "!" : "");
+        ssd1306_draw_string(&disp, 0, 55, 1, line);
+    }
+#else
     if (!adb_connected) {
         ssd1306_draw_string(&disp, 0, 55, 1, (char *)"ADB: --");
     } else {
@@ -162,6 +192,7 @@ void display_show_splash(void)
                 adb_srq ? " S" : "", adb_collision ? "!" : "");
         ssd1306_draw_string(&disp, 0, 55, 1, line);
     }
+#endif
 
     ssd1306_show(&disp);
     current_screen = DISPLAY_SCREEN_SPLASH;
@@ -257,6 +288,103 @@ void display_show_map_devices(void)
     last_drawn_bt_game = bt_gamepad_count;
 }
 
+#if ADB_HOST_MODE
+static bool adb_host_status_changed(const adb_host_status_t *a, const adb_host_status_t *b)
+{
+    if (a->count != b->count ||
+        a->kbd_configured != b->kbd_configured ||
+        a->kbd_working != b->kbd_working ||
+        a->mouse_configured != b->mouse_configured ||
+        a->mouse_working != b->mouse_working) {
+        return true;
+    }
+    for (uint8_t i = 0; i < a->count; i++) {
+        if (a->devices[i].addr != b->devices[i].addr ||
+            a->devices[i].is_keyboard != b->devices[i].is_keyboard ||
+            a->devices[i].working != b->devices[i].working) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void display_show_adb_bus(void)
+{
+    char buf[32];
+    int row = 9;
+
+    ssd1306_clear(&disp);
+    ssd1306_draw_string(&disp, 0, 0, 1, (char *)"ADB Bus");
+
+    if (!adb_mode_host_active()) {
+        ssd1306_draw_string(&disp, 0, 18, 1, (char *)"ADB>Mac mode");
+        ssd1306_draw_string(&disp, 0, 30, 1, (char *)"Switch to ADB>USB");
+        ssd1306_draw_string(&disp, 0, 55, 1, (char *)"to scan bus");
+    } else if (adb_host_status.count == 0) {
+        ssd1306_draw_string(&disp, 0, 18, 1, (char *)"Scanning...");
+    } else {
+        for (uint8_t i = 0; i < adb_host_status.count && row <= 45; i++) {
+            const adb_host_device_status_t *dev = &adb_host_status.devices[i];
+            snprintf(buf, sizeof(buf), "%s @%X %s",
+                     dev->is_keyboard ? "Key" : "Mou",
+                     (unsigned)dev->addr,
+                     dev->working ? "OK" : "--");
+            ssd1306_draw_string(&disp, 0, row, 1, buf);
+            row += 9;
+        }
+
+        snprintf(buf, sizeof(buf), "K %u/%u  M %u/%u",
+                 (unsigned)adb_host_status.kbd_working, (unsigned)adb_host_status.kbd_configured,
+                 (unsigned)adb_host_status.mouse_working, (unsigned)adb_host_status.mouse_configured);
+        ssd1306_draw_string(&disp, 0, 55, 1, buf);
+    }
+
+    ssd1306_show(&disp);
+    current_screen = DISPLAY_SCREEN_ADB_BUS;
+    last_drawn_adb_host_status = adb_host_status;
+}
+
+void display_set_adb_host_status(const adb_host_status_t *status)
+{
+    if (!status) {
+        return;
+    }
+    adb_host_status = *status;
+    if (current_screen == DISPLAY_SCREEN_ADB_BUS &&
+        adb_host_status_changed(status, &last_drawn_adb_host_status)) {
+        display_show_adb_bus();
+    } else if (current_screen == DISPLAY_SCREEN_SPLASH && adb_mode_host_active()) {
+        display_show_splash();
+    }
+}
+
+void display_show_mode(void)
+{
+    ssd1306_clear(&disp);
+    ssd1306_draw_string(&disp, 0, 0, 1, (char *)"ADB Mode");
+
+    if (mode_ui_selection == ADB_MODE_DEVICE) {
+        ssd1306_draw_string(&disp, 0, 16, 1, (char *)"> ADB > Mac");
+        ssd1306_draw_string(&disp, 0, 28, 1, (char *)"  ADB > USB");
+    } else {
+        ssd1306_draw_string(&disp, 0, 16, 1, (char *)"  ADB > Mac");
+        ssd1306_draw_string(&disp, 0, 28, 1, (char *)"> ADB > USB");
+    }
+
+    ssd1306_draw_string(&disp, 0, 44, 1, (char *)"USB kbd/mouse OFF");
+    ssd1306_draw_string(&disp, 0, 55, 1, (char *)"Mid=apply L/R=sel");
+    ssd1306_show(&disp);
+    current_screen = DISPLAY_SCREEN_MODE;
+}
+
+static void mode_screen_apply(void)
+{
+    adb_mode_request(mode_ui_selection, true);
+    adb_mode_apply_pending();
+    display_show_splash();
+}
+#endif
+
 void display_update_devices(void)
 {
     if (current_screen == DISPLAY_SCREEN_DEVICES) {
@@ -265,6 +393,11 @@ void display_update_devices(void)
     if (current_screen == DISPLAY_SCREEN_MAP_DEVICES) {
         display_show_map_devices();
     }
+#if ADB_HOST_MODE
+    if (current_screen == DISPLAY_SCREEN_ADB_BUS) {
+        display_show_adb_bus();
+    }
+#endif
 }
 
 void display_set_usb_counts(uint8_t kb, uint8_t mouse, uint8_t joy)
@@ -348,6 +481,10 @@ static void handle_pairing_clear_hold(void)
                 pairing_clear_last_second = -1;
                 if (current_screen == DISPLAY_SCREEN_MAP_DEVICES) {
                     display_show_map_devices();
+#if ADB_HOST_MODE
+                } else if (current_screen == DISPLAY_SCREEN_ADB_BUS) {
+                    display_show_adb_bus();
+#endif
                 } else if (current_screen == DISPLAY_SCREEN_DEVICES) {
                     display_show_devices();
                 } else {
@@ -381,18 +518,49 @@ void display_handle_buttons(void)
     if (!gpio_get(DISPLAY_GPIO_BUTTON_MIDDLE)) {
         if (button_middle_debounce <= BUTTON_DEBOUNCE_COUNT) {
             if (++button_middle_debounce == BUTTON_DEBOUNCE_COUNT) {
+#if ADB_HOST_MODE
+                if (current_screen == DISPLAY_SCREEN_MODE) {
+                    mode_screen_apply();
+                } else
+#endif
                 if (current_screen == DISPLAY_SCREEN_SPLASH) {
                     display_show_devices();
                 } else if (current_screen == DISPLAY_SCREEN_DEVICES) {
                     display_show_map_devices();
+#if ADB_HOST_MODE
+                } else if (current_screen == DISPLAY_SCREEN_MAP_DEVICES) {
+                    display_show_adb_bus();
+                } else if (current_screen == DISPLAY_SCREEN_ADB_BUS) {
+                    mode_ui_selection = adb_mode_get();
+                    display_show_mode();
                 } else {
                     display_show_splash();
                 }
+#else
+                } else {
+                    display_show_splash();
+                }
+#endif
             }
         }
     } else {
         button_middle_debounce = 0;
     }
+
+#if ADB_HOST_MODE
+    if (current_screen == DISPLAY_SCREEN_MODE) {
+        if (!gpio_get(DISPLAY_GPIO_BUTTON_LEFT) && button_left_debounce == BUTTON_DEBOUNCE_COUNT) {
+            mode_ui_selection = ADB_MODE_DEVICE;
+            display_show_mode();
+            button_left_debounce = 0;
+        }
+        if (!gpio_get(DISPLAY_GPIO_BUTTON_RIGHT) && button_right_debounce == BUTTON_DEBOUNCE_COUNT) {
+            mode_ui_selection = ADB_MODE_HOST;
+            display_show_mode();
+            button_right_debounce = 0;
+        }
+    }
+#endif
 
     if (!gpio_get(DISPLAY_GPIO_BUTTON_LEFT)) {
         if (button_left_debounce <= BUTTON_DEBOUNCE_COUNT) {
