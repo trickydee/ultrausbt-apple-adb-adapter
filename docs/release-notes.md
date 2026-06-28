@@ -6,6 +6,11 @@ Lineage: this firmware descends from QuokkADB and adbuino. Target hardware: [`ha
 
 - **Bluetooth gamepad:** One BT gamepad slot in Bluepad32 (`uni_gamepad_t`, `bluepad32_get_gamepad` / `bluepad32_get_gamepad_count`). **Phase B:** gamepad → **HID keyboard** (D-pad/buttons) and **left stick → mouse** via `bt_hid_bridge` / `KeyboardPrs` + `MousePrs` (see [gamepad-support.md](gamepad-support.md)). OLED **Devices** / **Bluetooth names:** BT gamepad **count**, **G1** name, and optional live **`BT GP:`** legend when a pad is connected.
 
+## 2.1.0
+
+- **Device/host GPIO split:** Restore pre-2.0 drive-high ADB GPIO in shared code for **ADB>Mac** device mode (fixes BT mouse jumps and collision detection). Host open-collector GPIO moved to `adb_host_gpio.h` only; host timing (765 µs attention, RX preamble) unchanged.
+- **Docs:** [`adb-shared-gpio-rollback.md`](adb-shared-gpio-rollback.md) records the reverted 2.0.0 shared GPIO and restore steps if host mode regresses.
+
 ## 2.0.0
 
 - **ADB host mode (major):** New **ADB>USB** operating mode polls vintage ADB keyboards and pointing devices on the passthrough bus and presents them as a composite USB HID keyboard/mouse to a modern PC. Manual mode switch via OLED; persisted in flash.

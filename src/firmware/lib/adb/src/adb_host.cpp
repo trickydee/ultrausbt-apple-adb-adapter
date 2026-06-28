@@ -1,4 +1,5 @@
 #include "adb_host.h"
+#include "adb_host_gpio.h"
 #include "adb_to_usb.h"
 #include "adbregisters.h"
 #include "quokkadb_gpio.h"
@@ -66,17 +67,17 @@ const char *AdbHost::rx_err_label(int32_t err)
 
 bool AdbHost::place_bit0(void)
 {
-    data_lo();
+    adb_host_gpio::data_lo();
     adb_delay_us(65);
-    data_hi();
+    adb_host_gpio::data_hi();
     return adb_delay_us(35);
 }
 
 bool AdbHost::place_bit1(void)
 {
-    data_lo();
+    adb_host_gpio::data_lo();
     adb_delay_us(35);
-    data_hi();
+    adb_host_gpio::data_hi();
     return adb_delay_us(65);
 }
 
@@ -108,26 +109,26 @@ bool AdbHost::decode_bit(uint16_t lo, uint16_t hi, uint8_t *bit_out)
 
 bool AdbHost::send_command(uint8_t cmd)
 {
-    adb_pin_out();
-    data_lo();
+    adb_host_gpio::bus_out();
+    adb_host_gpio::data_lo();
     // TMK/QMK attention: 800 µs low total; place_bit1() adds the final 35 µs low (start bit).
     if (!adb_delay_us(765)) {
-        adb_pin_in();
+        adb_host_gpio::bus_in();
         return false;
     }
     if (!place_bit1()) {
-        adb_pin_in();
+        adb_host_gpio::bus_in();
         return false;
     }
     if (!send_byte(cmd)) {
-        adb_pin_in();
+        adb_host_gpio::bus_in();
         return false;
     }
     if (!place_bit0()) {
-        adb_pin_in();
+        adb_host_gpio::bus_in();
         return false;
     }
-    adb_pin_in();
+    adb_host_gpio::bus_in();
     return true;
 }
 
@@ -137,19 +138,19 @@ void AdbHost::log_bus_wiring_test(void)
         return;
     }
 
-    adb_pin_out();
-    data_hi();
+    adb_host_gpio::bus_out();
+    adb_host_gpio::data_hi();
     busy_wait_us(200);
     uint8_t in_idle = data_in();
 
-    data_lo();
+    adb_host_gpio::data_lo();
     busy_wait_us(500);
     uint8_t in_lo = data_in();
 
-    data_hi();
+    adb_host_gpio::data_hi();
     busy_wait_us(500);
     uint8_t in_hi = data_in();
-    adb_pin_in();
+    adb_host_gpio::bus_in();
 
     Serial.print("ADB host: bus test GP");
     Serial.print(ADB_OUT_GPIO, DEC);
@@ -225,24 +226,24 @@ bool AdbHost::send_register16(uint16_t reg16)
         return false;
     }
 
-    adb_pin_out();
+    adb_host_gpio::bus_out();
     if (!place_bit1()) {
-        adb_pin_in();
+        adb_host_gpio::bus_in();
         return false;
     }
     if (!send_byte((uint8_t)((reg16 >> 8) & 0xFF))) {
-        adb_pin_in();
+        adb_host_gpio::bus_in();
         return false;
     }
     if (!send_byte((uint8_t)(reg16 & 0xFF))) {
-        adb_pin_in();
+        adb_host_gpio::bus_in();
         return false;
     }
     if (!place_bit0()) {
-        adb_pin_in();
+        adb_host_gpio::bus_in();
         return false;
     }
-    adb_pin_in();
+    adb_host_gpio::bus_in();
     return true;
 }
 
@@ -266,11 +267,11 @@ int32_t AdbHost::talk(uint8_t addr, uint8_t reg)
 
 void AdbHost::global_reset(void)
 {
-    adb_pin_out();
-    data_lo();
+    adb_host_gpio::bus_out();
+    adb_host_gpio::data_lo();
     adb_delay_us(3000);
-    data_hi();
-    adb_pin_in();
+    adb_host_gpio::data_hi();
+    adb_host_gpio::bus_in();
     busy_wait_ms(10);
 }
 

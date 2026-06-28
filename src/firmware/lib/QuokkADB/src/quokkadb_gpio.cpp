@@ -42,12 +42,11 @@ extern bool global_debug;
 void adb_gpio_init(void) {
     gpio_init(ADB_OUT_GPIO);
     gpio_set_function(ADB_OUT_GPIO, GPIO_FUNC_SIO);
-    gpio_set_dir(ADB_OUT_GPIO, GPIO_IN);
-    gpio_disable_pulls(ADB_OUT_GPIO);
+    gpio_set_dir(ADB_OUT_GPIO, GPIO_OUT);
+    gpio_put(ADB_OUT_GPIO, true);
 
     gpio_init(ADB_IN_GPIO);
     gpio_set_dir(ADB_IN_GPIO, GPIO_IN);
-    gpio_disable_pulls(ADB_IN_GPIO);
 }
 
 void led_gpio_init(void) {
