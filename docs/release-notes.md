@@ -6,6 +6,14 @@ Lineage: this firmware descends from QuokkADB and adbuino. Target hardware: [`ha
 
 - **Bluetooth gamepad:** One BT gamepad slot in Bluepad32 (`uni_gamepad_t`, `bluepad32_get_gamepad` / `bluepad32_get_gamepad_count`). **Phase B:** gamepad → **HID keyboard** (D-pad/buttons) and **left stick → mouse** via `bt_hid_bridge` / `KeyboardPrs` + `MousePrs` (see [gamepad-support.md](gamepad-support.md)). OLED **Devices** / **Bluetooth names:** BT gamepad **count**, **G1** name, and optional live **`BT GP:`** legend when a pad is connected.
 
+## 2.0.0
+
+- **ADB host mode (major):** New **ADB>USB** operating mode polls vintage ADB keyboards and pointing devices on the passthrough bus and presents them as a composite USB HID keyboard/mouse to a modern PC. Manual mode switch via OLED; persisted in flash.
+- **Multi-device bus master:** Address-aware enumeration supports keyboard @0x2 plus multiple pointing devices (e.g. mouse @0x3, relocated trackball @0xF). Mac-style trackball relocation, periodic hot-plug rescan with bus reset, and QMK-aligned attention/timing.
+- **OLED ADB Bus screen:** Shows configured vs working devices per address (`OK` / `--`), with splash summary in host mode.
+- **adbmon:** Standalone bus monitor firmware and capture docs for comparing host behaviour against real Mac traces.
+- **Hardware docs:** DIY board pinout and GPIO map (GP18/19 ADB, GP25 LED); HIDHopper references removed.
+
 ## 1.0.18
 
 - **Bluetooth mouse drag:** Patch Bluepad32 `uni_hid_parser_mouse.c` to persist button state across movement-only BLE reports; `bt_hid_bridge.cpp` ORs a button latch into synthetic HID reports so drags do not spuriously release the button.
