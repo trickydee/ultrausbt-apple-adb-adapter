@@ -2,14 +2,16 @@
 
 Configure from the **project root** (or any directory); firmware sources live under `src/firmware`.
 
-**Example:**
+**Example (unified Pico 2 W host build):**
 
 ```bash
-cmake -B build-pico2_w -S src/firmware -DPICO_BOARD=pico2_w
-cmake --build build-pico2_w -j$(nproc)
+cmake -B build -S src/firmware -DPICO_BOARD=pico2_w -DADB_HOST_MODE=ON
+cmake --build build -j$(nproc)
 ```
 
-`./build_all.sh` only passes **`-DPICO_BOARD=<board>`** for release builds; all ADB-related options below use the **defaults** in `src/firmware/CMakeLists.txt` unless you add more `-D` arguments.
+Or use **`./build-all.sh`** for release + debug + adbmon in `dist/`.
+
+`./build-all.sh` passes **`-DPICO_BOARD=pico2_w`** and **`-DADB_HOST_MODE=ON`** for adapter builds; debug also sets **`ADB_DEBUG=ON`**. Other ADB options use **defaults** in `src/firmware/CMakeLists.txt` unless you add more `-D` arguments.
 
 ---
 
@@ -27,11 +29,12 @@ This is a **Pico SDK** setting, not defined in our `CMakeLists.txt`, but every b
 
 | CMake flag | Kind | Default | Explanation |
 |------------|------|---------|-------------|
-| `ADB_DEBUG` | `option` | `OFF` | When `ON`, enables ADB protocol/timing **UART logging** (`adb.cpp` / related). Helps debugging; adds overhead. **`build_all.sh`** turns this **ON** only for `build-*-debug` directories. |
+| `ADB_DEBUG` | `option` | `OFF` | When `ON`, enables ADB protocol/timing **UART logging** (`adb.cpp` / related). Helps debugging; adds overhead. **`build-all.sh`** turns this **ON** for `build-debug/`. |
 | `ADB_MOUSE_ACCUMULATE_DELTAS` | `option` | `ON` | **`ON`:** add incoming USB/BLE mouse `dx`/`dy` between ADB polls (with saturation). **`OFF`:** only the latest delta is kept (legacy). Improves smoothness when many small reports arrive between host polls. |
 | `ADB_ATTENTION_LO_MIN_US` | `CACHE STRING` (integer µs) | `500` | Minimum **attention low** duration (µs) accepted in `ReceiveCommand`. Table 6-8 allows ~560–1040 µs on IIgs; `500` is a practical floor with measurement slack. Change for A/B tuning (e.g. `450`). Wired into the **`adb`** library as `ADB_ATTENTION_LO_MIN_US`. |
 | `ADB_STRICT_DUTY_CYCLE_DECODE` | `option` | `OFF` | **`ON`:** decode received bits using **35% / 65%** low-time thresholds (IIgs-style). **`OFF`:** **midpoint** decode (more tolerant). Strict mode has regressed on some hosts; default stays off. |
 | `ADB_STRICT_SYNC_WINDOW` | `option` | `OFF` | **`ON`:** sync window **42–91 µs** (IIgs envelope). **`OFF`:** tolerant **40–95 µs** window. Used in `ReceiveCommand` sync check. |
+| `ADB_HOST_MODE` | `option` | `OFF` | When `ON`, compiles ADB bus master + USB HID device stack; runtime OLED toggle between **ADB → Mac** and **ADB → USB**. **`build-all.sh`** enables this for the product UF2. |
 | `ADB_IIGS_MOUSE_SUPPRESS_SRQ` | `option` | `ON` | **`ON`:** mouse does **not** extend the SRQ line; keyboard SRQ only. Reduces IIgs **BASIC slowdown** when the mouse moves. **`OFF`:** legacy behavior (mouse can participate in SRQ). Set `OFF` only if you need to compare or hit an edge case. |
 
 ---
@@ -53,15 +56,14 @@ This is a **Pico SDK** setting, not defined in our `CMakeLists.txt`, but every b
 
 | Script | Purpose |
 |--------|---------|
-| `build_all.sh` | All boards, release + debug (`ADB_DEBUG=ON` for debug only). |
-| `scripts/build_attention_ab.sh` | A/B: `ADB_ATTENTION_LO_MIN_US` values. |
-| `scripts/build_decode_ab.sh` | A/B: `ADB_STRICT_DUTY_CYCLE_DECODE` on/off. |
-| `scripts/build_mouse_srq_ab.sh` | A/B: `ADB_IIGS_MOUSE_SUPPRESS_SRQ` on/off (plus fixed decode/sync defaults). |
+| `build-all.sh` | Pico 2 W unified adapter (release + debug) + Pico adbmon → `dist/`. |
+| `./build.sh` / `make` | Quick single dev build under `src/firmware/build/`. |
 
 ---
 
 ## See also
 
+- `docs/troubleshooting.md` — BT mouse GPIO regression, host timing.
 - `docs/iigs-debugging.md` — suggested order for trying options on IIgs.
 - `docs/align-iigs-support-to-hardware-reference.md` — how options map to the IIgs hardware reference.
 - `docs/release-notes.md` — when defaults changed.

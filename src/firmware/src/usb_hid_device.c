@@ -2,6 +2,8 @@
  * TinyUSB HID device (keyboard + mouse) for ADB host mode.
  */
 #include "usb_hid_device.h"
+#include "adb_host_led.h"
+#include "adb_to_usb.h"
 #include "tusb.h"
 #include <string.h>
 
@@ -23,6 +25,8 @@ static int8_t s_mouse_y;
 static int8_t s_mouse_wheel;
 static bool s_kbd_dirty;
 static bool s_mouse_dirty;
+static uint8_t s_usb_leds;
+static uint8_t s_caps_pulse_phase;
 
 #define USB_VID 0x2E8A
 #define USB_PID 0xADB0
@@ -77,9 +81,33 @@ void usb_hid_send_mouse(uint8_t buttons, int8_t dx, int8_t dy, int8_t wheel)
     s_mouse_dirty = true;
 }
 
+void usb_hid_set_led_state(uint8_t hid_leds)
+{
+    s_usb_leds = hid_leds;
+}
+
+void usb_hid_pulse_caps_lock(void)
+{
+    if (s_caps_pulse_phase == 0) {
+        s_caps_pulse_phase = 1;
+    }
+}
+
 void usb_hid_device_task(void)
 {
     if (!tud_mounted()) {
+        return;
+    }
+    if (s_caps_pulse_phase != 0 && tud_hid_ready()) {
+        if (s_caps_pulse_phase == 1) {
+            uint8_t keys[6] = {HID_KEY_CAPS_LOCK};
+            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keys);
+            s_caps_pulse_phase = 2;
+        } else {
+            uint8_t keys[6] = {0};
+            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keys);
+            s_caps_pulse_phase = 0;
+        }
         return;
     }
     if (s_kbd_dirty && tud_hid_ready()) {
@@ -138,9 +166,10 @@ uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_t
 {
     (void)instance;
     (void)report_id;
-    (void)report_type;
-    (void)buffer;
-    (void)reqlen;
+    if (report_type == HID_REPORT_TYPE_OUTPUT && buffer && reqlen >= 1) {
+        buffer[0] = s_usb_leds;
+        return 1;
+    }
     return 0;
 }
 
@@ -149,7 +178,10 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
 {
     (void)instance;
     (void)report_id;
-    (void)report_type;
-    (void)buffer;
-    (void)bufsize;
+    if (report_type != HID_REPORT_TYPE_OUTPUT || !buffer || bufsize < 1) {
+        return;
+    }
+    s_usb_leds = buffer[0];
+    adb_to_usb_note_host_leds(buffer[0]);
+    adb_host_apply_usb_leds(buffer[0]);
 }

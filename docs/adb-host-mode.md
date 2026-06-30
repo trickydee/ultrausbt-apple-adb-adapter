@@ -1,8 +1,7 @@
-# ADB host mode — product spec (draft)
+# ADB host mode — product spec
 
-**Branch:** `feature/adb-host-mode`  
-**Status:** MVP implemented (manual switch) — build with `-DADB_HOST_MODE=ON`  
-**Related:** [`FUTURE_WORK.md`](FUTURE_WORK.md) §10, [`hardware.md`](hardware.md), [`adb-passthrough-hub.md`](adb-passthrough-hub.md), [`adb-host-mode-capture.md`](adb-host-mode-capture.md) (adbmon capture checklist)
+**Status:** **MVP shipped (2026-06-28)** — firmware **2.0.0** / **2.1.0**; flash `dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2` from `./build-all.sh`  
+**Related:** [`FUTURE_WORK.md`](FUTURE_WORK.md) §10, [`hardware.md`](hardware.md), [`adb-passthrough-hub.md`](adb-passthrough-hub.md), [`adb-host-mode-capture.md`](adb-host-mode-capture.md), [`troubleshooting.md`](troubleshooting.md)
 
 ---
 
@@ -336,21 +335,36 @@ Triggered from OLED confirm or serial command:
 
 ## 10. Success criteria (Phase 1)
 
-- [ ] User can select **ADB → Mac** vs **ADB → USB** on OLED, with optional flash “remember”
-- [ ] After switch to host mode: ADB keyboard + mouse → PC via Pico USB works
-- [ ] After switch back: USB/BT peripherals → vintage Mac works as today
-- [ ] Splash / devices footer always shows active mode
-- [ ] No regression when `ADB_HOST_MODE` CMake option is OFF (device-only build)
+- [x] User can select **ADB → Mac** vs **ADB → USB** on OLED, with flash persistence — **2026-06-28**
+- [x] After switch to host mode: ADB keyboard + mouse → PC via Pico USB works — **2026-06-28**
+- [x] After switch back: USB/BT peripherals → vintage Mac works (GPIO split **2.1.0** fixes BT mouse) — **2026-06-28**
+- [x] Splash / **ADB Bus** screen shows active mode and device status — **2026-06-28**
+- [x] Unified `-host` build with runtime toggle — **2026-06-28**
 
 ---
 
-## 11. Build / config (planned)
+## 11. Build / config
+
+Shipped in **`./build-all.sh`**:
+
+| UF2 | Flags |
+|-----|--------|
+| `dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2` | `ADB_HOST_MODE=ON` |
+| `dist/BT-USB-ADB-Adapter-firmware-pico2_w-host-debug.uf2` | `ADB_HOST_MODE=ON`, `ADB_DEBUG=ON` |
 
 ```cmake
 option(ADB_HOST_MODE "Enable ADB host → USB HID mode (runtime switch)" OFF)
 ```
 
-When ON: compile dual TinyUSB stacks + manual mode FSM. **Default flash mode: ADB device** (today’s behaviour). User switches via OLED; no automatic detection.
+When ON at compile time: dual-mode FSM + host bus master code. **Default runtime mode: ADB device** (ADB → Mac). User switches via OLED.
+
+### Host bus timing (required)
+
+Implemented in `adb_host.cpp` only — see [`troubleshooting.md`](troubleshooting.md):
+
+- **765 µs** attention low before `place_bit1()` (800 µs total, QMK/TMK pattern)
+- RX preamble: `wait_data_hi(500)` then `wait_data_lo(500)` before decoding Talk replies
+- Host TX GPIO: open-collector via `adb_host_gpio.h` (not shared `adb_platform.h`)
 
 ---
 
@@ -359,5 +373,6 @@ When ON: compile dual TinyUSB stacks + manual mode FSM. **Default flash mode: AD
 - [`adb.cpp`](../src/firmware/lib/adb/src/adb.cpp) — device-side bit bang (reuse timing)
 - [`adbkbdparser.cpp`](../src/firmware/lib/adb/src/adbkbdparser.cpp) / [`adbmouseparser.cpp`](../src/firmware/lib/adb/src/adbmouseparser.cpp) — translation reference
 - TinyUSB [`dynamic_switch`](../src/firmware/tinyusb/examples/dual/dynamic_switch/) — host/device swap
-- [`adbmon.md`](adbmon.md) — bus traces for validation
+- [`adb-shared-gpio-rollback.md`](adb-shared-gpio-rollback.md) — GPIO split and restore notes
+- [`troubleshooting.md`](troubleshooting.md) — host timing and device-mode collision fix
 - Apple ADB Manager PDF (linked from README)

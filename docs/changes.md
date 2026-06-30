@@ -13,7 +13,7 @@ To bump the version: edit the `VERSION` in that `project()` line and rebuild.
 
 ## SDK and TinyUSB versions
 
-- **Pico SDK:** 2.2.0 (latest stable). **`build_all.sh`**, **`./build.sh`**, and **`make`** use **`scripts/lib/build_common.sh`**: if **`PICO_SDK_PATH`** is not set, the SDK is cloned **once** into **`.pico-sdk/pico-sdk`** (default tag **`PICO_SDK_TAG=2.2.0`**, aligned with `pico_sdk_import.cmake`). That path is reused for every `build-pico`, `build-pico_w`, etc., instead of fetching a separate SDK per build directory. **`PICOTOOL_FETCH_FROM_GIT_PATH`** defaults to **`.pico-sdk`** so the pico-sdk **picotool** helper is built there once as well. You can still set **`PICO_SDK_PATH`** yourself to skip the clone. To remove the cache, run **`./scripts/cleanup_build_artifacts.sh --include-sdk-cache`**.
+- **Pico SDK:** 2.2.0 (latest stable). **`build-all.sh`**, **`./build.sh`**, and **`make`** use **`scripts/lib/build_common.sh`**: if **`PICO_SDK_PATH`** is not set, the SDK is cloned **once** into **`.pico-sdk/pico-sdk`** (default tag **`PICO_SDK_TAG=2.2.0`**, aligned with `pico_sdk_import.cmake`). **`PICOTOOL_FETCH_FROM_GIT_PATH`** defaults to **`.pico-sdk`** so the pico-sdk **picotool** helper is built there once as well. You can still set **`PICO_SDK_PATH`** yourself to skip the clone. To remove the cache, run **`./scripts/cleanup_build_artifacts.sh --include-sdk-cache`**.
 - **TinyUSB:** Supplied by the Pico SDK (submodule at `lib/tinyusb`). SDK 2.2.0 includes the TinyUSB version tested with that release (e.g. 0.18.x). No separate TinyUSB update is required.
 
 **Upstream TinyUSB (implemented).** The project optionally uses upstream [hathach/tinyusb](https://github.com/hathach/tinyusb) when the submodule is present:
@@ -25,6 +25,15 @@ To bump the version: edit the `VERSION` in that `project()` line and rebuild.
 Configured in `src/firmware/CMakeLists.txt` and `src/firmware/pico_sdk_import.cmake`.
 
 ## GPIO configuration
+
+### ADB DATA GPIO (device vs host)
+
+| Mode | `data_hi()` behaviour | Where |
+|------|----------------------|--------|
+| **ADB → Mac** (device) | Drive GP18 **high** (`ADB_OUT_HIGH`) | `adb_platform.h` |
+| **ADB → USB** (host TX) | Tri-state (open-collector release) | `adb_host_gpio.h` only |
+
+Firmware **2.0.0** briefly used tri-state in shared `adb_platform.h`, which broke device-mode collision detection (BT mouse jumps). **2.1.0** split GPIO as above. See [`troubleshooting.md`](troubleshooting.md) and [`adb-shared-gpio-rollback.md`](adb-shared-gpio-rollback.md).
 
 ### ADB pins
 
@@ -73,18 +82,25 @@ Bluetooth HID support is available on **Pico W** and **Pico 2 W** only (boards w
 - **Behaviour:** When built for `pico_w` or `pico2_w`, the firmware starts Bluetooth scanning after init. Paired BT keyboards and mice feed into the same ADB pipeline as USB (same parsers and register handling). Up to 2 BT keyboards and 2 BT mice are supported; only the first of each is currently processed in the main loop.
 - **Files:** `src/firmware/src/bluepad32_init.c`, `bluepad32_platform.c`, `btstack_config.h`, `sdkconfig.h`; `lib/QuokkADB/src/bt_hid_bridge.cpp`; platform API in `bluepad32_platform.h`, app API in `bluepad32_api.h`.
 
-## Build all boards
+## Build (`build-all.sh`)
 
-From the project root, `./build_all.sh` builds firmware for all four boards into separate directories:
+From the project root, **`./build-all.sh`** produces three UF2s in **`dist/`**:
 
-| Board     | Build directory  | UF2 path |
-|----------|------------------|----------|
-| Pico     | `build-pico`     | `build-pico/src/BT-USB-ADB-Adapter-firmware.uf2` |
-| Pico W   | `build-pico_w`   | `build-pico_w/src/BT-USB-ADB-Adapter-firmware.uf2` |
-| Pico 2   | `build-pico2`    | `build-pico2/src/BT-USB-ADB-Adapter-firmware.uf2` |
-| Pico 2 W | `build-pico2_w`  | `build-pico2_w/src/BT-USB-ADB-Adapter-firmware.uf2` |
+| Artifact | Board | CMake | Build dir |
+|----------|-------|-------|-----------|
+| `BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2` | Pico 2 W | `ADB_HOST_MODE=ON` | `build/` |
+| `BT-USB-ADB-Adapter-firmware-pico2_w-host-debug.uf2` | Pico 2 W | `ADB_HOST_MODE=ON`, `ADB_DEBUG=ON` | `build-debug/` |
+| `adbmon-pico.uf2` | Pico | adbmon project | `build-adbmon/` |
 
-Requires `PICO_SDK_PATH` or `PICO_SDK_FETCH_FROM_GIT=ON` (same as `build.sh`). Submodules are initialized automatically.
+The **host** UF2 is the unified product image: **ADB → Mac** (default) and **ADB → USB** (OLED toggle). Skip adbmon with `./build-all.sh --no-adbmon`.
+
+On **success**, CMake trees (`build/`, `build-debug/`, `build-adbmon/`) are **removed** after UF2s are copied to `dist/`. Set **`BUILD_KEEP_DIRS=1`** to keep them for incremental rebuilds.
+
+**Quick dev build:** `./build.sh` or `make` → `src/firmware/build/src/BT-USB-ADB-Adapter-firmware.uf2` (configure board via CMake as needed).
+
+Other boards (`pico`, `pico_w`, `pico2`) can still be built manually with `cmake -DPICO_BOARD=…`. The DIY ultramegausb board targets **Pico 2 W**.
+
+Requires `PICO_SDK_PATH` or the repo `.pico-sdk/` cache (see `build_common.sh`). Submodules are initialized automatically.
 
 ## Bluetooth pairing stability (planned work)
 
@@ -101,6 +117,6 @@ Firmware port **not started**; see companion doc for checklist vs current code.
 
 **Git remote:** `origin` was switched to **https://github.com/trickydee/ultramegausb-apple-adb.git** (new private repo). Local **master** was pushed to remote as **main**. These branches were pushed to origin with the same names: **feature/bluetooth**, **feature/improvements**, **feature/joysticks**, **feature/display**. All set to track their `origin/` counterparts.
 
-**Build by branch:** On **feature/bluetooth**, the build script does *not* auto-enable SDK fetch; use `PICO_SDK_FETCH_FROM_GIT=ON ./build_all.sh` if `PICO_SDK_PATH` is not set. On **feature/joysticks** and **feature/display**, the script auto-fetches the SDK from git when not found in common paths.
+**Build by branch:** Use **`./build-all.sh`** from `main`; SDK is resolved via `build_common.sh` (`.pico-sdk/` cache or `PICO_SDK_PATH`).
 
 **Pairing / display experiments (reverted):** On **feature/joysticks** we tried: (1) Reducing pairing delays from 50 ms/50 ms/200 ms to 10 ms; (2) `__not_in_flash_func` on the Core 1 pause path; (3) Optional display off via `ENABLE_DISPLAY_UPDATE` in `display_config.h`. All were reverted; current committed state has original delays and display always on. The doc **docs/pairing-timing-feature-bluetooth-vs-joysticks.md** records timing and code differences between **feature/bluetooth** and **feature/joysticks** for pairing investigation.

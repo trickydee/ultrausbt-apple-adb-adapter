@@ -7,9 +7,12 @@
 
 extern uint8_t usb_keycode_to_adb_code(uint8_t usb_code);
 
+static constexpr uint8_t kAdbCapsLock = 0x39;
+
 static uint8_t s_adb_to_usb[128];
 static uint8_t s_keys[6];
 static uint8_t s_mod;
+static uint8_t s_host_leds;
 static bool s_map_ready = false;
 
 static void build_reverse_map(void)
@@ -33,6 +36,24 @@ extern "C" void adb_to_usb_init(void)
     }
     memset(s_keys, 0, sizeof(s_keys));
     s_mod = 0;
+    s_host_leds = 0;
+}
+
+extern "C" void adb_to_usb_note_host_leds(uint8_t hid_leds)
+{
+    s_host_leds = hid_leds;
+    usb_hid_set_led_state(hid_leds);
+}
+
+extern "C" void adb_to_usb_apply_reg2(uint16_t reg2)
+{
+    bool kbd_caps = !(reg2 & (1u << ADB_REG_2_FLAG_CAPS_LOCK_LED));
+    bool pc_caps = (s_host_leds & 0x02u) != 0;
+
+    if (kbd_caps != pc_caps) {
+        usb_hid_pulse_caps_lock();
+        s_host_leds ^= 0x02u;
+    }
 }
 
 static uint8_t adb_code_to_modifier(uint8_t adb_code)
@@ -75,9 +96,18 @@ static int8_t seven_to_eight_signed(uint8_t seven)
     return (int8_t)(v * 2);
 }
 
+static bool adb_keycode_valid(uint8_t adb_code)
+{
+    return adb_code != 0 && adb_code != ADB_REG_0_NO_KEY && adb_code < 0x7F;
+}
+
 static void push_key(uint8_t adb_code, bool key_up)
 {
-    if (adb_code == ADB_REG_0_NO_KEY || adb_code >= 0x7F) {
+    if (!adb_keycode_valid(adb_code)) {
+        return;
+    }
+    // Locking caps on vintage ADB keyboards — latch/LED comes from register 2, not R0.
+    if (adb_code == kAdbCapsLock) {
         return;
     }
     uint8_t mod_bit = adb_code_to_modifier(adb_code);
@@ -112,16 +142,29 @@ static void push_key(uint8_t adb_code, bool key_up)
 
 extern "C" void adb_to_usb_keyboard_reg0(uint16_t reg0)
 {
+    if (reg0 == 0) {
+        memset(s_keys, 0, sizeof(s_keys));
+        s_mod = 0;
+        usb_hid_send_keyboard(s_mod, s_keys);
+        return;
+    }
+
     uint8_t key1 = (uint8_t)((reg0 >> ADB_REG_0_KEY_1_KEY_CODE) & 0x7F);
     uint8_t key2 = (uint8_t)((reg0 >> ADB_REG_0_KEY_2_KEY_CODE) & 0x7F);
     bool key1_up = (reg0 & (1u << ADB_REG_0_KEY_1_STATUS_BIT)) != 0;
     bool key2_up = (reg0 & (1u << ADB_REG_0_KEY_2_STATUS_BIT)) != 0;
 
-    if (key1 == ADB_REG_0_NO_KEY && key2 == ADB_REG_0_NO_KEY) {
+    if (!adb_keycode_valid(key1) && !adb_keycode_valid(key2)) {
         memset(s_keys, 0, sizeof(s_keys));
         s_mod = 0;
-    } else {
+        usb_hid_send_keyboard(s_mod, s_keys);
+        return;
+    }
+
+    if (adb_keycode_valid(key1)) {
         push_key(key1, key1_up);
+    }
+    if (adb_keycode_valid(key2)) {
         push_key(key2, key2_up);
     }
 

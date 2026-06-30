@@ -52,7 +52,7 @@ ensure_pico_sdk() {
     done
   fi
 
-  # 3) Repo-local cache: one clone for all build-pico / build-pico_w / … directories.
+  # 3) Repo-local cache: one clone for all build trees (build/, build-debug/, build-adbmon/, …).
   if [ -f "$cached_sdk/pico_sdk_init.cmake" ]; then
     export PICO_SDK_PATH="$cached_sdk"
     echo "Using Pico SDK at: $PICO_SDK_PATH (repo cache: $cache)"

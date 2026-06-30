@@ -223,7 +223,7 @@ int quokkadb(void) {
       adb_host_status_t host_status;
       adb_host.fill_status(&host_status);
       display_set_adb_host_status(&host_status);
-      sleep_ms(10);
+      sleep_ms(1);
       continue;
     }
 #endif

@@ -1,5 +1,6 @@
 #include "adb_host.h"
 #include "adb_host_gpio.h"
+#include "adb_host_led.h"
 #include "adb_to_usb.h"
 #include "adbregisters.h"
 #include "quokkadb_gpio.h"
@@ -15,6 +16,8 @@ using rp2040_serial::Serial;
 
 extern bool global_debug;
 
+static AdbHost *s_host_instance = nullptr;
+
 static bool addr_is_keyboard_slot(uint8_t addr)
 {
     return addr == 0x02 || addr == 0x04 || addr == 0x05 || addr == 0x06 || addr == 0x07;
@@ -27,7 +30,7 @@ static bool addr_is_pointing_slot(uint8_t addr)
 
 static bool classify_r3_valid(uint8_t addr, uint8_t handler, bool *is_keyboard_out)
 {
-    if (handler == 0xFE || handler == 0xFF) {
+    if (handler == 0x00 || handler == 0xFE || handler == 0xFF) {
         return false;
     }
     if (addr_is_keyboard_slot(addr)) {
@@ -48,8 +51,6 @@ static const unsigned kScanCount = sizeof(kScanAddrs) / sizeof(kScanAddrs[0]);
 const char *AdbHost::rx_err_label(int32_t err)
 {
     switch (err) {
-    case -1:
-        return "Tlt";
     case -2:
         return "start";
     case -3:
@@ -107,11 +108,33 @@ bool AdbHost::decode_bit(uint16_t lo, uint16_t hi, uint8_t *bit_out)
     return true;
 }
 
+bool AdbHost::bus_wait_until_high(uint32_t timeout_us)
+{
+    uint64_t start = time_us_64();
+    while (!data_in()) {
+        if ((uint64_t)(time_us_64() - start) >= timeout_us) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool AdbHost::bus_wait_until_low(uint32_t timeout_us)
+{
+    uint64_t start = time_us_64();
+    while (data_in()) {
+        if ((uint64_t)(time_us_64() - start) >= timeout_us) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool AdbHost::send_command(uint8_t cmd)
 {
     adb_host_gpio::bus_out();
     adb_host_gpio::data_lo();
-    // TMK/QMK attention: 800 µs low total; place_bit1() adds the final 35 µs low (start bit).
+    // ADB attention: 800 µs low total; place_bit1() adds the final 35 µs low (start bit).
     if (!adb_delay_us(765)) {
         adb_host_gpio::bus_in();
         return false;
@@ -168,14 +191,12 @@ int32_t AdbHost::receive_register16(void)
 {
     int32_t data = 0;
 
-    // QMK adb_host_talk_buf: wait for bus high after command stop (skip SRQ stretch).
-    if (!wait_data_hi(500)) {
-        last_rx_timing_ = 0;
-        return -1;
+    // After command stop bit: wait for bus release, then Tlt stop-to-start (per ADB spec).
+    if (!bus_wait_until_high(500)) {
+        return 0;
     }
-    if (!wait_data_lo(500)) {
-        last_rx_timing_ = 0;
-        return -1;
+    if (!bus_wait_until_low(500)) {
+        return 0;
     }
 
     // Start bit (1)
@@ -328,6 +349,25 @@ uint8_t AdbHost::count_device_kind(DevKind kind) const
     return count;
 }
 
+bool AdbHost::has_working_devices(void) const
+{
+    for (uint8_t i = 0; i < device_count_; i++) {
+        if (devices_[i].active && devices_[i].ever_responded) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool AdbHost::slot_poll_due(const DeviceSlot *slot, uint32_t now_ms) const
+{
+    if (!slot || slot->last_talk_ms == 0) {
+        return true;
+    }
+    uint32_t interval = (slot->kind == DevKind::Keyboard) ? kKeyboardPollMs : kPointingPollMs;
+    return (now_ms - slot->last_talk_ms) >= interval;
+}
+
 bool AdbHost::has_device_at(uint8_t addr) const
 {
     for (uint8_t i = 0; i < device_count_; i++) {
@@ -365,6 +405,9 @@ bool AdbHost::ensure_device(uint8_t addr, DevKind kind)
     slot->last_r0 = -1;
     slot->last_err = 0;
     slot->poll_attempts = 0;
+    slot->last_talk_ms = 0;
+    slot->last_rx_log_ms = 0;
+    slot->last_r2_poll_ms = 0;
     slot->ever_responded = false;
 
     if (global_debug) {
@@ -374,14 +417,6 @@ bool AdbHost::ensure_device(uint8_t addr, DevKind kind)
         Serial.println(addr, HEX);
     }
     return true;
-}
-
-void AdbHost::ensure_pointing_candidate(uint8_t addr)
-{
-    if (!addr_is_pointing_slot(addr) || has_device_at(addr)) {
-        return;
-    }
-    ensure_device(addr, DevKind::Pointing);
 }
 
 void AdbHost::log_device_list(const char *label) const
@@ -410,7 +445,7 @@ void AdbHost::try_keyboard_default(void)
     if (has_device_kind(DevKind::Keyboard)) {
         return;
     }
-    // QMK/TMK: default Apple keyboard address is 0x02; Talk R3 often has no payload.
+    // Default Apple keyboard address is 0x02 per ADB standard; Talk R3 often has no payload.
     ensure_device(0x02, DevKind::Keyboard);
 }
 
@@ -449,23 +484,37 @@ bool AdbHost::try_mouse_relocation(void)
     return ensure_device(0x0F, DevKind::Pointing);
 }
 
-void AdbHost::try_pointing_defaults(void)
-{
-    ensure_pointing_candidate(0x03);
-}
-
 void AdbHost::discover_pointing_devices(bool allow_relocation)
 {
+    // Passthrough / direct trackballs at 0x03 must not receive Mac-style relocation
+    // (Listen R3 @0x3/0xFFE) — that sequence is only for built-in trackballs -> @0xF.
+    if (has_device_at(0x03)) {
+        prune_relocation_ghost();
+        if (global_debug) {
+            Serial.println("ADB host: skip relocation (pointing device @0x3)");
+        }
+        return;
+    }
+
     if (allow_relocation && !has_device_at(0x0F)) {
         if (global_debug) {
             Serial.println("ADB host: try trackball relocation -> @0xF");
         }
         try_mouse_relocation();
     }
+}
 
-    ensure_pointing_candidate(0x03);
-    ensure_pointing_candidate(0x0E);
-    ensure_pointing_candidate(0x0F);
+void AdbHost::prune_relocation_ghost(void)
+{
+    for (uint8_t i = 0; i < device_count_; i++) {
+        DeviceSlot *slot = &devices_[i];
+        if (slot->addr == 0x0F && slot->active && !slot->ever_responded) {
+            slot->active = false;
+            if (global_debug) {
+                Serial.println("ADB host: prune ghost mouse @0xF");
+            }
+        }
+    }
 }
 
 void AdbHost::scan_r3(bool verbose)
@@ -473,6 +522,11 @@ void AdbHost::scan_r3(bool verbose)
     for (unsigned i = 0; i < kScanCount; i++) {
         uint8_t addr = kScanAddrs[i];
         int32_t reg3 = talk(addr, 3);
+        if (reg3 <= 0 && addr_is_keyboard_slot(addr)) {
+            // Chained keyboards (passthrough port) may need extra settle after global reset.
+            busy_wait_ms(20);
+            reg3 = talk(addr, 3);
+        }
         if (reg3 < 0) {
             if (verbose && global_debug) {
                 Serial.print("ADB host: scan @0x");
@@ -524,19 +578,21 @@ void AdbHost::enumerate_bus(bool reset_slots)
     log_device_list("poll targets");
 }
 
+void AdbHost::light_rescan(void)
+{
+    scan_r3(false);
+    try_keyboard_default();
+    log_device_list("rescan targets");
+}
+
 void AdbHost::rescan_bus(void)
 {
     if (global_debug) {
-        Serial.println("ADB host: rescan");
+        Serial.println("ADB host: rescan (global reset)");
     }
 
-    // Hot-plugged ADB devices only appear after a bus reset (same as Mac at power-on).
-    if (global_debug) {
-        Serial.println("ADB host: global reset for hotplug scan");
-    }
     global_reset();
-    busy_wait_ms(50);
-
+    busy_wait_ms(100);
     scan_r3(false);
     discover_pointing_devices(true);
     try_keyboard_default();
@@ -570,7 +626,7 @@ void AdbHost::log_poll_result(uint8_t addr, uint8_t reg, int32_t result, DevKind
             Serial.print(rx_err_label(result));
             Serial.print(" err=");
             Serial.print(result, DEC);
-            if (result == -1 || result == -2 || result == -3 || result == -4 || result == -5) {
+            if (result == -2 || result == -3 || result == -4 || result == -5) {
                 Serial.print(" t=");
                 Serial.print(last_rx_timing_, DEC);
             }
@@ -586,6 +642,12 @@ void AdbHost::log_poll_result(uint8_t addr, uint8_t reg, int32_t result, DevKind
         return;
     }
     slot->last_r0 = result;
+
+    uint32_t now = to_ms_since_boot(get_absolute_time());
+    if (now - slot->last_rx_log_ms < kRxLogMinMs) {
+        return;
+    }
+    slot->last_rx_log_ms = now;
 
     Serial.print("ADB host: RX Talk R");
     Serial.print(reg, DEC);
@@ -634,11 +696,13 @@ void AdbHost::leave_mode(void)
     if (entered_ && global_debug) {
         Serial.println("ADB host: leave mode");
     }
+    s_host_instance = nullptr;
     entered_ = false;
     device_count_ = 0;
     poll_count_ = 0;
     last_summary_ms_ = 0;
     last_rescan_ms_ = 0;
+    last_usb_leds_ = 0xFF;
 }
 
 void AdbHost::on_enter_mode(void)
@@ -655,7 +719,7 @@ void AdbHost::on_enter_mode(void)
     adb_to_usb_init();
     log_bus_wiring_test();
     global_reset();
-    busy_wait_ms(50);
+    busy_wait_ms(100);
     device_count_ = 0;
     poll_count_ = 0;
     last_summary_ms_ = to_ms_since_boot(get_absolute_time());
@@ -663,6 +727,106 @@ void AdbHost::on_enter_mode(void)
 
     enumerate_bus(true);
     entered_ = true;
+    s_host_instance = this;
+}
+
+void AdbHost::apply_usb_leds(uint8_t hid_leds)
+{
+    // ADB register 2 LED bits are active-low; HID output report bits are active-high.
+    uint8_t adb_leds = (uint8_t)(~hid_leds & 0x07u);
+    if (adb_leds == last_usb_leds_) {
+        return;
+    }
+    last_usb_leds_ = adb_leds;
+
+    for (uint8_t i = 0; i < device_count_; i++) {
+        DeviceSlot *slot = &devices_[i];
+        if (!slot->active || slot->kind != DevKind::Keyboard) {
+            continue;
+        }
+        // Upper byte 0xFF preserves default modifier/key flags per ADB register 2 layout.
+        listen(slot->addr, 2, (uint16_t)(0xFF00u | adb_leds));
+        break;
+    }
+}
+
+void AdbHost::sync_keyboard_leds_from_device(uint8_t addr)
+{
+    int32_t reg2 = talk(addr, 2);
+    if (reg2 < 0) {
+        return;
+    }
+
+    uint8_t adb_leds = (uint8_t)(reg2 & 0x07u);
+    adb_to_usb_apply_reg2((uint16_t)reg2);
+    last_usb_leds_ = adb_leds;
+}
+
+void AdbHost::poll_keyboard_r2(DeviceSlot *slot, uint32_t now_ms)
+{
+    if (now_ms - slot->last_r2_poll_ms < kKeyboardR2PollMs) {
+        return;
+    }
+    slot->last_r2_poll_ms = now_ms;
+    sync_keyboard_leds_from_device(slot->addr);
+}
+
+static bool reg0_caps_released(uint16_t reg0)
+{
+    uint8_t key1 = (uint8_t)((reg0 >> ADB_REG_0_KEY_1_KEY_CODE) & 0x7F);
+    uint8_t key2 = (uint8_t)((reg0 >> ADB_REG_0_KEY_2_KEY_CODE) & 0x7F);
+    bool key1_up = (reg0 & (1u << ADB_REG_0_KEY_1_STATUS_BIT)) != 0;
+    bool key2_up = (reg0 & (1u << ADB_REG_0_KEY_2_STATUS_BIT)) != 0;
+    return (key1 == 0x39 && key1_up) || (key2 == 0x39 && key2_up);
+}
+
+extern "C" void adb_host_apply_usb_leds(uint8_t hid_leds)
+{
+    if (s_host_instance) {
+        s_host_instance->apply_usb_leds(hid_leds);
+    }
+}
+
+void AdbHost::poll_device_slot(DeviceSlot *slot, uint32_t now)
+{
+    if (!slot || !slot->active || !slot_poll_due(slot, now)) {
+        return;
+    }
+
+    int32_t reg0 = talk(slot->addr, 0);
+    slot->last_talk_ms = now;
+    log_poll_result(slot->addr, 0, reg0, slot->kind);
+    if (reg0 < 0) {
+        slot->poll_attempts++;
+        if (!slot->ever_responded && slot->poll_attempts >= kProbePollAttempts) {
+            slot->active = false;
+            if (global_debug) {
+                Serial.print("ADB host: drop probe @0x");
+                Serial.println(slot->addr, HEX);
+            }
+        }
+        return;
+    }
+
+    slot->poll_attempts = 0;
+    slot->ever_responded = true;
+
+    if (slot->kind == DevKind::Keyboard) {
+        if (reg0 != 0 && reg0_caps_released((uint16_t)reg0)) {
+            sync_keyboard_leds_from_device(slot->addr);
+        } else {
+            poll_keyboard_r2(slot, now);
+        }
+        if (reg0 == 0) {
+            return;
+        }
+        adb_to_usb_keyboard_reg0((uint16_t)reg0);
+        return;
+    }
+
+    if (reg0 != 0) {
+        adb_to_usb_mouse_reg0((uint16_t)reg0);
+    }
 }
 
 void AdbHost::poll(void)
@@ -674,30 +838,29 @@ void AdbHost::poll(void)
     poll_count_++;
 
     uint32_t now = to_ms_since_boot(get_absolute_time());
-    if (now - last_rescan_ms_ >= kRescanMs) {
+    uint32_t rescan_interval = has_working_devices() ? kRescanActiveMs : kRescanMs;
+    if (now - last_rescan_ms_ >= rescan_interval) {
         last_rescan_ms_ = now;
-        rescan_bus();
+        if (has_working_devices()) {
+            if (global_debug) {
+                Serial.println("ADB host: light rescan");
+            }
+            light_rescan();
+        } else {
+            rescan_bus();
+        }
     }
 
     for (uint8_t i = 0; i < device_count_; i++) {
         DeviceSlot *slot = &devices_[i];
-        if (!slot->active) {
-            continue;
-        }
-
-        int32_t reg0 = talk(slot->addr, 0);
-        slot->poll_attempts++;
-        log_poll_result(slot->addr, 0, reg0, slot->kind);
-        if (reg0 < 0) {
-            continue;
-        }
-
-        slot->ever_responded = true;
-
         if (slot->kind == DevKind::Keyboard) {
-            adb_to_usb_keyboard_reg0((uint16_t)reg0);
-        } else {
-            adb_to_usb_mouse_reg0((uint16_t)reg0);
+            poll_device_slot(slot, now);
+        }
+    }
+    for (uint8_t i = 0; i < device_count_; i++) {
+        DeviceSlot *slot = &devices_[i];
+        if (slot->kind == DevKind::Pointing) {
+            poll_device_slot(slot, now);
         }
     }
 

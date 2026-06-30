@@ -17,7 +17,7 @@ See [`docs/hardware.md`](docs/hardware.md) for board wiring, power, and setup. *
    - Plug the adapter into the ADB bus
    - Power on the Mac
    - **No hot-plug** — do not unplug from ADB or remove USB devices while the Mac is running
-- **Host mode** (experimental, `-DADB_HOST_MODE=ON` builds): Mac **off and disconnected**; power the Pico from USB (see hardware doc for bus power); connect ADB keyboard/mouse to the pass-through ports; Pico USB to a modern PC
+- **Host mode** (ADB accessories → PC): flash **`dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2`** from `./build-all.sh`; switch mode on the OLED (**ADB → USB**). Mac **off and disconnected**; power the Pico from USB (see [`docs/hardware.md`](docs/hardware.md)).
 
 # Background
 
@@ -25,15 +25,17 @@ This is a fork of Difegue's version of the [adbuino](https://github.com/Difegue/
 
 ## Project documentation
 
+- [docs/troubleshooting.md](docs/troubleshooting.md) — BT mouse regression, host timing, flash images
 - [docs/gamepad-support.md](docs/gamepad-support.md) — gamepad support roadmap (Bluetooth / USB, ADB mapping options)
 
 # How to build and flash BT-USB-ADB-Adapter
 
 Note: This software is intended to be compiled in an Ubuntu Linux environment.
 
-- **Pico SDK:** Either install [pico-sdk](https://github.com/raspberrypi/pico-sdk) somewhere and set **`PICO_SDK_PATH`**, or leave it unset. **`build_all.sh`**, **`./build.sh`**, and **`make`** run `scripts/lib/build_common.sh`, which clones the SDK **once** into **`.pico-sdk/pico-sdk`** (gitignored) and sets **`PICOTOOL_FETCH_FROM_GIT_PATH`** to **`.pico-sdk`** so picotool is also built in that single tree—avoiding repeated downloads for every `build-*` directory. Override the tag with **`PICO_SDK_TAG`** (default **`2.2.0`**, keep in sync with `src/firmware/pico_sdk_import.cmake`).
+- **Pico SDK:** Either install [pico-sdk](https://github.com/raspberrypi/pico-sdk) somewhere and set **`PICO_SDK_PATH`**, or leave it unset. **`build-all.sh`**, **`./build.sh`**, and **`make`** run `scripts/lib/build_common.sh`, which clones the SDK **once** into **`.pico-sdk/pico-sdk`** (gitignored) and sets **`PICOTOOL_FETCH_FROM_GIT_PATH`** to **`.pico-sdk`** so picotool is also built in that single tree. Override the tag with **`PICO_SDK_TAG`** (default **`2.2.0`**, keep in sync with `src/firmware/pico_sdk_import.cmake`).
 - **From the top level of this project** you can build with:
-  - `make` (or `./build.sh`)
+  - **`./build-all.sh`** — recommended release bundle: unified **Pico 2 W** adapter (device + host toggle), UART debug UF2, and **adbmon** for Pico → `dist/`
+  - `make` or `./build.sh` — quick single dev build under `src/firmware/build/`
 - To use **upstream TinyUSB** (optional), initialize the submodule first:  
   `git submodule update --init --recursive`  
   Then build as above; the firmware will use the TinyUSB at `src/firmware/tinyusb`. See [docs/changes.md](docs/changes.md).
@@ -45,7 +47,7 @@ Note: This software is intended to be compiled in an Ubuntu Linux environment.
 - Press the button which is near the micro-USB port
 - While holding down the button, plug the USB cable into your computer (then release the button after plugging in)
 - You should see an "RPI-RP2" mass storage device appear on your computer
-- Drag the `.uf2` file onto that mass storage device (release build: `BT-USB-ADB-Adapter-firmware.uf2` under `build/src/`, or the per-board copies under `dist/` from `build_all.sh`)
+- Drag the `.uf2` file onto that mass storage device (release: `dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2` from `./build-all.sh`, or `src/firmware/build/src/BT-USB-ADB-Adapter-firmware.uf2` from `./build.sh`)
 - Once the mass storage device disappears, wait 10 seconds and then you are free to unplug
 
 # References

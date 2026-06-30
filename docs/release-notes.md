@@ -9,7 +9,7 @@ Lineage: this firmware descends from QuokkADB and adbuino. Target hardware: [`ha
 ## 2.1.0
 
 - **Device/host GPIO split:** Restore pre-2.0 drive-high ADB GPIO in shared code for **ADB>Mac** device mode (fixes BT mouse jumps and collision detection). Host open-collector GPIO moved to `adb_host_gpio.h` only; host timing (765 µs attention, RX preamble) unchanged.
-- **Docs:** [`adb-shared-gpio-rollback.md`](adb-shared-gpio-rollback.md) records the reverted 2.0.0 shared GPIO and restore steps if host mode regresses.
+- **Docs:** [`adb-shared-gpio-rollback.md`](adb-shared-gpio-rollback.md), [`troubleshooting.md`](troubleshooting.md); **`build-all.sh`** simplified to Pico 2 W adapter + debug + adbmon.
 
 ## 2.0.0
 

@@ -2,7 +2,7 @@
 
 **Branch:** `feature/fix-device-host-modes`  
 **Date:** 2026-06-24  
-**Related:** [`adb-host-mode.md`](adb-host-mode.md), release **2.0.0** (`3508160`)
+**Related:** [`adb-host-mode.md`](adb-host-mode.md), release **2.0.0** (`3508160`), fix **2.1.0** (`62611dc`). Troubleshooting: [`troubleshooting.md`](troubleshooting.md).
 
 ## Problem
 
