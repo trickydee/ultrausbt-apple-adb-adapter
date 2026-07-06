@@ -134,9 +134,10 @@ void core1_main() {
 #endif
 #if ENABLE_BLUEPAD32
     if (bt_host_coop_usb_host_is_paused()) {
-      busy_wait_us(5000);
+      bt_host_coop_core1_pause_iteration();
       continue;
     }
+    bt_host_coop_core1_set_running();
 #endif
     tuh_task(); // tinyusb host task
 
@@ -199,6 +200,10 @@ int quokkadb(void) {
 /*------------ Core0 main loop ------------*/
   while (true) {
     int16_t cmd = 0;
+
+#if ENABLE_BLUEPAD32
+    core1_bt_pause_watchdog_tick();
+#endif
 
     display_handle_buttons();
 

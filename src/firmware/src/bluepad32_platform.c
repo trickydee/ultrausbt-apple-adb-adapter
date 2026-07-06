@@ -15,7 +15,7 @@
 #include "sdkconfig.h"
 #include "bluepad32_platform.h"
 #include "bt_host_coop.h"
-#include "controller/uni_controller_type.h"
+#include "bt_pairing_config.h"
 #include "uni_hid_device.h"
 
 #ifndef CONFIG_BLUEPAD32_PLATFORM_CUSTOM
@@ -75,31 +75,19 @@ static void gamepad_visual_clear(void) {
     g_gp_vis_connected = 0;
 }
 
-/* Ported from amigahid-pico bluepad32_platform: Stadia/Xbox GATT enumeration vs Core 1 USB host (here: pause tuh_task). */
-static bool name_suggests_gamepad_class(const char* name) {
+/* Atari/Amiga recipe: busy_wait only in BT callbacks — never sleep_ms on Core 0. */
+static void bt_callback_busy_wait_ms(uint32_t ms) {
+    busy_wait_us(ms * 1000u);
+}
+
+/* Pause Core 1 only for long-pairing BLE gamepads (Stadia/Xbox), not generic "gamepad" names. */
+static bool name_suggests_heavy_gamepad_pairing(const char* name) {
     if (!name || name[0] == '\0') return false;
-    return strstr(name, "Stadia") != NULL || strstr(name, "Xbox") != NULL || strstr(name, "XBOX") != NULL ||
-           strstr(name, "gamepad") != NULL || strstr(name, "Gamepad") != NULL || strstr(name, "GAMEPAD") != NULL;
+    return strstr(name, "Stadia") != NULL || strstr(name, "Xbox") != NULL || strstr(name, "XBOX") != NULL;
 }
 
-static bool hid_is_xbox(const uni_hid_device_t* d) {
-    if (!uni_hid_device_has_controller_type(d)) return false;
-    uni_controller_type_t t = d->controller_type;
-    return (t == k_eControllerType_XBoxOneController) || (t == k_eControllerType_XBox360Controller);
-}
-
-static bool hid_is_stadia_vid_pid(const uni_hid_device_t* d) {
-    uint16_t vid = uni_hid_device_get_vendor_id(d);
-    uint16_t pid = uni_hid_device_get_product_id(d);
-    return (vid == 0x18D1 && pid == 0x9400);
-}
-
-static bool hid_is_stadia_vid_only(const uni_hid_device_t* d) {
-    return uni_hid_device_get_vendor_id(d) == 0x18D1;
-}
-
-static bool is_xbox_or_stadia_for_heavy_enum(const uni_hid_device_t* d) {
-    return hid_is_xbox(d) || hid_is_stadia_vid_only(d);
+static bool discovery_needs_core1_pause(uint16_t cod, const char* name) {
+    return (cod == 0x0508) || name_suggests_heavy_gamepad_pairing(name);
 }
 
 static void store_pending_name_by_addr(bd_addr_t addr, const char* name) {
@@ -181,7 +169,7 @@ static void my_platform_init(int argc, const char** argv) {
 
 static void my_platform_on_init_complete(void) {
     logi("bluepad32_platform: on_init_complete\n");
-    sleep_ms(2000);
+    bt_callback_busy_wait_ms(2000);
     logi("Starting Bluetooth scanning...\n");
     uni_bt_start_scanning_and_autoconnect_unsafe();
 #if defined(CYW43_WL_GPIO_LED_PIN)
@@ -194,25 +182,25 @@ static uni_error_t my_platform_on_device_discovered(bd_addr_t addr, const char* 
     if (name && name[0] != '\0') {
         store_pending_name_by_addr(addr, name);
     }
-    bool might_be_gamepad = (cod == 0x0508) || name_suggests_gamepad_class(name);
-    if (might_be_gamepad) {
+    if (discovery_needs_core1_pause(cod, name)) {
         logi("[bt] Pausing USB host during gamepad discovery (COD=0x%04X)\n", cod);
-        bt_host_coop_usb_host_set_paused(true);
+        core1_pause_for_bt_enumeration();
+        core1_wait_for_pause_active(20);
+        bt_callback_busy_wait_ms(BT_GAMEPAD_DISCOVERY_SETTLE_MS);
     }
     return UNI_ERROR_SUCCESS;
 }
 
 static void my_platform_on_device_connected(uni_hid_device_t* d) {
+    ARG_UNUSED(d);
     logi("bluepad32_platform: device connected\n");
-    if (is_xbox_or_stadia_for_heavy_enum(d)) {
-        logi("[bt] Pausing USB host for Xbox/Stadia connection (GATT)\n");
-        bt_host_coop_usb_host_set_paused(true);
-    }
 }
 
 static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
     logi("bluepad32_platform: device disconnected\n");
-    bt_host_coop_usb_host_set_paused(false);
+    if (core1_get_bt_pause_depth() > 0) {
+        core1_resume_after_bt_enumeration();
+    }
 
     bt_keyboard_storage_t* kb_storage = get_keyboard_storage(d);
     if (kb_storage && kb_storage->connected) {
@@ -283,10 +271,6 @@ static uni_error_t my_platform_on_device_ready(uni_hid_device_t* d) {
         }
         logi("bluepad32_platform: mouse ready\n");
     } else if (uni_hid_device_is_gamepad(d)) {
-        bool is_x = hid_is_xbox(d);
-        bool is_stadia = hid_is_stadia_vid_pid(d);
-        bool heavy = is_x || is_stadia;
-
         bt_gamepad_storage_t* storage = get_gamepad_storage(d);
         if (storage) {
             storage->connected = true;
@@ -305,17 +289,13 @@ static uni_error_t my_platform_on_device_ready(uni_hid_device_t* d) {
         } else {
             logi("bluepad32_platform: gamepad ready but no free slot (max %d)\n", MAX_BT_GAMEPADS);
         }
-
-        /* amigahid-pico: delay before resuming Core 1; Stadia is sensitive to timing during GATT discovery. */
-        if (heavy) {
-            logi("[bt] Xbox/Stadia gamepad: delay then resume USB host\n");
-            sleep_ms(50);
-        } else {
-            sleep_ms(10);
-        }
-        bt_host_coop_usb_host_set_paused(false);
     } else {
         logi("bluepad32_platform: unsupported device type\n");
+    }
+
+    if (core1_get_bt_pause_depth() > 0) {
+        bt_callback_busy_wait_ms(BT_GAMEPAD_CORE1_RESUME_DELAY_MS);
+        core1_resume_after_bt_enumeration();
     }
 
     return UNI_ERROR_SUCCESS;
@@ -474,6 +454,7 @@ void bluepad32_get_gamepad_visual(uint8_t* dpad, uint16_t* buttons, uint8_t* mis
 }
 
 void bluepad32_delete_pairing_keys(void) {
+    core1_force_release_bt_pause();
     uni_bt_del_keys_unsafe();
 }
 
