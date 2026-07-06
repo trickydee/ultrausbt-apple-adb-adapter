@@ -2,9 +2,18 @@
 
 Lineage: this firmware descends from QuokkADB and adbuino. Target hardware: [`hardware.md`](hardware.md).
 
-## feature/gamepad (in progress)
+## feature/gamepad
 
-- **Bluetooth gamepad:** One BT gamepad slot in Bluepad32 (`uni_gamepad_t`, `bluepad32_get_gamepad` / `bluepad32_get_gamepad_count`). **Phase B:** gamepad → **HID keyboard** (D-pad/buttons) and **left stick → mouse** via `bt_hid_bridge` / `KeyboardPrs` + `MousePrs` (see [gamepad-support.md](gamepad-support.md)). OLED **Devices** / **Bluetooth names:** BT gamepad **count**, **G1** name, and optional live **`BT GP:`** legend when a pad is connected.
+- **Bluetooth gamepad:** One BT gamepad slot in Bluepad32 (`uni_gamepad_t`, `bluepad32_get_gamepad` / `bluepad32_get_gamepad_count`). **Phase B shipped:** gamepad → **HID keyboard** (D-pad/buttons) and **left stick → mouse** via `bt_hid_bridge` / `KeyboardPrs` + `MousePrs` (see [gamepad-support.md](gamepad-support.md)). OLED **Devices** / **Bluetooth names:** BT gamepad **count**, **G1** name, and optional live **`BT GP:`** legend when a pad is connected.
+- **Phase C (planned):** Native Gravis MouseStick II handler **0x23** — see [`FUTURE_WORK.md`](FUTURE_WORK.md) §2 / §11.
+
+## 2.2.1
+
+- **Bluetooth pairing stability (Atari v22.1.0 / Amiga recipe):** Refcounted Core 1 pause in `bt_host_coop.c`; `__wfe()` pause loop on Core 1; `bt_callback_busy_wait_ms()` only in Bluepad32 callbacks (no `sleep_ms` during pairing); 30 ms discovery settle + 100 ms pre-resume; pause on BLE gamepad discovery only (CoD `0x0508`, Stadia/Xbox name — not generic `"gamepad"`); no double-pause on connect; 45 s pause watchdog; tunables in `bt_pairing_config.h`.
+- **Multi-device BT input:** Always-merge keyboard + gamepad key reports via `bluepad32_peek_keyboard()` / `bluepad32_peek_gamepad()` before `KeyboardPrs.Parse()` — fixes keyboard queue flood when Xbox pairs before keyboard.
+- **Mac boot + BT pairing:** Defer Mac global ADB reset while BT link is forming or within 2.5 s after `device_ready` (`bluepad32_bt_defer_adb_reset()`) — fixes mouse dead on ADB when pairing during Mac cold boot.
+- **Xbox reconnect:** Force-release Core 1 pause on disconnect and key wipe; clear orphan slots on failed connect.
+- **Docs:** [`bluetooth-pairing.md`](bluetooth-pairing.md), [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md), [`troubleshooting.md`](troubleshooting.md) § Bluetooth, [`FUTURE_WORK.md`](FUTURE_WORK.md) §1 marked done.
 
 ## 2.2.0
 

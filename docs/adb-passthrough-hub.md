@@ -68,6 +68,8 @@ SRQ from downstream devices is visible on the shared line when the adapter is no
 
 After a **global ADB reset** or Mac power-on, the host re-enumerates from default addresses. Chained physical devices (trackball, Gravis stick, ADB keyboard) participate in the same collision/relocation dance.
 
+**Bluetooth pairing during Mac boot:** The Mac’s global reset can collide with BT device enumeration and leave the emulated mouse dead even when UART shows all BT devices ready. Firmware **2.2.1+** defers adapter `adb.Reset()` while BT links are forming (`bluepad32_bt_defer_adb_reset()`). Recommended pair order: **mouse → keyboard → gamepad** — see [`bluetooth-pairing.md`](bluetooth-pairing.md) and [`troubleshooting.md`](troubleshooting.md) § Bluetooth.
+
 Power-cycle the Mac after firmware changes so enumeration runs cleanly.
 
 ## Options for smooth movement + chained devices
@@ -96,4 +98,5 @@ No single fix is implemented yet beyond Phase 1 relocation and suppressed mouse 
 - [`hardware.md`](hardware.md) — dual ADB ports, BSS138, power
 - [`FUTURE_WORK.md`](FUTURE_WORK.md) §7 (hub Phase 2), §8 (multiple pointing devices), §9 (intelligent mouse SRQ)
 - [`iigs-debugging.md`](iigs-debugging.md) §10 — mouse SRQ suppression
+- [`bluetooth-pairing.md`](bluetooth-pairing.md) — BT multi-device pairing during Mac boot
 - [`adb-iigs-hardware-reference.md`](adb-iigs-hardware-reference.md) — SRQ timing; IIgs mouse SRQ policy

@@ -1,9 +1,11 @@
 # Bluetooth pairing — port Atari v22.1.0 (Amiga reference implementation)
 
+**Apple ADB status:** **Port complete** on branch **`feature/BT-alignment`** — see [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) for checklist and Apple-specific extensions (keyboard/gamepad merge, defer Mac ADB reset).
+
 **Audience:** LLM or developer porting **ultramegausb-apple-adb** to the same BLE gamepad pairing fix already shipped on Atari ST (v22.1.0) and **ultramegausb-amiga** (`feature/BT-Pairing-align`).
 
 **Start here:** [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) (family-wide root cause).  
-**This repo status:** [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) (gap checklist).  
+**This repo status:** [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) (port complete + Apple extras).  
 **Canonical source:** `ultramegausb-atari-st-rpikbd` — tag/branch with **v22.1.0** pairing fix.  
 **Sibling port (completed):** `ultramegausb-amiga` — branch **`feature/BT-Pairing-align`** (firmware **v2.2.11**).
 
@@ -25,15 +27,15 @@ Amiga’s port is a **direct C translation** of Atari’s `main.cpp` + `bluepad3
 
 ## Architecture mapping (three products)
 
-| Piece | Atari ST | Amiga (ported) | Apple ADB (to port) |
+| Piece | Atari ST | Amiga (ported) | Apple ADB (ported) |
 |-------|----------|----------------|---------------------|
 | **Core 0** | TinyUSB, Bluepad32, OLED | Same | ADB, Bluepad32, OLED |
 | **Core 1 from XIP** | HD6301 emulator | Quadrature mouse GPIO | `tuh_task()` + keyboard LEDs |
 | **What to pause** | Emulator loop | Mouse quadrature loop | USB host loop (`tuh_task`) |
-| **Pause module** | `main.cpp` | `quad_mouse.c` | **`bt_host_coop.c`** (extend) |
+| **Pause module** | `main.cpp` | `quad_mouse.c` | **`bt_host_coop.c`** |
 | **Platform hooks** | `bluepad32_platform.c` | `bluepad32_platform.c` | `src/firmware/src/bluepad32_platform.c` |
 | **User flash** | `NVSettings.cpp` | `mouse_config.c` (moved below TLV) | `flashsettings.cpp` (**already OK**) |
-| **System clock** | 225 MHz (BT builds) | 200 MHz | 125 MHz — retest after port |
+| **System clock** | 225 MHz (BT builds) | 200 MHz | 125 MHz — retest if hangs persist |
 
 ---
 
@@ -205,6 +207,9 @@ Test on **Pico W** and **Pico 2 W** if both are supported targets.
 
 ## After porting
 
-- Update [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) checklist to **Done** per item.
-- Update [`FUTURE_WORK.md`](FUTURE_WORK.md) §1.
-- Note clock speed (125 MHz vs Atari 225 MHz) if hangs persist — only after full recipe is green.
+- [x] [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) checklist marked **Done** (plus Apple-specific extensions documented).
+- [x] [`FUTURE_WORK.md`](FUTURE_WORK.md) §1 updated to **Done** on `feature/BT-alignment`.
+- [x] Merge to `main`; bump `CMakeLists.txt` to **2.2.1**; update [`release-notes.md`](release-notes.md).
+- [ ] Note clock speed (125 MHz vs Atari 225 MHz) if hangs persist — only after full recipe is green on release hardware.
+
+**Apple ADB extensions beyond this Amiga port:** always-merge keyboard + gamepad in `bt_hid_bridge.cpp`; `bluepad32_bt_defer_adb_reset()` during Mac global ADB reset windows. See [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) § Apple ADB extensions.

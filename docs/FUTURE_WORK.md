@@ -7,7 +7,7 @@ Tracked improvements and features for **ultramegausb-apple-adb**. For a broader 
 ## 1. Bluetooth pairing stability (Pico W / Pico 2 W)
 
 **Priority:** High  
-**Status:** Not started (reference docs in place)  
+**Status:** **Done** — shipped in firmware **2.2.1** (see [`release-notes.md`](release-notes.md))
 **Symptom:** Random hangs when pairing BLE devices — especially **gamepad** while keyboard/mouse are connected; intermittent keyboard pairing stalls (e.g. MX Keys M). Heisenbug: verbose UART can mask the race.
 
 ### References
@@ -15,28 +15,35 @@ Tracked improvements and features for **ultramegausb-apple-adb**. For a broader 
 | Document | Purpose |
 |----------|---------|
 | [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) | Canonical fix recipe (from ultramegausb-atari-st-rpikbd **v22.1.0**) |
-| [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) | Gap analysis, file map, test matrix, prior experiments on this repo |
-| [`gamepad-support.md`](gamepad-support.md) | Gamepad Phase C and pairing cross-link |
+| [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) | Port status, Apple-specific fixes, test matrix |
+| [`troubleshooting.md`](troubleshooting.md) | User-facing BT pairing / multi-device notes |
+| [`gamepad-support.md`](gamepad-support.md) | Gamepad Phase B + pairing cross-link |
 
-### What we already have
+### Shipped (Atari/Amiga recipe)
 
-- `flash_safe_execute_core_init()` on Core 1 (`quokkadb.cpp`)
-- Partial Core 1 USB pause via `bt_host_coop` (gamepad discovery, Xbox/Stadia connect)
-- `FlashSettings` sector below BTstack TLV (`flashsettings.cpp`)
+- [x] Refcounted Core 1 pause (`bt_host_coop.c`)
+- [x] Core 1 pause loop: `__wfe()` instead of `busy_wait_us` spin
+- [x] `bt_callback_busy_wait_ms()` — **no `sleep_ms` in Bluepad32 callbacks**
+- [x] 30 ms settle after pause on gamepad discovery
+- [x] 100 ms busy-wait before resume in `on_device_ready` (all device types)
+- [x] `core1_wait_for_pause_active()` before BTstack flash activity
+- [x] No double-pause on `device_connected`
+- [x] Resume on disconnect if `pause_depth > 0`; force-release on key wipe
+- [x] Tunable constants in `bt_pairing_config.h`
+- [x] 45 s pause watchdog (`core1_bt_pause_watchdog_tick()`)
 
-### What to port (from Atari handoff)
+### Shipped (Apple ADB follow-ons)
 
-- [ ] Refcounted Core 1 pause (replace single bool in `bt_host_coop.c`)
-- [ ] Core 1 pause loop: `__wfe()` instead of `busy_wait_us` spin
-- [ ] `bt_callback_busy_wait_ms()` — **no `sleep_ms` in Bluepad32 callbacks**
-- [ ] 30 ms settle after pause on gamepad discovery
-- [ ] 100 ms busy-wait before resume in `on_device_ready`
-- [ ] `core1_wait_for_pause_active()` before BTstack flash activity
-- [ ] No double-pause on `device_connected` if already paused on discovery
-- [ ] Resume on disconnect if `pause_depth > 0`
-- [ ] Tunable constants in `bt_pairing_config.h` (or similar)
-- [ ] Optional phase / `pause_depth` diagnostics (gate behind build flag)
-- [ ] Hardware test matrix on Pico W and Pico 2 W (**release** build, minimal UART)
+- [x] Always-merge BT keyboard + gamepad via `peek_*` before `KeyboardPrs.Parse()` (`bt_hid_bridge.cpp`)
+- [x] Defer Mac global ADB reset during BT link setup + `BT_POST_READY_ADB_SETTLE_MS` (2500 ms)
+- [x] Clear orphan slots on failed connect; reset gamepad mouse latch on disconnect
+
+### Remaining / optional
+
+- [x] Merge to `main`; bump `CMakeLists.txt` version to **2.2.1**
+- [ ] Hardware retest matrix on **release** UF2 (Pico W + Pico 2 W; Mac cold boot + Xbox-first)
+- [ ] Optional `pause_depth` / phase diagnostics (gate behind `ADB_DEBUG`)
+- [ ] **125 MHz** vs Atari’s **225 MHz** for CYW43 — evaluate only if hangs persist after merge
 
 ### Do not repeat without cause
 
@@ -44,15 +51,16 @@ Reverted on `feature/joysticks` with no improvement: shorter pairing delays (10 
 
 ### Open questions
 
-- **125 MHz** system clock vs Atari’s **225 MHz** for CYW43 — evaluate only after full pairing port.
-- Keyboard/mouse pairing without Core 1 pause — Atari handoff says short path; we still saw MX Keys hangs. Revisit if gamepad recipe alone is insufficient.
+- **125 MHz** system clock vs Atari’s **225 MHz** for CYW43 — port is green at 125 MHz; clock is a separate experiment.
+- Keyboard/mouse pairing without Core 1 pause — Atari handoff says short path; MX Keys stalls may return; revisit if reported post-merge.
+- Mac cold boot + Xbox-first pair order — defer-ADB-reset mitigates; confirm on release hardware.
 
 ---
 
 ## 2. Gamepad — native ADB / Gravis (Phase C)
 
-**Priority:** Medium (after pairing stability)  
-**Status:** Phase A+B shipped (BT gamepad → keyboard+mouse emulation); Phase C planned  
+**Priority:** Medium  
+**Status:** Phase A+B shipped (BT gamepad → keyboard+mouse emulation); **pairing stability done** in **2.2.1**; Phase C planned  
 **Reference:** [`gamepad-support.md`](gamepad-support.md), [`gravis_mousestick_ii.md`](gravis_mousestick_ii.md)
 
 - [ ] Detect ADB handler switch to **0x23**; implement Talk 0 / Talk 1 per Gravis docs
@@ -270,7 +278,7 @@ Handler **0x23** behaviour is host-driven and payload-specific. Capturing **real
 
 ## Suggested order
 
-1. **Bluetooth pairing stability** — unblocks reliable multi-device BT (KB + mouse + gamepad).
+1. ~~**Bluetooth pairing stability** — unblocks reliable multi-device BT (KB + mouse + gamepad).~~ **Done** in **2.2.1**; hardware retest optional.
 2. **ADBMON (§5)** — extend capture (Gravis payloads, OLED, adapter-integrated toggle).
 3. **UI alignment** — merge when ready; independent of pairing but benefits from stable BT counts/names.
 4. **Intelligent mouse SRQ (§9)** — refine hub/trackball detection; use ADBMON traces to validate.

@@ -2,7 +2,7 @@
 
 **Copied into ultramegausb-apple-adb** from `ultramegausb-atari-st-rpikbd/docs/BT_PAIRING_HANDOFF.md` (Atari ST IKBD emulator, fixes in **v22.1.0**). Keep in sync when the source doc changes.
 
-**Apple-ADB porting status:** see [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md). Tracked in [`FUTURE_WORK.md`](FUTURE_WORK.md) §1.
+**Apple-ADB porting status:** **Done** — shipped in firmware **2.2.1**. See [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) for port checklist and Apple-specific extensions; user guide: [`bluetooth-pairing.md`](bluetooth-pairing.md). Tracked in [`FUTURE_WORK.md`](FUTURE_WORK.md) §1.
 
 ---
 
@@ -192,10 +192,25 @@ Gate verbose `[DIAG]` logs behind `ENABLE_SERIAL_LOGGING` — they **change timi
 
 | Document | Content |
 |----------|---------|
-| `RELEASE_NOTES.md` §22.1.0 | User-facing fix summary |
-| `docs/FUTURE_WORK.md` §Xbox/Stadia BT regression | Root cause + BTstack experiment |
-| `docs/TECHNICAL_NOTES.md` | Current timing, flash, pause behaviour |
-| `AGENTS.md` | Core 0 timing, BT callback rules, agent boundaries |
+| [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) | Apple ADB port status, checklist, Apple-specific fixes |
+| [`bluetooth-pairing.md`](bluetooth-pairing.md) | User-facing pair order and troubleshooting |
+| [`troubleshooting.md`](troubleshooting.md) § Bluetooth | Symptom → fix for multi-device pairing |
+| [`FUTURE_WORK.md`](FUTURE_WORK.md) §1 | Pairing stability — done on `feature/BT-alignment` |
+| [`gamepad-support.md`](gamepad-support.md) | BT gamepad Phase B + pairing hooks |
+
+---
+
+## Apple ADB extensions (beyond this handoff)
+
+The Atari/Amiga recipe is necessary but not sufficient on the Apple ADB adapter. Also shipped on `feature/BT-alignment`:
+
+| Extension | Why |
+|-----------|-----|
+| Always-merge BT keyboard + gamepad before `KeyboardPrs.Parse()` | Xbox-before-keyboard caused keyboard queue flood |
+| `bluepad32_bt_defer_adb_reset()` + 2.5 s post-ready settle | Mac global ADB reset during BT pairing left mouse dead |
+| `core1_force_release_bt_pause()` on disconnect / key wipe | Xbox sleep/wake reconnect with stuck pause depth |
+
+Details: [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) § Apple ADB extensions.
 
 ---
 

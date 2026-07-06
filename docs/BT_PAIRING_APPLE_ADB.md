@@ -1,11 +1,11 @@
 # Bluetooth pairing — Apple ADB adapter port notes
 
-**Status:** Work not started (reference docs only). Tracked in [`FUTURE_WORK.md`](FUTURE_WORK.md) §1.  
+**Status:** **Done** — shipped in firmware **2.2.1**.
 **Canonical fix recipe:** [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) (from ultramegausb-atari-st-rpikbd v22.1.0).  
-**Sibling port (done):** [`BT_PAIRING_PORT_AMIGA_REFERENCE.md`](BT_PAIRING_PORT_AMIGA_REFERENCE.md) — ultramegausb-amiga `feature/BT-Pairing-align` (v2.2.11), step-by-step for this repo.  
-**Related:** [`gamepad-support.md`](gamepad-support.md), [`changes.md`](changes.md) (session notes).
+**Sibling port (done):** [`BT_PAIRING_PORT_AMIGA_REFERENCE.md`](BT_PAIRING_PORT_AMIGA_REFERENCE.md) — ultramegausb-amiga `feature/BT-Pairing-align` (v2.2.11).  
+**Related:** [`gamepad-support.md`](gamepad-support.md), [`bluetooth-pairing.md`](bluetooth-pairing.md) (user guide), [`troubleshooting.md`](troubleshooting.md), [`changes.md`](changes.md).
 
-This document maps the Atari handoff to **ultramegausb-apple-adb** firmware: what we already have, what is missing, prior experiments, and the hardware test matrix to run after porting.
+This document maps the Atari handoff to **ultramegausb-apple-adb** firmware: what was ported, Apple-specific fixes beyond the Atari recipe, prior experiments, and the hardware test matrix.
 
 ---
 
@@ -16,6 +16,7 @@ This document maps the Atari handoff to **ultramegausb-apple-adb** firmware: wha
 - **v1.0.8-era fixes** (flash-safe init + Core 1 pause) were a **clear improvement** but did **not** eliminate random hangs.
 - Hangs were **Heisenbugs**: verbose `printf` / `logi` sometimes made them disappear or move.
 - **Second-device** pairing (KB + mouse already connected, then gamepad) was a common failure mode.
+- **Mac cold boot + Xbox-first pairing order** could leave the BT mouse dead on ADB even when all three devices showed “device ready” in UART — caused by Mac global ADB reset colliding with BT enumeration (fixed by deferral below).
 
 ---
 
@@ -25,8 +26,8 @@ This document maps the Atari handoff to **ultramegausb-apple-adb** firmware: wha
 |---------------|-------------------|
 | Core 0: TinyUSB, Bluepad32, OLED | Core **0**: ADB, `bluepad32_poll()`, OLED, `process_bluepad32_devices()` |
 | Core 1: `hd6301_run_clocks()` from **XIP** | Core **1**: `tuh_task()`, `ChangeUSBKeyboardLEDs()` from **XIP** |
-| `g_core1_pause_depth` + `__wfe()` in pause loop | `bt_host_coop` — **single `bool`**, `busy_wait_us(5000)` spin |
-| `bt_callback_busy_wait_ms()` in platform callbacks | **`sleep_ms()`** in `bluepad32_platform.c` |
+| `g_core1_pause_depth` + `__wfe()` in pause loop | `bt_host_coop.c` — **refcounted depth** + `__wfe()` in pause loop |
+| `bt_callback_busy_wait_ms()` in platform callbacks | `bt_callback_busy_wait_ms()` in `bluepad32_platform.c` — **no `sleep_ms` in callbacks** |
 | `NVSettings.cpp` sector layout | `flashsettings.cpp` → `settings_flash_offset_bytes()` |
 | System clock **225 MHz** (BT builds) | System clock **125 MHz** (`set_sys_clock_khz(125000)` in `quokkadb.cpp`) |
 
@@ -39,32 +40,47 @@ The **multicore flash race** is the same: BTstack on Core 0 writes pairing TLV v
 | Item | Status | Location / notes |
 |------|--------|------------------|
 | `flash_safe_execute_core_init()` on Core 1 | **Done** | `lib/QuokkADB/src/quokkadb.cpp` → `core1_main()` |
-| Core 1 pause loop uses `__wfe()` | **Missing** | Uses `busy_wait_us(5000)` + `continue` |
-| Refcounted Core 1 pause | **Missing** | `src/bt_host_coop.c` — single volatile bool |
-| Pause on gamepad discovery (CoD 0x0508 / name) | **Partial** | `bluepad32_platform.c` → `my_platform_on_device_discovered()` |
-| No double-pause on `device_connected` | **Gap** | Xbox/Stadia pause on connect **after** gamepad discovery may already have paused |
-| 30 ms settle after pause | **Missing** | No `BT_GAMEPAD_DISCOVERY_SETTLE_MS` equivalent |
-| 100 ms busy-wait before resume in `device_ready` | **Missing** | Gamepad path uses `sleep_ms(10)` or `sleep_ms(50)` only |
-| `core1_wait_for_pause_active()` | **Missing** | — |
-| BT callbacks: `busy_wait_us` only | **Violated** | `sleep_ms(2000)` in `on_init_complete`; `sleep_ms(10/50)` in `on_device_ready` |
-| Resume on disconnect if pairing aborted | **Partial** | `set_paused(false)` on disconnect; no depth tracking |
+| Core 1 pause loop uses `__wfe()` | **Done** | `quokkadb.cpp` — `g_core1_pause_spins++`; `__wfe()` |
+| Refcounted Core 1 pause | **Done** | `src/bt_host_coop.c` / `include/bt_host_coop.h` |
+| Pause on gamepad discovery (CoD 0x0508 / Stadia/Xbox name) | **Done** | `bluepad32_platform.c` → `discovery_needs_core1_pause()` |
+| No double-pause on `device_connected` | **Done** | `on_device_connected` is empty |
+| 30 ms settle after pause | **Done** | `BT_GAMEPAD_DISCOVERY_SETTLE_MS` in `bt_pairing_config.h` |
+| 100 ms busy-wait before resume in `device_ready` | **Done** | `BT_GAMEPAD_CORE1_RESUME_DELAY_MS`; all device types if `depth > 0` |
+| `core1_wait_for_pause_active()` | **Done** | `bt_host_coop.c` |
+| BT callbacks: `busy_wait_us` only | **Done** | `bt_callback_busy_wait_ms()` — no `sleep_ms` in pairing callbacks |
+| Resume on disconnect if pairing aborted | **Done** | `core1_resume_after_bt_enumeration()` if `depth > 0`; `core1_force_release_bt_pause()` on key wipe |
+| 45 s pause watchdog | **Done** | `BT_CORE1_PAUSE_WATCHDOG_MS`; ticked from Core 0 loop |
 | NV / settings flash below BTstack TLV | **Done** | `lib/QuokkADB/src/flashsettings.cpp` |
 | SDK-pinned BTstack | **Yes** | `pico_btstack_*` via Bluepad32 CMake |
-| Avoid 2 ms HID / duplicate handlers without retest | **N/A yet** | Single `process_bluepad32_devices()` per loop today |
-| 225 MHz for CYW43 (Atari) | **Different** | We use 125 MHz; evaluate separately if hangs persist after full port |
+| Tunable constants header | **Done** | `include/bt_pairing_config.h` |
+| 225 MHz for CYW43 (Atari) | **Different** | We use 125 MHz; evaluate separately if hangs persist |
 
 ---
 
-## Code map (this repo — files to change when porting)
+## Apple ADB extensions (beyond Atari/Amiga recipe)
 
-| File | Responsibility today | Port action |
-|------|----------------------|-------------|
-| `lib/QuokkADB/src/quokkadb.cpp` | Core 1 USB loop, `flash_safe_execute_core_init` | Pause loop → `__wfe()`; optional phase/pause diagnostics |
-| `src/bt_host_coop.c` / `include/bt_host_coop.h` | Single bool USB-host pause flag | Refcount; `wait_for_pause_active`; rename API to match Atari pattern if desired |
-| `src/bluepad32_platform.c` | Discovery/connect/ready hooks, `sleep_ms` delays | `bt_callback_busy_wait_ms`; settle + resume constants; remove connect double-pause; resume all device types if paused |
-| `src/bluepad32_init.c` | CYW43 power-cycle sleeps | Review: init sleeps may be OK outside pairing callbacks |
-| `lib/QuokkADB/src/flashsettings.cpp` | Settings sector below TLV | **No change expected** — already fixed for RP2040/RP2350 A2 |
-| New header (suggested) | — | `src/bt_pairing_config.h` or constants in `display_config.h`: `BT_GAMEPAD_DISCOVERY_SETTLE_MS`, `BT_GAMEPAD_CORE1_RESUME_DELAY_MS` |
+These fixes were required after the base port; they are **not** in the Atari handoff doc.
+
+| Fix | Files | Why |
+|-----|--------|-----|
+| Always-merge BT keyboard + gamepad before `Parse()` | `bt_hid_bridge.cpp`, `bluepad32_peek_keyboard()` / `bluepad32_peek_gamepad()` | Xbox paired before keyboard caused spurious KeyUp/KeyDown via shared `prevState` at fake BT addr `0x80` → keyboard queue flood (`unable to enqueue new KeyDown`) |
+| Suppress gamepad→keyboard keys during Core 1 pause when BT keyboard connected | `bt_hid_bridge.cpp` → `include_gamepad_keys_in_keyboard_report()` | Avoid phantom keys while Xbox BLE bond completes |
+| Defer Mac global ADB reset during BT link setup + post-ready settle | `bluepad32_bt_defer_adb_reset()`, `quokkadb.cpp`, `BT_POST_READY_ADB_SETTLE_MS` (2500 ms) | Mac cold boot sends `ALL: Resetting devices` mid-enumeration → mouse dead on ADB despite successful BT `device ready` |
+| Force-release pause on disconnect; clear orphan slots on failed connect | `bluepad32_platform.c`, `core1_force_release_bt_pause()` | Xbox sleep/wake reconnect failures; stuck `pause_depth` after aborted pair |
+| Queue overflow warnings gated behind debug build | `usbkbdparser.cpp` | Reduce UART noise on release UF2 |
+
+---
+
+## Code map (this repo)
+
+| File | Responsibility |
+|------|----------------|
+| `lib/QuokkADB/src/quokkadb.cpp` | Core 1 USB loop, `__wfe()` pause, deferred ADB reset apply, watchdog tick |
+| `src/bt_host_coop.c` / `include/bt_host_coop.h` | Refcount pause API, watchdog, force release |
+| `include/bt_pairing_config.h` | `BT_GAMEPAD_DISCOVERY_SETTLE_MS`, `BT_GAMEPAD_CORE1_RESUME_DELAY_MS`, `BT_CORE1_PAUSE_WATCHDOG_MS`, `BT_POST_READY_ADB_SETTLE_MS` |
+| `src/bluepad32_platform.c` | Discovery/connect/ready/disconnect hooks; defer-ADB-reset state; peek APIs |
+| `lib/QuokkADB/src/bt_hid_bridge.cpp` | Merged keyboard+gamepad reports; gamepad stick → mouse |
+| `lib/QuokkADB/src/flashsettings.cpp` | Settings sector below TLV — no change needed |
 
 ---
 
@@ -76,20 +92,22 @@ Documented in [`changes.md`](changes.md) — all **reverted**, **no pairing impr
 2. `__not_in_flash_func` on the Core 1 pause path.
 3. Optional display off via `ENABLE_DISPLAY_UPDATE` in `display_config.h`.
 
-Earlier branches also tried **pausing Core 1 for all HID** devices (not just gamepads); narrowed to gamepad/Xbox/Stadia only. Keyboard-only hangs (MX Keys) may need revisiting after the full Atari recipe is ported — the handoff assumes KB/mouse do not need pause, but we saw keyboard pairing stalls before gamepad work landed.
+Earlier branches also tried **pausing Core 1 for all HID** devices (not just gamepads); narrowed to gamepad/Xbox/Stadia only. Keyboard-only hangs (MX Keys) may need revisiting if they return after this port — the handoff assumes KB/mouse do not need pause, but we saw keyboard pairing stalls before gamepad work landed.
 
 ---
 
-## Suggested porting order
+## Recommended pairing order (hardware)
 
-Follow [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) §Suggested porting order. For this repo specifically:
+Use **release** UF2 (`dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2`), not debug, for pairing tests — verbose UART can mask timing races.
 
-1. **`bt_host_coop`** — refcount + `core1_wait_for_pause_active()` (port from Atari `main.cpp`).
-2. **`quokkadb.cpp`** — Core 1 pause branch: `__wfe()` instead of busy-spin.
-3. **`bluepad32_platform.c`** — `bt_callback_busy_wait_ms()`; discovery settle 30 ms; ready resume delay 100 ms; pause once on discovery only; resume on ready **and** disconnect if `depth > 0`.
-4. Add **`bt_pairing_config.h`** with tunable constants (do not hide delays inside `logi` paths).
-5. **Hardware matrix** (release build, minimal UART).
-6. Only then: Core 0 loop timing, clock speed experiments, BTstack upgrade.
+| Order | Mac cold boot | Mac already running |
+|-------|---------------|---------------------|
+| **Recommended** | Mouse → keyboard → gamepad (Xbox/Stadia) | Same; generally reliable |
+| **Risky** | Gamepad (Xbox) → mouse → keyboard | May leave mouse dead until adapter reset (mitigated by defer-ADB-reset in 2.2.1+) |
+
+**PS5 (DualSense)** uses BR/EDR and does **not** trigger the BLE gamepad Core 1 pause path — pairing is typically easier than Xbox BLE.
+
+Clear stale bonds: **Map Devices** screen → hold **L+R** for 5 s.
 
 ---
 
@@ -105,19 +123,23 @@ Run on **Pico W** and **Pico 2 W**, **release** firmware (verbose UART off — i
 | 4 | Reboot → all three reconnect | No hang on autoconnect |
 | 5 | Map Devices screen → **L+R 5 s** clear pairings → re-pair all three | Clean pair cycle |
 | 6 | USB keyboard + mouse plugged **and** BT gamepad paired | No regression on USB or BT paths |
+| 7 | **Mac cold boot** — pair mouse → keyboard → Xbox | All three work on ADB after Mac finishes boot |
+| 8 | **Mac cold boot** — pair Xbox → mouse → keyboard | Mouse works on ADB (defer-ADB-reset); or document workaround if still flaky |
+| 9 | Xbox sleep/wake → reconnect | Reconnects without stuck pause; USB/BT inputs recover |
 
-**Failure notes to capture:** last log line before hang; whether OLED frozen (Core 0 blocked) or only input dead; `pause_depth` if diagnostics added.
+**Failure notes to capture:** last log line before hang; whether OLED frozen (Core 0 blocked) or only input dead; `pause_depth` if using debug UF2.
 
 ---
 
 ## Open questions
 
-1. **125 MHz vs 225 MHz** — Atari uses 225 MHz for CYW43 on BT builds; we use 125 MHz (QuokkADB heritage). Port pairing fixes first; treat clock as a separate experiment.
-2. **Keyboard/mouse pairing without Core 1 pause** — Atari handoff says short path; we still saw MX Keys hangs. If gamepad recipe is ported and KB hangs remain, consider selective pause for BLE HID CoD `0x05xx` or post-pause settle on `device_connected` for keyboards only.
-3. **Display I2C on Core 0** — ruled out as root cause on Atari (Map Devices / `usb_device_map`). Our OLED still runs every Core 0 loop; unlikely primary cause but avoid heavy redraw during pair tests.
+1. **125 MHz vs 225 MHz** — Atari uses 225 MHz for CYW43 on BT builds; we use 125 MHz (QuokkADB heritage). Port is complete at 125 MHz; treat clock as a separate experiment if hangs persist.
+2. **Keyboard/mouse pairing without Core 1 pause** — Atari handoff says short path; we still saw MX Keys hangs before this port. If KB-only stalls return, consider selective pause for BLE HID CoD `0x05xx`.
+3. **Mac cold boot + Xbox-first** — defer-ADB-reset mitigates; retest on release 2.2.1+ before declaring fully closed.
+4. **Display I2C on Core 0** — ruled out as root cause on Atari. Our OLED still runs every Core 0 loop; unlikely primary cause but avoid heavy redraw during pair tests.
 
 ---
 
 ## LLM session paste (Apple ADB context)
 
-> Port Atari v22.1.0 BT pairing fix into ultramegausb-apple-adb: see `docs/BT_PAIRING_HANDOFF.md` + `docs/BT_PAIRING_APPLE_ADB.md`. Core 0 = ADB/BT/OLED; Core 1 = TinyUSB from XIP. Already have `flash_safe_execute_core_init()` and `settings_flash_offset_bytes()`. Missing: refcounted pause, `__wfe()` on Core 1, `busy_wait_us` only in BT callbacks, 30 ms post-pause settle, 100 ms pre-resume delay, no double-pause on connect. Prior delay/display experiments reverted. Test KB + mouse + gamepad on Pico W and Pico 2 W without verbose UART.
+> **Context:** ultramegausb-apple-adb (Pico W / Pico 2 W). Core 0 = ADB + Bluepad32 + OLED. Core 1 = TinyUSB `tuh_task()` from XIP. **Port complete** on `feature/BT-alignment`: refcounted pause + `__wfe()` + `bt_callback_busy_wait_ms` + 30 ms settle + 100 ms pre-resume + no connect double-pause + watchdog. **Apple extras:** `peek_keyboard`/`peek_gamepad` always-merge in `bt_hid_bridge.cpp`; `bluepad32_bt_defer_adb_reset()` + 2.5 s post-ready settle; force-release pause on disconnect. **Read:** `docs/BT_PAIRING_HANDOFF.md`, this file, `docs/troubleshooting.md` § Bluetooth. **Test:** KB + mouse + Stadia/Xbox on Pico W and Pico 2 W with release UF2; Mac cold boot pair-order matrix.

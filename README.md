@@ -13,7 +13,7 @@ See [`docs/hardware.md`](docs/hardware.md) for board wiring, power, and setup. *
 # Quick usage
 
 - **Device mode** (default), *before* turning on the Mac:
-   - Plug in your USB keyboard and/or mouse (or pair Bluetooth on Pico W / Pico 2 W)
+   - Plug in your USB keyboard and/or mouse (or pair Bluetooth on Pico W / Pico 2 W — **mouse → keyboard → gamepad** if pairing multiple BT devices; see [`docs/bluetooth-pairing.md`](docs/bluetooth-pairing.md))
    - Plug the adapter into the ADB bus
    - Power on the Mac
    - **No hot-plug** — do not unplug from ADB or remove USB devices while the Mac is running
@@ -26,7 +26,9 @@ This is a fork of Difegue's version of the [adbuino](https://github.com/Difegue/
 ## Project documentation
 
 - [docs/troubleshooting.md](docs/troubleshooting.md) — BT mouse regression, host timing, flash images
-- [docs/gamepad-support.md](docs/gamepad-support.md) — gamepad support roadmap (Bluetooth / USB, ADB mapping options)
+- [docs/bluetooth-pairing.md](docs/bluetooth-pairing.md) — BT pairing order, multi-device tips (keyboard + mouse + gamepad)
+- [docs/gamepad-support.md](docs/gamepad-support.md) — gamepad support (Bluetooth Phase B shipped; Gravis Phase C planned)
+- [docs/release-notes.md](docs/release-notes.md) — version history (2.2.1 BT pairing stability)
 
 # How to build and flash BT-USB-ADB-Adapter
 

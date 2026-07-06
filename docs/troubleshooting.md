@@ -70,9 +70,66 @@ If host enumeration or device replies are consistently wrong after wiring checks
 
 ---
 
+## Bluetooth — multi-device pairing
+
+User guide: [`bluetooth-pairing.md`](bluetooth-pairing.md). Use the **release** UF2 from `./build-all.sh` (`dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2`) for pairing tests. The **debug** UF2 changes timing and can mask or trigger Heisenbugs. Full developer notes: [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md).
+
+### Recommended pair order
+
+| When | Order |
+|------|--------|
+| Mac **cold boot** (adapter and Mac power on together) | **Mouse → keyboard → gamepad** (Xbox/Stadia) |
+| Mac already running | Same order; generally reliable |
+
+Pairing **gamepad before keyboard** (especially Xbox BLE on Mac cold boot) was a common failure mode before firmware **2.2.1**.
+
+### Mouse dead after pairing (Mac boot)
+
+**Symptom:** UART shows all three BT devices “device ready”; keyboard works; **mouse does not move** on ADB.
+
+**Cause:** Mac sends a **global ADB reset** (`ALL: Resetting devices`) during boot while BT enumeration is still in progress. `adb.Reset()` mid-pair relocates addresses and clears mouse state.
+
+**Fix (2.2.1+):** `bluepad32_bt_defer_adb_reset()` holds the reset until BT link setup finishes and a **2.5 s** post-`device_ready` settle (`BT_POST_READY_ADB_SETTLE_MS`).
+
+**Workaround (older firmware):** Reset the adapter after Mac has booted, then pair in order mouse → keyboard → gamepad.
+
+### Keyboard queue flood / adapter hang (Xbox paired first)
+
+**Symptom (debug UF2):** Repeated `unable to enqueue new KeyDown`; typing stops; device may feel hung.
+
+**Cause:** Gamepad and keyboard shared `KeyboardPrs.Parse()` at fake BT address `0x80`. Gamepad-only reports caused spurious KeyUp/KeyDown when Xbox paired before the keyboard.
+
+**Fix (2.2.1+):** `bluepad32_peek_keyboard()` / `bluepad32_peek_gamepad()` — always merge keyboard + gamepad key reports before `Parse()`. Gamepad keys are suppressed during Core 1 pause when a BT keyboard is connected.
+
+**Workaround (older firmware):** Pair keyboard before gamepad, or clear pairings (Map Devices → **L+R 5 s**) and re-pair in recommended order.
+
+### Xbox won’t reconnect after sleep
+
+**Symptom:** `Failed to set device information client`, `Device cannot connect in time`; USB host or BT inputs stuck after failed reconnect.
+
+**Cause:** Core 1 pause depth stuck > 0 after aborted pair or double discovery pause.
+
+**Fix (2.2.1+):** `core1_force_release_bt_pause()` on disconnect and before key wipe; no second pause on `device_connected`; 45 s watchdog.
+
+**Workaround:** Map Devices → **L+R 5 s** to clear pairings; power-cycle the Xbox controller; flash latest firmware.
+
+### Xbox BLE vs PS5 (DualSense)
+
+**Xbox / Stadia (BLE):** Triggers Core 1 pause on discovery (CoD `0x0508` or name match). Longer bond path; more sensitive to pair order and Mac boot timing.
+
+**PS5 (BR/EDR):** Does **not** use the BLE gamepad pause path — pairing with mouse + keyboard is typically easier.
+
+### Logitech “Identity resolving failed”
+
+Often **non-fatal** on MX Keys / MX Master. If the device reaches “device ready” and works, ignore this line.
+
+---
+
 ## Related docs
 
 - [`iigs-debugging.md`](iigs-debugging.md) — IIgs keyboard/mouse timing experiments
 - [`adb-passthrough-hub.md`](adb-passthrough-hub.md) — hub + chained trackball SRQ behaviour
 - [`adb-host-mode.md`](adb-host-mode.md) — host mode setup and architecture
-- [`release-notes.md`](release-notes.md) — version history (2.1.0 GPIO split)
+- [`release-notes.md`](release-notes.md) — version history (2.1.0 GPIO split, 2.2.1 BT pairing)
+- [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) — developer pairing port notes
+- [`gamepad-support.md`](gamepad-support.md) — BT gamepad mapping and pairing cross-link

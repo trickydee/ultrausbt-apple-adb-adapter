@@ -40,3 +40,6 @@ dist/
 
 # One-time Pico SDK + shared picotool cache (see scripts/lib/build_common.sh)
 .pico-sdk/
+
+# Local branch cleanup list (merged or obsolete; safe to delete locally/remotely)
+docs/branches-to-clear.md

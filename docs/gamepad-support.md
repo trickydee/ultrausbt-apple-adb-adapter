@@ -1,6 +1,6 @@
 # Gamepad support (Bluetooth first, USB later)
 
-This document tracks **BT-USB-ADB-Adapter** gamepad work: goals, mapping options, flash/timing notes, and implementation status.
+This document tracks **BT-USB-ADB-Adapter** gamepad work: goals, mapping options, flash/timing notes, and implementation status. For BT pairing order and multi-device tips, see [`bluetooth-pairing.md`](bluetooth-pairing.md).
 
 ## Goals
 
@@ -25,13 +25,23 @@ Behavior follows the **real Gravis MouseStick II** split documented in `docs/gra
 
 **Later USB gamepads** should feed the same logical layer so all three modes apply regardless of BT vs USB source.
 
-## Reference: amigahid-pico
+## Reference: amigahid-pico (historical)
 
-The tree at `/Users/rich/Documents/Code/3rd party/amigahid-pico` (local clone) implements:
+The tree at `/Users/rich/Documents/Code/3rd party/amigahid-pico` (local clone) was the **pre-fix** reference for gamepad plumbing. **Pairing stability** in this firmware follows the **Atari v22.1.0 / Amiga v2.2.11** recipe — not the old amigahid `sleep_ms(50/10)` connect-pause pattern.
 
-- `bt_gamepad_storage_t`, `MAX_BT_GAMEPADS`, `uni_hid_device_is_gamepad()`, `UNI_CONTROLLER_CLASS_GAMEPAD` in `on_controller_data`.
-- **Stadia / Xbox enumeration:** In `bluepad32_platform.c`, when a gamepad-class device is **discovered** (COD `0x0508` or name hints) or an **Xbox / Google (Stadia) VID** device **connects**, the project **pauses Core 1’s quadrature mouse loop** (`amiga_quad_mouse_pause_core1`). After **`on_device_ready`** for a gamepad, it **`sleep_ms(50)`** for Xbox/Stadia ( **`10ms`** for other pads) then **resumes** Core 1. Core 1 also calls **`flash_safe_execute_core_init()`** so BTstack TLV flash work does not deadlock the second core. **`on_controller_data`** ignores gamepad reports until **`storage->connected`** is set in **`on_device_ready`** (enumeration complete).
-- **This firmware (ported behavior):** Core 1 runs **TinyUSB `tuh_task()`**, not quadrature. **`bt_host_coop.c`** exposes a flag so Core 1 **skips `tuh_task`** while the flag is set (same windows as above: discovery / connect / until gamepad ready + delay). Core 1 calls **`flash_safe_execute_core_init()`** once at startup (see `quokkadb.cpp`).
+**Stadia / Xbox enumeration (this firmware — shipped on `feature/BT-alignment`):**
+
+- **Discovery only:** If CoD **`0x0508`** or name contains **Stadia** / **Xbox** / **XBOX**, Core 1 USB host is paused via `core1_pause_for_bt_enumeration()` → `core1_wait_for_pause_active(20)` → `bt_callback_busy_wait_ms(30)` (`BT_GAMEPAD_DISCOVERY_SETTLE_MS`).
+- **`on_device_connected`:** Empty — **no** second pause (avoids stuck `pause_depth`).
+- **`on_device_ready`:** Register device; if `core1_get_bt_pause_depth() > 0`: `bt_callback_busy_wait_ms(100)` → `core1_resume_after_bt_enumeration()` — **all device types**, not gamepad-only.
+- **`on_device_disconnected`:** Resume if `depth > 0`; `core1_force_release_bt_pause()` before key wipe.
+- **Callbacks:** `bt_callback_busy_wait_ms()` only — never `sleep_ms()` on Core 0 during pairing.
+- **Core 1:** `tuh_task()` loop uses `__wfe()` while paused; `flash_safe_execute_core_init()` at startup (`quokkadb.cpp`).
+- **Constants:** `include/bt_pairing_config.h` — settle 30 ms, pre-resume 100 ms, watchdog 45 s, post-ready ADB settle 2500 ms.
+
+**Do not** pause for generic `"gamepad"` name strings — reduces false pauses.
+
+See [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md), [`troubleshooting.md`](troubleshooting.md) § Bluetooth.
 
 ## Flash and BTstack
 
@@ -105,8 +115,9 @@ Characters are appended only while the control is active: `^` `v` `<` `>` (D-pad
 
 ### Done (Phase B – keyboard emulation + OLED viz)
 
-- `process_bluepad32_devices()` maps gamepad → `hid_keyboard_report_t` and calls `KeyboardPrs.Parse` at fake BT address `0x80` (same as BT keyboard).
-- **Left stick → mouse:** merged with BT mouse movement in `bt_hid_bridge.cpp` (single `bluepad32_get_gamepad` read per loop).
+- `process_bluepad32_devices()` maps gamepad → `hid_keyboard_report_t` and merges with BT keyboard via `build_merged_bt_keyboard_report()` before `KeyboardPrs.Parse` at fake BT address `0x80`.
+- **Keyboard + gamepad merge:** `bluepad32_peek_keyboard()` / `bluepad32_peek_gamepad()` — always merge when both are connected; gamepad keys suppressed during Core 1 pause when a BT keyboard is connected (`include_gamepad_keys_in_keyboard_report()`).
+- **Left stick → mouse:** merged with BT mouse movement in `bt_hid_bridge.cpp` (single `bluepad32_peek_gamepad` read per loop).
 - `bluepad32_get_gamepad_visual()` exposes the latest sticks/buttons for the OLED without consuming the `updated` flag used for input.
 - `display_poll_bt_gamepad_viz()` redraws **Devices** / **Bluetooth names** only when the live snapshot changes (avoids hammering I2C).
 
@@ -115,8 +126,8 @@ Characters are appended only while the control is active: `^` `v` `<` `>` (D-pad
 - **Mode 2:** Detect ADB **handler switch** to **0x23**; implement **Talk 0 / Talk 1** per `docs/gravis_mousestick_ii.md`; map Bluetooth gamepad axes/buttons into 7-byte / 3-byte reports as appropriate.
 - **Mode 3:** User **toggle** + persisted **custom keymap** (extend `FlashSettings` carefully; re-verify flash layout).
 - USB HID gamepads via TinyUSB → same bridge as Bluetooth.
-- **Core 1 pause / pairing stability** — see [`FUTURE_WORK.md`](FUTURE_WORK.md) §1, [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md), [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md). Partial `bt_host_coop` exists today; full Atari v22.1.0 recipe not yet ported.
+- **Core 1 pause / pairing stability** — **Done** on `feature/BT-alignment`; see [`FUTURE_WORK.md`](FUTURE_WORK.md) §1, [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md), [`troubleshooting.md`](troubleshooting.md) § Bluetooth.
 
 ## Version
 
-Document aligned with firmware **1.0.18+**; bump `docs/release-notes.md` when gamepad output ships to users.
+Document aligned with firmware **2.2.1** (`feature/BT-alignment`); see [`release-notes.md`](release-notes.md).

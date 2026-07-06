@@ -69,9 +69,9 @@ An I2C SSD1306 128×64 OLED can be connected for splash, device counts, and (on 
 
 Config: `src/firmware/src/display/display_config.h`. Display address 0x3c. If no display is connected, the firmware still runs; I2C init is attempted at boot.
 
-## Bluepad32 (Bluetooth keyboard and mouse)
+## Bluepad32 (Bluetooth keyboard, mouse, and gamepad)
 
-Bluetooth HID support is available on **Pico W** and **Pico 2 W** only (boards with CYW43). It uses [Bluepad32](https://github.com/ricardoquesada/bluepad32) for BT keyboard and mouse; gamepads are not implemented yet.
+Bluetooth HID support is available on **Pico W** and **Pico 2 W** only (boards with CYW43). It uses [Bluepad32](https://github.com/ricardoquesada/bluepad32) for BT keyboard, mouse, and **one gamepad** slot. **Phase B** gamepad output (D-pad/buttons → keyboard, left stick → mouse) is implemented — see [`gamepad-support.md`](gamepad-support.md).
 
 - **Submodule:** `src/firmware/bluepad32`. Initialize with `git submodule update --init --recursive` (or let `build.sh` do it).
 - **Build for Bluetooth:** Use a wireless board so Bluepad32 is enabled:
@@ -79,8 +79,9 @@ Bluetooth HID support is available on **Pico W** and **Pico 2 W** only (boards w
     `cd src/firmware/build && cmake -DPICO_BOARD=pico_w ..` (or `pico2_w`) then `make`
   - Or with build script: set board in CMake (e.g. edit `build.sh` to pass `-DPICO_BOARD=pico_w` to `cmake`).
 - **Default build** (no `-DPICO_BOARD=pico_w`): builds for **pico**; Bluepad32 is disabled and the firmware is USB-only.
-- **Behaviour:** When built for `pico_w` or `pico2_w`, the firmware starts Bluetooth scanning after init. Paired BT keyboards and mice feed into the same ADB pipeline as USB (same parsers and register handling). Up to 2 BT keyboards and 2 BT mice are supported; only the first of each is currently processed in the main loop.
-- **Files:** `src/firmware/src/bluepad32_init.c`, `bluepad32_platform.c`, `btstack_config.h`, `sdkconfig.h`; `lib/QuokkADB/src/bt_hid_bridge.cpp`; platform API in `bluepad32_platform.h`, app API in `bluepad32_api.h`.
+- **Behaviour:** When built for `pico_w` or `pico2_w`, the firmware starts Bluetooth scanning after init. Paired BT keyboards, mice, and one gamepad feed into the same ADB pipeline as USB (same parsers and register handling). Up to 2 BT keyboards and 2 BT mice are supported; keyboard and gamepad key reports are merged in `bt_hid_bridge.cpp` before `KeyboardPrs.Parse()`.
+- **Pairing stability:** Atari v22.1.0 recipe ported on `feature/BT-alignment` — see [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) and [`troubleshooting.md`](troubleshooting.md) § Bluetooth.
+- **Files:** `src/firmware/src/bluepad32_init.c`, `bluepad32_platform.c`, `btstack_config.h`, `sdkconfig.h`; `lib/QuokkADB/src/bt_hid_bridge.cpp`; `include/bt_pairing_config.h`, `include/bt_host_coop.h`; platform API in `bluepad32_platform.h`, app API in `bluepad32_api.h`.
 
 ## Build (`build-all.sh`)
 
@@ -102,14 +103,23 @@ Other boards (`pico`, `pico_w`, `pico2`) can still be built manually with `cmake
 
 Requires `PICO_SDK_PATH` or the repo `.pico-sdk/` cache (see `build_common.sh`). Submodules are initialized automatically.
 
-## Bluetooth pairing stability (planned work)
+## Bluetooth pairing stability
 
-Random BLE pairing hangs on Pico W / Pico 2 W are tracked in [`docs/FUTURE_WORK.md`](FUTURE_WORK.md) §1 and detailed in:
+Random BLE pairing hangs on Pico W / Pico 2 W are **fixed** in firmware **2.2.1**. Tracked in [`FUTURE_WORK.md`](FUTURE_WORK.md) §1.
 
-- [`docs/BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) — canonical fix recipe (copied from ultramegausb-atari-st-rpikbd v22.1.0).
-- [`docs/BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) — this repo’s gap analysis, file map, test matrix, and prior experiments.
+**Reference docs:**
 
-Firmware port **not started**; see companion doc for checklist vs current code.
+- [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) — canonical fix recipe (from ultramegausb-atari-st-rpikbd v22.1.0).
+- [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) — port status, Apple-specific fixes (keyboard/gamepad merge, defer Mac ADB reset), test matrix.
+- [`troubleshooting.md`](troubleshooting.md) — user-facing pairing order and symptom → fix.
+
+**Shipped changes (summary):**
+
+1. Atari/Amiga recipe: refcounted Core 1 pause, `__wfe()` pause loop, `bt_callback_busy_wait_ms` only in callbacks, 30 ms discovery settle, 100 ms pre-resume, no connect double-pause, watchdog (`bt_host_coop.c`, `bt_pairing_config.h`, `bluepad32_platform.c`, `quokkadb.cpp`).
+2. Always-merge BT keyboard + gamepad before `Parse()` (`peek_keyboard` / `peek_gamepad` in `bt_hid_bridge.cpp`).
+3. Defer Mac global ADB reset while BT link is forming or within 2.5 s post-`device_ready` (`bluepad32_bt_defer_adb_reset()`).
+
+Do **not** repeat reverted experiments (shorter delays, `__not_in_flash_func` on pause path, display off during pair) — see session notes below.
 
 ---
 

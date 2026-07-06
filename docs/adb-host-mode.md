@@ -1,7 +1,7 @@
 # ADB host mode — product spec
 
 **Status:** **MVP shipped (2026-06-28)** — firmware **2.0.0** / **2.1.0** (GPIO split) / **2.2.0** (host reliability); flash `dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2` from `./build-all.sh`  
-**Related:** [`FUTURE_WORK.md`](FUTURE_WORK.md) §10, [`hardware.md`](hardware.md), [`adb-passthrough-hub.md`](adb-passthrough-hub.md), [`adb-host-mode-capture.md`](adb-host-mode-capture.md), [`troubleshooting.md`](troubleshooting.md)
+**Related:** [`FUTURE_WORK.md`](FUTURE_WORK.md) §10, [`hardware.md`](hardware.md), [`adb-passthrough-hub.md`](adb-passthrough-hub.md), [`adb-host-mode-capture.md`](adb-host-mode-capture.md), [`troubleshooting.md`](troubleshooting.md), [`bluetooth-pairing.md`](bluetooth-pairing.md) (BT pairing is **ADB → Mac** only)
 
 ---
 
@@ -79,7 +79,7 @@ A third mode (**monitor** / adbmon) remains a separate build or future screen �
 
 1. Disconnect Pico from PC (or leave connected only if not in host mode — prefer disconnect).
 2. Select **ADB → Mac** on OLED.
-3. Attach USB keyboard/mouse (and BT as today).
+3. Attach USB keyboard/mouse (and pair Bluetooth in **ADB → Mac** mode — see [`bluetooth-pairing.md`](bluetooth-pairing.md)).
 4. **Mac off** → plug adapter into ADB → power on Mac (per [`hardware.md`](hardware.md)).
 
 ### 2.5 USB port constraint (unchanged)

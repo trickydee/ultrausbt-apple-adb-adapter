@@ -132,6 +132,22 @@ See [`troubleshooting.md`](troubleshooting.md) § “BT mouse jumps”.
 
 ---
 
+## 12. Bluetooth multi-device pairing (firmware 2.2.1+)
+
+**Symptom:** Keyboard works; mouse dead; or adapter hangs when pairing Xbox/Stadia with keyboard and mouse already connected — especially on **Mac cold boot**.
+
+**Not an IIgs timing issue** — this is BT pairing + Mac global ADB reset interaction. Verbose UART (debug UF2) can mask or worsen timing races.
+
+**Fix / guidance:**
+
+- Flash **release** UF2 for pairing tests (`dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2`).
+- Pair in order: **mouse → keyboard → gamepad** (Xbox/Stadia last).
+- Firmware **2.2.1+** (`feature/BT-alignment`): defer Mac global ADB reset during BT setup; always-merge keyboard + gamepad key reports.
+
+See [`bluetooth-pairing.md`](bluetooth-pairing.md) and [`troubleshooting.md`](troubleshooting.md) § Bluetooth.
+
+---
+
 ## Suggested order to try
 
 1. **(7)** Disable debug for testing  

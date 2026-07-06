@@ -2,7 +2,7 @@
 
 This document tracks upcoming development work for the BT-USB-ADB-Adapter firmware.
 
-For a prioritized future-work list (including **Bluetooth pairing stability**), see [`FUTURE_WORK.md`](FUTURE_WORK.md).
+For a prioritized future-work list, see [`FUTURE_WORK.md`](FUTURE_WORK.md). **Bluetooth pairing stability** shipped in **2.2.1** (see [`bluetooth-pairing.md`](bluetooth-pairing.md)).
 
 ## 1) Add Gravis Flightstick support (Bluetooth + USB)
 
