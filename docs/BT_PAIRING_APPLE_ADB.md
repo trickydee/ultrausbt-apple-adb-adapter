@@ -2,6 +2,7 @@
 
 **Status:** Work not started (reference docs only). Tracked in [`FUTURE_WORK.md`](FUTURE_WORK.md) §1.  
 **Canonical fix recipe:** [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) (from ultramegausb-atari-st-rpikbd v22.1.0).  
+**Sibling port (done):** [`BT_PAIRING_PORT_AMIGA_REFERENCE.md`](BT_PAIRING_PORT_AMIGA_REFERENCE.md) — ultramegausb-amiga `feature/BT-Pairing-align` (v2.2.11), step-by-step for this repo.  
 **Related:** [`gamepad-support.md`](gamepad-support.md), [`changes.md`](changes.md) (session notes).
 
 This document maps the Atari handoff to **ultramegausb-apple-adb** firmware: what we already have, what is missing, prior experiments, and the hardware test matrix to run after porting.

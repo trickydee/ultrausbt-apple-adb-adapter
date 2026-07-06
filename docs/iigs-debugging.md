@@ -122,6 +122,16 @@ For A/B testing with existing script-driven flows, keep all other options identi
 
 ---
 
+## 11. Bluetooth mouse jumps (device mode, firmware 2.0.0)
+
+**Symptom:** USB mouse OK; BT mouse **jumps** intermittently after upgrading to **2.0.0** host release.
+
+**Cause / fix:** Shared tri-state ADB GPIO broke collision detection. Fixed in **2.1.0** (drive-high in `adb_platform.h`, host tri-state in `adb_host_gpio.h` only).
+
+See [`troubleshooting.md`](troubleshooting.md) § “BT mouse jumps”.
+
+---
+
 ## Suggested order to try
 
 1. **(7)** Disable debug for testing  

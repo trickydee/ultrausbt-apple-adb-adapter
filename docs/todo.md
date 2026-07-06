@@ -48,6 +48,8 @@ Support Gravis Flightstick-style joystick input devices and map their controls t
 
 ## 2) Reimplement adbmon functionality and design an adbmon diagnostic board
 
+**Status:** **Partial — standalone Pico adbmon shipped 2026-06-28** (`src/adbmon`, `./build-all.sh` → `dist/adbmon-pico.uf2`). Diagnostic interposer PCB not started.
+
 ### Goal
 Create a Pico-native ADB monitor/diagnostic tool that captures ADB traffic with timing details and provides practical hardware for repeatable troubleshooting.
 

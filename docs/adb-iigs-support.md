@@ -92,13 +92,13 @@ When `global_debug` is true, failed receives log short UART lines instead of old
 - `ADB RX fail: SYNC hi=<µs>`
 - `ADB RX fail: BIT b=<bit> lo=<µs> hi=<µs>`
 
-**Build with ADB UART debug:** CMake option **`ADB_DEBUG=ON`** defines `ADB_DEBUG` and forces **`global_debug = true`** in `src/firmware/lib/QuokkADB/src/quokkadb.cpp`. **`build_all.sh`** on this branch also produces per-board **`build-<board>-debug`** and copies **`BT-USB-ADB-Adapter-firmware-debug.uf2`**.
+**Build with ADB UART debug:** CMake option **`ADB_DEBUG=ON`** defines `ADB_DEBUG` and forces **`global_debug = true`** in `src/firmware/lib/QuokkADB/src/quokkadb.cpp`. **`./build-all.sh`** produces **`dist/BT-USB-ADB-Adapter-firmware-pico2_w-host-debug.uf2`**.
 
 ---
 
 ## 6. Related commits (on `feature/IIGS-Fixes`)
 
-1. **IIGS ADB: wider timing, targeted RX failure logging** — attention window, sync/start bounds, bit-cell and logging changes; `ADB_DEBUG` / `build_all.sh` debug builds.
+1. **IIGS ADB: wider timing, targeted RX failure logging** — attention window, sync/start bounds, bit-cell and logging changes; `ADB_DEBUG` / `build-all.sh` debug UF2.
 2. **IIGS: spec-aligned receive timing + debugging doc** — Tlt and register/command bit cells adjusted; adds `docs/iigs-debugging.md`.
 
 ---
@@ -111,7 +111,7 @@ When `global_debug` is true, failed receives log short UART lines instead of old
 | `src/firmware/lib/adb/include/adb.h` | `Receive16bitRegister` Tlt and bit-cell checks |
 | `src/firmware/CMakeLists.txt` | `ADB_DEBUG` option |
 | `src/firmware/lib/QuokkADB/src/quokkadb.cpp` | `global_debug` default when `ADB_DEBUG` |
-| `build_all.sh` | Release + debug tree builds |
+| `build-all.sh` | Unified Pico 2 W release + host-debug + adbmon |
 | `docs/iigs-debugging.md` | Further IIgs debugging parameters |
 
 This file (`docs/adb-iigs-support.md`) is a **high-level summary** only; exact thresholds should always be taken from the source on the branch you are building. Current build-time options that affect timing/behavior include `ADB_ATTENTION_LO_MIN_US` and `ADB_MOUSE_ACCUMULATE_DELTAS`.

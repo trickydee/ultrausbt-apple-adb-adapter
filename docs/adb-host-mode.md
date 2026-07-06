@@ -1,6 +1,6 @@
 # ADB host mode — product spec
 
-**Status:** **MVP shipped (2026-06-28)** — firmware **2.0.0** / **2.1.0**; flash `dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2` from `./build-all.sh`  
+**Status:** **MVP shipped (2026-06-28)** — firmware **2.0.0** / **2.1.0** (GPIO split) / **2.2.0** (host reliability); flash `dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2` from `./build-all.sh`  
 **Related:** [`FUTURE_WORK.md`](FUTURE_WORK.md) §10, [`hardware.md`](hardware.md), [`adb-passthrough-hub.md`](adb-passthrough-hub.md), [`adb-host-mode-capture.md`](adb-host-mode-capture.md), [`troubleshooting.md`](troubleshooting.md)
 
 ---

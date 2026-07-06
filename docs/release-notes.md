@@ -6,6 +6,13 @@ Lineage: this firmware descends from QuokkADB and adbuino. Target hardware: [`ha
 
 - **Bluetooth gamepad:** One BT gamepad slot in Bluepad32 (`uni_gamepad_t`, `bluepad32_get_gamepad` / `bluepad32_get_gamepad_count`). **Phase B:** gamepad → **HID keyboard** (D-pad/buttons) and **left stick → mouse** via `bt_hid_bridge` / `KeyboardPrs` + `MousePrs` (see [gamepad-support.md](gamepad-support.md)). OLED **Devices** / **Bluetooth names:** BT gamepad **count**, **G1** name, and optional live **`BT GP:`** legend when a pad is connected.
 
+## 2.2.0
+
+- **ADB host mode reliability:** Improved keyboard polling (12 ms), RX preamble (idle R0 no longer logged as errors), and probe logic (devices not dropped on idle `R0=0x0`).
+- **Multi-device / passthrough:** Keyboard + trackball work on daisy-chain and dual-port setups; skip Mac-style trackball relocation when a pointing device is already at `@0x3`.
+- **Locking caps lock:** Sync via ADB register 2 (not R0 `0x39`); USB HID LED output → Listen R2 for keyboard LED; caps-release R2 read pulses PC state when needed.
+- **Docs:** [`troubleshooting.md`](troubleshooting.md) host-mode section; **`build-all.sh`** rename from `build_all.sh`.
+
 ## 2.1.0
 
 - **Device/host GPIO split:** Restore pre-2.0 drive-high ADB GPIO in shared code for **ADB>Mac** device mode (fixes BT mouse jumps and collision detection). Host open-collector GPIO moved to `adb_host_gpio.h` only; host timing (765 µs attention, RX preamble) unchanged.

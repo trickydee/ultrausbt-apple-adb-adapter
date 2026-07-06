@@ -152,7 +152,7 @@ These areas already match or sit inside the IIgs table:
 **Current / resolved:** Implemented an IIgs-appropriate policy switch `ADB_IIGS_MOUSE_SUPPRESS_SRQ`.
 
 - When `ADB_IIGS_MOUSE_SUPPRESS_SRQ=ON`, the adapter suppresses the mouse SRQ extension so `ReceiveCommand()` is driven by keyboard SRQ only.
-- **Default:** `ON` in `src/firmware/CMakeLists.txt` for all configures (including `build_all.sh`, `make`, and CI). Use `-DADB_IIGS_MOUSE_SUPPRESS_SRQ=OFF` only when you need legacy mouse SRQ behavior.
+- **Default:** `ON` in `src/firmware/CMakeLists.txt` for all configures (including `build-all.sh`, `make`, and CI). Use `-DADB_IIGS_MOUSE_SUPPRESS_SRQ=OFF` only when you need legacy mouse SRQ behavior.
 
 **Validation:** On your IIgs (Taifun Boot) the BASIC loop slowdown on mouse move is resolved. It also remains good on an ADB Mac Quadra.
 

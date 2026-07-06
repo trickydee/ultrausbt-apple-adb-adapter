@@ -69,6 +69,7 @@ See [`adb-passthrough-hub.md`](adb-passthrough-hub.md) for hub-mode firmware.
 
 ## Related docs
 
+- [`troubleshooting.md`](troubleshooting.md) — BT mouse regression, host timing, flash images
 - [`adb-passthrough-hub.md`](adb-passthrough-hub.md)
 - [`adb-host-mode.md`](adb-host-mode.md)
 - [`changes.md`](changes.md)

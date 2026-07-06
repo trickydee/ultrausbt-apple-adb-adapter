@@ -196,7 +196,7 @@ Absolute positioning, pressure, Wacom-style ADB register packing.
 ## 10. ADB Host mode (ADB accessories → USB host)
 
 **Priority:** Medium  
-**Status:** **Complete (MVP) — 2026-06-28** — firmware **2.0.0** + GPIO split **2.1.0**; see [`adb-host-mode.md`](adb-host-mode.md), [`troubleshooting.md`](troubleshooting.md)
+**Status:** **Complete (MVP) — 2026-06-28** — firmware **2.0.0** + GPIO split **2.1.0** + host reliability **2.2.0**; see [`adb-host-mode.md`](adb-host-mode.md), [`troubleshooting.md`](troubleshooting.md)
 
 ### Use case
 

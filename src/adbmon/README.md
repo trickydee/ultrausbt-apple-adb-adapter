@@ -33,36 +33,25 @@ Requires [Pico SDK](https://github.com/raspberrypi/pico-sdk) (1.5+ or 2.x).
 From the **repo root** (recommended — uses shared SDK cache and copies to `dist/`):
 
 ```bash
-./build_all.sh
-# → dist/adbmon-pico.uf2, dist/adbmon-pico2_w.uf2 (default boards)
-# → dist/BT-USB-ADB-Adapter-firmware-*.uf2 (adapter firmware)
+./build-all.sh
+# → dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2      (adapter, unified device+host)
+# → dist/BT-USB-ADB-Adapter-firmware-pico2_w-host-debug.uf2 (adapter + UART debug)
+# → dist/adbmon-pico.uf2                                    (passive bus monitor)
 ```
 
 Skip adbmon when you only need adapter firmware:
 
 ```bash
-BUILD_ADBMON=0 ./build_all.sh
-# or
-./build_all.sh --no-adbmon
+./build-all.sh --no-adbmon
 ```
-
-Build **adbmon only** (fast iteration — does not build adapter firmware):
-
-```bash
-./build_all.sh --adbmon-only
-ADBMON_BOARDS="pico" ./build_all.sh --adbmon-only
-# → dist/adbmon-pico.uf2
-```
-
-`ADBMON_BOARDS` only selects which boards get adbmon UF2s; use `--adbmon-only` to skip adapter builds.
 
 **adbmon only** (manual CMake):
 
 ```bash
 source scripts/lib/build_common.sh
 ensure_pico_sdk
-cmake_build_adbmon_dir build-adbmon-pico -DPICO_BOARD=pico
-# → build-adbmon-pico/adbmon.uf2
+cmake_build_adbmon_dir build-adbmon -DPICO_BOARD=pico
+# → build-adbmon/adbmon.uf2
 ```
 
 ```bash
@@ -88,7 +77,7 @@ Artifacts: `adbmon.uf2`, `adbmon.elf` (under the build directory).
 2. Connect the Pico on QuokkADB hardware to an **inline** ADB chain (host → adapter ADB port → downstream devices).
 3. Open serial at 115200 (USB CDC device or UART TX on GPIO 0 / Pico pin 1).
 
-**Important:** This firmware does **not** emulate keyboard or mouse. Use it only when you want to observe bus traffic. For normal adapter use, flash the main QuokkADB firmware from `src/firmware`.
+**Important:** This firmware does **not** emulate keyboard or mouse. Use it only when you want to observe bus traffic. For normal adapter use, flash the main adapter UF2 from `dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2`.
 
 ## Layout
 
@@ -101,7 +90,7 @@ Artifacts: `adbmon.uf2`, `adbmon.elf` (under the build directory).
 
 ## Roadmap
 
-See [`docs/adbmon.md`](../docs/adbmon.md) and [`docs/FUTURE_WORK.md`](../docs/FUTURE_WORK.md) §5.
+See [`docs/FUTURE_WORK.md`](../docs/FUTURE_WORK.md) §5 and [`docs/troubleshooting.md`](../docs/troubleshooting.md).
 
 - [ ] Multi-byte Talk payloads (Gravis 7-byte register 0)
 - [ ] Raw edge / timing dump mode

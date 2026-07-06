@@ -55,4 +55,5 @@ This is separate from GPIO 15 status blinks and from the CYW43 LED.
 ## See also
 
 - [`hardware.md`](hardware.md) — board GPIO map
-- [`iigs-debugging.md`](iigs-debugging.md) — IIgs-focused troubleshooting (if present in tree)
+- [`troubleshooting.md`](troubleshooting.md) — general troubleshooting (BT mouse, host timing)
+- [`iigs-debugging.md`](iigs-debugging.md) — IIgs-focused tuning parameters
