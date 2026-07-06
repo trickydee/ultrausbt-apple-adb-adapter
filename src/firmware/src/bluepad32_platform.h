@@ -20,6 +20,9 @@ extern "C" {
 // Returns true if connected and has new data; clears updated flag.
 bool bluepad32_get_keyboard(int idx, void* out_keyboard);
 
+// Last keyboard snapshot. Does not clear updated.
+bool bluepad32_peek_keyboard(int idx, void* out_keyboard);
+
 // Get count of connected Bluetooth keyboards
 int bluepad32_get_keyboard_count(void);
 
@@ -35,6 +38,9 @@ int bluepad32_get_mouse_count(void);
 
 // Get gamepad data for index (0 only; single BT gamepad). out_gamepad must match uni_gamepad_t layout.
 bool bluepad32_get_gamepad(int idx, void* out_gamepad);
+
+// Last gamepad snapshot. Does not clear updated.
+bool bluepad32_peek_gamepad(int idx, void* out_gamepad);
 
 // Get count of connected Bluetooth gamepads (0 or 1)
 int bluepad32_get_gamepad_count(void);

@@ -111,7 +111,9 @@ void KbdRptParser::OnKeyDown(uint8_t mod, uint8_t key)
             B_UNSET(m_custom_mod_keys, Led2CapsLockFlag);
             if (!m_keyboard_events.enqueue(new KeyEvent(key, KeyEvent::KeyDown, mod)))
             {
-                Serial.println("Warning! unable to queue caps lock down");
+                if (global_debug) {
+                    Serial.println("Warning! unable to queue caps lock down");
+                }
             }
         }
         else
@@ -120,20 +122,26 @@ void KbdRptParser::OnKeyDown(uint8_t mod, uint8_t key)
             B_SET(m_custom_mod_keys, Led2CapsLockFlag);
             if (!m_keyboard_events.enqueue(new KeyEvent(key, KeyEvent::KeyUp, mod)))
             {
-                Serial.println("Warning! unable to queue caps lock up");
+                if (global_debug) {
+                    Serial.println("Warning! unable to queue caps lock up");
+                }
             }
         }        
     }
     else if (!m_keyboard_events.enqueue(new KeyEvent(key, KeyEvent::KeyDown, mod)))
     {
-        Serial.println("Warning! unable to enqueue new KeyDown");
+        if (global_debug) {
+            Serial.println("Warning! unable to enqueue new KeyDown");
+        }
     }
     // If power button replacement queue key twice
     else if (key == USB_KEY_PAUSE || key == USB_KEY_F15)
     {
         if (!m_keyboard_events.enqueue(new KeyEvent(key, KeyEvent::KeyDown, mod)))
         {
-            Serial.println("Warning! unable to enqueue new Power Button KeyDown");
+            if (global_debug) {
+                Serial.println("Warning! unable to enqueue new Power Button KeyDown");
+            }
         }
     }
 
@@ -187,7 +195,9 @@ void KbdRptParser::OnKeyUp(uint8_t mod, uint8_t key)
     {
         if (!m_keyboard_events.enqueue(new KeyEvent(key, KeyEvent::KeyUp, mod)))
         {
-            Serial.println("Warning! unable to enqueue new KeyDown");
+            if (global_debug) {
+                Serial.println("Warning! unable to enqueue new KeyDown");
+            }
         }
     
         // If power button replacement queue key twice
@@ -195,7 +205,9 @@ void KbdRptParser::OnKeyUp(uint8_t mod, uint8_t key)
         {
             if (!m_keyboard_events.enqueue(new KeyEvent(key, KeyEvent::KeyUp, mod)))
             {
-                Serial.println("Warning! unable to enqueue new Power Button KeyUp");
+                if (global_debug) {
+                    Serial.println("Warning! unable to enqueue new Power Button KeyUp");
+                }
             }
         }
         if (key == USB_KEY_BACKSPACE)

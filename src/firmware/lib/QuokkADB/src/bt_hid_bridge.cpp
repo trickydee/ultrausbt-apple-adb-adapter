@@ -14,6 +14,7 @@
 
 #include "bluepad32_platform.h"
 #include "bluepad32_api.h"
+#include "bt_host_coop.h"
 #include "controller/uni_gamepad.h"
 
 // Opaque data from Bluepad32 (must match uni_keyboard_t / uni_mouse_t layout)
@@ -63,7 +64,6 @@ static int fill_keys_from_gamepad(const uni_gamepad_t* gp, uint8_t keys[6]) {
     if (gp->buttons & BUTTON_B) n = append_unique_key(keys, n, HID_KEY_ESCAPE);
     if (gp->buttons & BUTTON_X) n = append_unique_key(keys, n, HID_KEY_Z);
     if (gp->buttons & BUTTON_Y) n = append_unique_key(keys, n, HID_KEY_X);
-    /* L1 / R2 → mouse clicks in process_bluepad32_mouse_merged */
     if (gp->buttons & BUTTON_SHOULDER_R) n = append_unique_key(keys, n, HID_KEY_E);
     if (gp->buttons & BUTTON_TRIGGER_L) n = append_unique_key(keys, n, HID_KEY_1);
     if (gp->buttons & BUTTON_THUMB_L) n = append_unique_key(keys, n, HID_KEY_COMMA);
@@ -86,12 +86,20 @@ static void merge_keyboard_reports(const hid_keyboard_report_t* a, const hid_key
     for (int i = n; i < 6; i++) merged->keycode[i] = 0;
 }
 
-static bool try_keyboard_reports_merged(hid_keyboard_report_t* out) {
+static bool keyboard_report_has_keys(const hid_keyboard_report_t* report) {
+    if (report->modifier != 0) return true;
+    for (int i = 0; i < 6; i++) {
+        if (report->keycode[i] != 0) return true;
+    }
+    return false;
+}
+
+static bool peek_keyboard_reports_merged(hid_keyboard_report_t* out) {
     hid_keyboard_report_t merged = {};
     bool any = false;
     for (int i = 0; i < BLUEPAD32_MAX_BT_KEYBOARDS; i++) {
         bt_kbd_data_t kbd;
-        if (!bluepad32_get_keyboard(i, &kbd)) continue;
+        if (!bluepad32_peek_keyboard(i, &kbd)) continue;
         hid_keyboard_report_t kr = {};
         kr.modifier = kbd.modifiers;
         kr.reserved = 0;
@@ -109,6 +117,44 @@ static bool try_keyboard_reports_merged(hid_keyboard_report_t* out) {
     }
     if (any) *out = merged;
     return any;
+}
+
+/** Gamepad keys share the BT keyboard parser — omit during gamepad pairing or when a BT keyboard is not ready yet. */
+static bool include_gamepad_keys_in_keyboard_report(void) {
+    if (bluepad32_get_gamepad_count() == 0) return false;
+    if (bluepad32_get_keyboard_count() == 0) return true;
+    return core1_get_bt_pause_depth() == 0;
+}
+
+static bool build_merged_bt_keyboard_report(hid_keyboard_report_t* out) {
+    hid_keyboard_report_t kb = {};
+    const bool have_kb = peek_keyboard_reports_merged(&kb);
+
+    hid_keyboard_report_t gp_keys = {};
+    bool have_gp_keys = false;
+    if (include_gamepad_keys_in_keyboard_report()) {
+        uni_gamepad_t gp = {};
+        if (bluepad32_peek_gamepad(0, &gp)) {
+            gp_keys.modifier = 0;
+            gp_keys.reserved = 0;
+            fill_keys_from_gamepad(&gp, gp_keys.keycode);
+            have_gp_keys = keyboard_report_has_keys(&gp_keys);
+        }
+    }
+
+    if (have_kb && have_gp_keys) {
+        merge_keyboard_reports(&kb, &gp_keys, out);
+        return true;
+    }
+    if (have_kb) {
+        *out = kb;
+        return true;
+    }
+    if (have_gp_keys) {
+        *out = gp_keys;
+        return true;
+    }
+    return false;
 }
 
 static int8_t clamp_i32_to_i8_mouse(int32_t v) {
@@ -136,27 +182,17 @@ static uint8_t gamepad_mouse_button_mask(const uni_gamepad_t* gp) {
     return b;
 }
 
-static void process_bluepad32_keyboard_and_gamepad(const uni_gamepad_t* gp, bool gp_new) {
-    hid_keyboard_report_t kr = {};
-    hid_keyboard_report_t gr = {};
-    bool k = try_keyboard_reports_merged(&kr);
-    bool g = false;
-    if (gp_new) {
-        gr.modifier = 0;
-        gr.reserved = 0;
-        for (int i = 0; i < 6; i++) gr.keycode[i] = 0;
-        fill_keys_from_gamepad(gp, gr.keycode);
-        g = true;
+static void process_bluepad32_keyboard_and_gamepad(bool kb_new, bool gp_new) {
+    if (!kb_new && !gp_new) {
+        return;
     }
-    if (k && g) {
-        hid_keyboard_report_t merged;
-        merge_keyboard_reports(&kr, &gr, &merged);
-        KeyboardPrs.Parse(BT_KBD_DEV_ADDR, BT_KBD_INSTANCE, &merged);
-    } else if (k) {
-        KeyboardPrs.Parse(BT_KBD_DEV_ADDR, BT_KBD_INSTANCE, &kr);
-    } else if (g) {
-        KeyboardPrs.Parse(BT_KBD_DEV_ADDR, BT_KBD_INSTANCE, &gr);
+
+    hid_keyboard_report_t report = {};
+    if (!build_merged_bt_keyboard_report(&report)) {
+        return;
     }
+
+    KeyboardPrs.Parse(BT_KBD_DEV_ADDR, BT_KBD_INSTANCE, &report);
 }
 
 /** Last-known BT mouse button mask (movement-only BLE reports omit buttons). */
@@ -170,12 +206,31 @@ static uint8_t peek_merged_bt_buttons(void) {
     return merged;
 }
 
+static void reset_gamepad_mouse_latch_state(uint8_t* prev_gp_mouse_btn, uint8_t* prev_buttons,
+                                            uint8_t* s_bt_buttons_latched, uint8_t* s_gp_buttons_latched,
+                                            bool* gp_stick_was_moving) {
+    *prev_gp_mouse_btn = 0;
+    *prev_buttons = 0;
+    *s_bt_buttons_latched = 0;
+    *s_gp_buttons_latched = 0;
+    *gp_stick_was_moving = false;
+    MousePrs.ResetMouseMovement();
+}
+
 static void process_bluepad32_mouse_merged(const uni_gamepad_t* gp, bool gp_new) {
     static uint8_t prev_gp_mouse_btn = 0;
     static uint8_t prev_buttons = 0;
     static uint8_t s_bt_buttons_latched = 0;
     static uint8_t s_gp_buttons_latched = 0;
     static bool gp_stick_was_moving = false;
+    static int prev_gp_count = 0;
+
+    const int gp_count = bluepad32_get_gamepad_count();
+    if (prev_gp_count > 0 && gp_count == 0) {
+        reset_gamepad_mouse_latch_state(&prev_gp_mouse_btn, &prev_buttons, &s_bt_buttons_latched,
+                                        &s_gp_buttons_latched, &gp_stick_was_moving);
+    }
+    prev_gp_count = gp_count;
 
     int16_t acc_dx = 0;
     int16_t acc_dy = 0;
@@ -257,10 +312,18 @@ static void process_bluepad32_mouse_merged(const uni_gamepad_t* gp, bool gp_new)
 }
 
 void process_bluepad32_devices(void) {
-    uni_gamepad_t gp = {};
-    bool gp_new = bluepad32_get_gamepad(0, &gp);
+    bool kb_new = false;
+    for (int i = 0; i < BLUEPAD32_MAX_BT_KEYBOARDS; i++) {
+        bt_kbd_data_t kbd;
+        if (bluepad32_get_keyboard(i, &kbd)) {
+            kb_new = true;
+        }
+    }
 
-    process_bluepad32_keyboard_and_gamepad(gp_new ? &gp : nullptr, gp_new);
+    uni_gamepad_t gp = {};
+    const bool gp_new = bluepad32_get_gamepad(0, &gp);
+
+    process_bluepad32_keyboard_and_gamepad(kb_new, gp_new);
     process_bluepad32_mouse_merged(gp_new ? &gp : nullptr, gp_new);
 }
 
