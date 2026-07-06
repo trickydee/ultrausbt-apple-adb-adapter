@@ -51,6 +51,9 @@ void bluepad32_get_gamepad_visual(uint8_t* dpad, uint16_t* buttons, uint8_t* mis
 // Delete all stored Bluetooth pairing keys
 void bluepad32_delete_pairing_keys(void);
 
+/** True while BT links are forming or shortly after ready — defer Mac global ADB reset. */
+bool bluepad32_bt_defer_adb_reset(void);
+
 // Get device name for display. device_type: 'K' keyboard, 'M' mouse, 'G' gamepad. idx 0-based.
 const char* bluepad32_get_device_name(char device_type, int idx);
 

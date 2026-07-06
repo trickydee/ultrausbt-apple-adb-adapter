@@ -57,6 +57,7 @@
 
 #if ENABLE_BLUEPAD32
 #include "bluepad32_api.h"
+#include "bluepad32_platform.h"
 #include "bt_host_coop.h"
 #endif
 #include "display/display.h"
@@ -308,11 +309,24 @@ int quokkadb(void) {
 
     if (adb_reset)
     {
-      adb.Reset();
-      adb_reset = false;
-      usb_reset = true;
-      Serial.println("ALL: Resetting devices");
-    } 
+#if ENABLE_BLUEPAD32
+      if (bluepad32_bt_defer_adb_reset()) {
+        /* Mac boot sends global reset during BT pairing; defer until links are up and settled. */
+      } else
+#endif
+      {
+        adb.Reset();
+        adb_reset = false;
+        usb_reset = true;
+        mousepending = 0;
+        mousesrq = 0;
+        mousereg0 = 0;
+        MousePrs.ResetMouseMovement();
+        if (global_debug) {
+          Serial.println("ALL: Resetting devices");
+        }
+      }
+    }
   }
   return 0;
 }

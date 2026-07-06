@@ -62,6 +62,36 @@ typedef struct {
 } pending_name_by_addr_t;
 static pending_name_by_addr_t pending_names_by_addr[MAX_PENDING_NAMES_BY_ADDR] = {0};
 
+static int s_bt_awaiting_ready;
+static uint32_t s_bt_settle_until_us;
+
+static void bt_link_mark_connect_started(void) {
+    s_bt_awaiting_ready++;
+}
+
+static void bt_link_mark_connect_finished(void) {
+    if (s_bt_awaiting_ready > 0) {
+        s_bt_awaiting_ready--;
+    }
+}
+
+static void bt_link_extend_post_ready_settle(void) {
+    s_bt_settle_until_us = time_us_32() + (uint32_t)BT_POST_READY_ADB_SETTLE_MS * 1000u;
+}
+
+static bool bt_any_device_connected(void) {
+    for (int i = 0; i < MAX_BT_KEYBOARDS; i++) {
+        if (bt_keyboards[i].connected) return true;
+    }
+    for (int i = 0; i < MAX_BT_MICE; i++) {
+        if (bt_mice[i].connected) return true;
+    }
+    for (int i = 0; i < MAX_BT_GAMEPADS; i++) {
+        if (bt_gamepads[i].connected) return true;
+    }
+    return false;
+}
+
 /* Last gamepad state for OLED (not tied to bluepad32_get_gamepad "updated" flag) */
 static volatile uint8_t g_gp_vis_dpad;
 static volatile uint16_t g_gp_vis_buttons;
@@ -203,6 +233,7 @@ static uni_error_t my_platform_on_device_discovered(bd_addr_t addr, const char* 
 static void my_platform_on_device_connected(uni_hid_device_t* d) {
     ARG_UNUSED(d);
     logi("bluepad32_platform: device connected\n");
+    bt_link_mark_connect_started();
 }
 
 static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
@@ -211,9 +242,12 @@ static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
         core1_force_release_bt_pause();
     }
 
+    bool was_ready = false;
+
     if (find_existing_slot(d, keyboard_device_map, MAX_BT_KEYBOARDS) >= 0) {
         bt_keyboard_storage_t* kb_storage = get_keyboard_storage(d);
         if (kb_storage) {
+            was_ready = kb_storage->connected;
             kb_storage->connected = false;
             kb_storage->updated = false;
             memset(&kb_storage->keyboard, 0, sizeof(kb_storage->keyboard));
@@ -225,6 +259,7 @@ static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
     if (find_existing_slot(d, mouse_device_map, MAX_BT_MICE) >= 0) {
         bt_mouse_storage_t* mouse_storage = get_mouse_storage(d);
         if (mouse_storage) {
+            was_ready = was_ready || mouse_storage->connected;
             mouse_storage->connected = false;
             mouse_storage->updated = false;
             memset(&mouse_storage->mouse, 0, sizeof(mouse_storage->mouse));
@@ -236,6 +271,7 @@ static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
     if (find_existing_slot(d, gamepad_device_map, MAX_BT_GAMEPADS) >= 0) {
         bt_gamepad_storage_t* gp_storage = get_gamepad_storage(d);
         if (gp_storage) {
+            was_ready = was_ready || gp_storage->connected;
             gp_storage->connected = false;
             gp_storage->updated = false;
             memset(&gp_storage->gamepad, 0, sizeof(gp_storage->gamepad));
@@ -243,6 +279,10 @@ static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
         }
         gamepad_visual_clear();
         clear_slot(d, gamepad_device_map, MAX_BT_GAMEPADS);
+    }
+
+    if (!was_ready) {
+        bt_link_mark_connect_finished();
     }
 }
 
@@ -312,6 +352,9 @@ static uni_error_t my_platform_on_device_ready(uni_hid_device_t* d) {
         bt_callback_busy_wait_ms(BT_GAMEPAD_CORE1_RESUME_DELAY_MS);
         core1_resume_after_bt_enumeration();
     }
+
+    bt_link_mark_connect_finished();
+    bt_link_extend_post_ready_settle();
 
     return UNI_ERROR_SUCCESS;
 }
@@ -484,7 +527,23 @@ void bluepad32_get_gamepad_visual(uint8_t* dpad, uint16_t* buttons, uint8_t* mis
 
 void bluepad32_delete_pairing_keys(void) {
     core1_force_release_bt_pause();
+    s_bt_awaiting_ready = 0;
+    s_bt_settle_until_us = 0;
     uni_bt_del_keys_unsafe();
+}
+
+bool bluepad32_bt_defer_adb_reset(void) {
+    if (core1_get_bt_pause_depth() > 0) {
+        return true;
+    }
+    if (s_bt_awaiting_ready > 0) {
+        return true;
+    }
+    if (bt_any_device_connected() && s_bt_settle_until_us != 0
+        && (int32_t)(time_us_32() - s_bt_settle_until_us) < 0) {
+        return true;
+    }
+    return false;
 }
 
 const char* bluepad32_get_device_name(char device_type, int idx) {
