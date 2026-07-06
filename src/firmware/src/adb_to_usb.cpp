@@ -98,7 +98,7 @@ static int8_t seven_to_eight_signed(uint8_t seven)
 
 static bool adb_keycode_valid(uint8_t adb_code)
 {
-    return adb_code != 0 && adb_code != ADB_REG_0_NO_KEY && adb_code < 0x7F;
+    return adb_code != ADB_REG_0_NO_KEY && adb_code < 0x7F;
 }
 
 static void push_key(uint8_t adb_code, bool key_up)
