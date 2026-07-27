@@ -31,7 +31,7 @@ This order is especially important when the **Mac and adapter power on together*
 
 ## Clear stale pairings
 
-On the OLED **Map Devices** screen, hold **Left + Right** buttons for **5 seconds** to wipe Bluetooth link keys. Then re-pair in the recommended order.
+On the OLED **Map Devices** screen, hold **`˄+˯`** for **5 seconds** to wipe Bluetooth link keys. Then re-pair in the recommended order.
 
 ---
 
@@ -47,7 +47,7 @@ Bluetooth pairing runs in **ADB → Mac** (device mode). In **ADB → USB** (hos
 |---------|--------------|------------|
 | Mouse dead; keyboard OK; UART shows all BT “ready” | Mac **global ADB reset** during pairing (cold boot) | Use firmware **2.2.1+**; pair mouse first; or reset adapter after Mac has booted |
 | `unable to enqueue new KeyDown` (debug UART) | Gamepad paired before keyboard | Clear pairings; pair keyboard before gamepad; use **2.2.1+** |
-| Xbox won’t reconnect after sleep | Stuck Core 1 pause after failed bond | Clear pairings (L+R 5 s); power-cycle controller; flash **2.2.1+** |
+| Xbox won’t reconnect after sleep | Stuck Core 1 pause after failed bond | Clear pairings (`˄+˯` 5 s); power-cycle controller; flash **2.2.1+** |
 | `Identity resolving failed` (Logitech) | Often **non-fatal** | Continue if device reaches “device ready” and works |
 
 Full symptom → fix notes: [`troubleshooting.md`](troubleshooting.md) § Bluetooth.

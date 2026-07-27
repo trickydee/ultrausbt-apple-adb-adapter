@@ -77,7 +77,7 @@ Reverted on `feature/joysticks` with no improvement: shorter pairing delays (10 
 **Priority:** Medium  
 **Status:** Implemented on `feature/ui-alignment` (splash / devices / map devices per ULTRAMEGAUSB spec)
 
-- [x] Three-screen flow, USB map, L+R pairing clear
+- [x] Three-screen flow, USB map, `˄+˯` pairing clear
 - [ ] Merge branch; verify on hardware
 
 ---

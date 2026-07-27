@@ -107,7 +107,7 @@ Use **release** UF2 (`dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2`), not d
 
 **PS5 (DualSense)** uses BR/EDR and does **not** trigger the BLE gamepad Core 1 pause path — pairing is typically easier than Xbox BLE.
 
-Clear stale bonds: **Map Devices** screen → hold **L+R** for 5 s.
+Clear stale bonds: **Map Devices** screen → hold **`˄+˯`** for 5 s.
 
 ---
 
@@ -121,7 +121,7 @@ Run on **Pico W** and **Pico 2 W**, **release** firmware (verbose UART off — i
 | 2 | Add BT mouse (keyboard still connected) | Both work; no hang during mouse pair |
 | 3 | With KB + mouse connected → pair **Stadia or Xbox BLE gamepad** | Gamepad pairs; KB/mouse still work; OLED responsive |
 | 4 | Reboot → all three reconnect | No hang on autoconnect |
-| 5 | Map Devices screen → **L+R 5 s** clear pairings → re-pair all three | Clean pair cycle |
+| 5 | Map Devices screen → **`˄+˯` 5 s** clear pairings → re-pair all three | Clean pair cycle |
 | 6 | USB keyboard + mouse plugged **and** BT gamepad paired | No regression on USB or BT paths |
 | 7 | **Mac cold boot** — pair mouse → keyboard → Xbox | All three work on ADB after Mac finishes boot |
 | 8 | **Mac cold boot** — pair Xbox → mouse → keyboard | Mouse works on ADB (defer-ADB-reset); or document workaround if still flaky |

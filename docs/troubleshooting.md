@@ -101,7 +101,7 @@ Pairing **gamepad before keyboard** (especially Xbox BLE on Mac cold boot) was a
 
 **Fix (2.2.1+):** `bluepad32_peek_keyboard()` / `bluepad32_peek_gamepad()` — always merge keyboard + gamepad key reports before `Parse()`. Gamepad keys are suppressed during Core 1 pause when a BT keyboard is connected.
 
-**Workaround (older firmware):** Pair keyboard before gamepad, or clear pairings (Map Devices → **L+R 5 s**) and re-pair in recommended order.
+**Workaround (older firmware):** Pair keyboard before gamepad, or clear pairings (Map Devices → **`˄+˯` 5 s**) and re-pair in recommended order.
 
 ### Xbox won’t reconnect after sleep
 
@@ -111,7 +111,7 @@ Pairing **gamepad before keyboard** (especially Xbox BLE on Mac cold boot) was a
 
 **Fix (2.2.1+):** `core1_force_release_bt_pause()` on disconnect and before key wipe; no second pause on `device_connected`; 45 s watchdog.
 
-**Workaround:** Map Devices → **L+R 5 s** to clear pairings; power-cycle the Xbox controller; flash latest firmware.
+**Workaround:** Map Devices → **`˄+˯` 5 s** to clear pairings; power-cycle the Xbox controller; flash latest firmware.
 
 ### Xbox BLE vs PS5 (DualSense)
 

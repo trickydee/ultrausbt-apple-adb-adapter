@@ -48,10 +48,9 @@ A third mode (**monitor** / adbmon) remains a separate build or future screen �
 
 **At runtime (primary):**
 
-1. Open **mode screen** on OLED (draft: long-press both map buttons, or new item in UI flow — align with [`gamepad-support.md`](gamepad-support.md) / UI alignment patterns).
-2. Select **ADB → Mac** or **ADB → USB**.
-3. Confirm — firmware runs the stack swap (see §6).
-4. OLED shows active mode on splash / devices footer.
+1. **Quick toggle:** press the **`*`** button (GP6) from **any** OLED screen — flips between **ADB → Mac** and **ADB → USB**, persists, returns to splash.
+2. **Mode menu:** cycle with **`#`** (center) to the **ADB Mode** screen → **`˄`** = ADB→Mac, **`˯`** = ADB→USB, **`#`** = apply.
+3. OLED splash shows active mode (`Mode: ADB>Mac` / `ADB>USB`).
 
 **Persisted default:**
 
@@ -71,14 +70,14 @@ A third mode (**monitor** / adbmon) remains a separate build or future screen �
 1. **Vintage Mac off**; adapter **not** acting as bus slave to a running Mac.
 2. ADB keyboard/mouse plugged into adapter ADB port(s).
 3. **Remove** USB-A peripherals (and disable BT pairing use — host mode does not bridge BT).
-4. Select **ADB → USB** on OLED; wait for mode switch complete (brief LED pattern).
+4. Select **ADB → USB** on OLED (`*` toggle or Mode screen); wait for mode switch complete (brief LED pattern).
 5. Connect Pico **native USB** to modern PC.
 6. PC should enumerate a USB keyboard + mouse.
 
 **Switching back to device mode (`ADB → Mac`):**
 
 1. Disconnect Pico from PC (or leave connected only if not in host mode — prefer disconnect).
-2. Select **ADB → Mac** on OLED.
+2. Select **ADB → Mac** on OLED (`*` toggle or Mode screen).
 3. Attach USB keyboard/mouse (and pair Bluetooth in **ADB → Mac** mode — see [`bluetooth-pairing.md`](bluetooth-pairing.md)).
 4. **Mac off** → plug adapter into ADB → power on Mac (per [`hardware.md`](hardware.md)).
 

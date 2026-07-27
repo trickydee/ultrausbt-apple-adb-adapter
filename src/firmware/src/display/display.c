@@ -67,9 +67,12 @@ static adb_host_status_t last_drawn_adb_host_status;
 #endif
 
 #define BUTTON_DEBOUNCE_COUNT 3
-static uint8_t button_middle_debounce = 0;
-static uint8_t button_left_debounce = 0;
-static uint8_t button_right_debounce = 0;
+static uint8_t button_hash_debounce = 0;   /* # center */
+static uint8_t button_up_debounce = 0;     /* ˄ */
+static uint8_t button_down_debounce = 0;   /* ˯ */
+#if ADB_HOST_MODE
+static uint8_t button_star_debounce = 0;   /* * */
+#endif
 
 #if ENABLE_BLUEPAD32
 static bool pairing_clear_active = false;
@@ -110,17 +113,21 @@ void display_init(void)
     gpio_pull_up(SSD1306_PIN_SDA);
     gpio_pull_up(SSD1306_PIN_SCL);
 
-    gpio_init(DISPLAY_GPIO_BUTTON_LEFT);
-    gpio_set_dir(DISPLAY_GPIO_BUTTON_LEFT, GPIO_IN);
-    gpio_pull_up(DISPLAY_GPIO_BUTTON_LEFT);
+    gpio_init(DISPLAY_GPIO_BUTTON_UP);
+    gpio_set_dir(DISPLAY_GPIO_BUTTON_UP, GPIO_IN);
+    gpio_pull_up(DISPLAY_GPIO_BUTTON_UP);
 
-    gpio_init(DISPLAY_GPIO_BUTTON_MIDDLE);
-    gpio_set_dir(DISPLAY_GPIO_BUTTON_MIDDLE, GPIO_IN);
-    gpio_pull_up(DISPLAY_GPIO_BUTTON_MIDDLE);
+    gpio_init(DISPLAY_GPIO_BUTTON_DOWN);
+    gpio_set_dir(DISPLAY_GPIO_BUTTON_DOWN, GPIO_IN);
+    gpio_pull_up(DISPLAY_GPIO_BUTTON_DOWN);
 
-    gpio_init(DISPLAY_GPIO_BUTTON_RIGHT);
-    gpio_set_dir(DISPLAY_GPIO_BUTTON_RIGHT, GPIO_IN);
-    gpio_pull_up(DISPLAY_GPIO_BUTTON_RIGHT);
+    gpio_init(DISPLAY_GPIO_BUTTON_HASH);
+    gpio_set_dir(DISPLAY_GPIO_BUTTON_HASH, GPIO_IN);
+    gpio_pull_up(DISPLAY_GPIO_BUTTON_HASH);
+
+    gpio_init(DISPLAY_GPIO_BUTTON_STAR);
+    gpio_set_dir(DISPLAY_GPIO_BUTTON_STAR, GPIO_IN);
+    gpio_pull_up(DISPLAY_GPIO_BUTTON_STAR);
 
     if (ssd1306_init(&disp, SSD1306_WIDTH, SSD1306_HEIGHT, SSD1306_ADDR, SSD1306_I2C)) {
         display_show_splash();
@@ -274,7 +281,7 @@ void display_show_map_devices(void)
         draw_map_row(row, "M2", bluepad32_get_device_name('M', 1));
     }
 
-    ssd1306_draw_string(&disp, 0, 55, 1, (char *)"L+R: clear pairings");
+    ssd1306_draw_string(&disp, 0, 55, 1, (char *)"^+~ Clear Pair");  /* ˄+˯ */
 #else
     draw_map_row(9, "G1", usb_map_get_gamepad(0));
     draw_map_row(18, "K1", usb_map_get_keyboard());
@@ -372,7 +379,7 @@ void display_show_mode(void)
     }
 
     ssd1306_draw_string(&disp, 0, 44, 1, (char *)"USB kbd/mouse OFF");
-    ssd1306_draw_string(&disp, 0, 55, 1, (char *)"Mid=apply L/R=sel");
+    ssd1306_draw_string(&disp, 0, 55, 1, (char *)"#=ok ^/~=sel *=tog");  /* ˄/˯ */
     ssd1306_show(&disp);
     current_screen = DISPLAY_SCREEN_MODE;
 }
@@ -382,6 +389,13 @@ static void mode_screen_apply(void)
     adb_mode_request(mode_ui_selection, true);
     adb_mode_apply_pending();
     display_show_splash();
+}
+
+/** Toggle ADB → Mac / ADB → USB from any screen (* button). */
+static void mode_toggle_from_star(void)
+{
+    mode_ui_selection = (adb_mode_get() == ADB_MODE_HOST) ? ADB_MODE_DEVICE : ADB_MODE_HOST;
+    mode_screen_apply();
 }
 #endif
 
@@ -454,10 +468,10 @@ static void show_pairing_clear_overlay(int seconds_left)
 
 static void handle_pairing_clear_hold(void)
 {
-    bool left_down = !gpio_get(DISPLAY_GPIO_BUTTON_LEFT);
-    bool right_down = !gpio_get(DISPLAY_GPIO_BUTTON_RIGHT);
+    bool up_down = !gpio_get(DISPLAY_GPIO_BUTTON_UP);
+    bool down_down = !gpio_get(DISPLAY_GPIO_BUTTON_DOWN);
 
-    if (left_down && right_down) {
+    if (up_down && down_down) {
         if (!pairing_clear_active) {
             pairing_clear_active = true;
             pairing_clear_started = get_absolute_time();
@@ -515,9 +529,9 @@ void display_handle_buttons(void)
     }
 #endif
 
-    if (!gpio_get(DISPLAY_GPIO_BUTTON_MIDDLE)) {
-        if (button_middle_debounce <= BUTTON_DEBOUNCE_COUNT) {
-            if (++button_middle_debounce == BUTTON_DEBOUNCE_COUNT) {
+    if (!gpio_get(DISPLAY_GPIO_BUTTON_HASH)) {
+        if (button_hash_debounce <= BUTTON_DEBOUNCE_COUNT) {
+            if (++button_hash_debounce == BUTTON_DEBOUNCE_COUNT) {
 #if ADB_HOST_MODE
                 if (current_screen == DISPLAY_SCREEN_MODE) {
                     mode_screen_apply();
@@ -544,37 +558,47 @@ void display_handle_buttons(void)
             }
         }
     } else {
-        button_middle_debounce = 0;
+        button_hash_debounce = 0;
     }
 
 #if ADB_HOST_MODE
     if (current_screen == DISPLAY_SCREEN_MODE) {
-        if (!gpio_get(DISPLAY_GPIO_BUTTON_LEFT) && button_left_debounce == BUTTON_DEBOUNCE_COUNT) {
+        if (!gpio_get(DISPLAY_GPIO_BUTTON_UP) && button_up_debounce == BUTTON_DEBOUNCE_COUNT) {
             mode_ui_selection = ADB_MODE_DEVICE;
             display_show_mode();
-            button_left_debounce = 0;
+            button_up_debounce = 0;
         }
-        if (!gpio_get(DISPLAY_GPIO_BUTTON_RIGHT) && button_right_debounce == BUTTON_DEBOUNCE_COUNT) {
+        if (!gpio_get(DISPLAY_GPIO_BUTTON_DOWN) && button_down_debounce == BUTTON_DEBOUNCE_COUNT) {
             mode_ui_selection = ADB_MODE_HOST;
             display_show_mode();
-            button_right_debounce = 0;
+            button_down_debounce = 0;
         }
+    }
+
+    if (!gpio_get(DISPLAY_GPIO_BUTTON_STAR)) {
+        if (button_star_debounce <= BUTTON_DEBOUNCE_COUNT) {
+            if (++button_star_debounce == BUTTON_DEBOUNCE_COUNT) {
+                mode_toggle_from_star();
+            }
+        }
+    } else {
+        button_star_debounce = 0;
     }
 #endif
 
-    if (!gpio_get(DISPLAY_GPIO_BUTTON_LEFT)) {
-        if (button_left_debounce <= BUTTON_DEBOUNCE_COUNT) {
-            button_left_debounce++;
+    if (!gpio_get(DISPLAY_GPIO_BUTTON_UP)) {
+        if (button_up_debounce <= BUTTON_DEBOUNCE_COUNT) {
+            button_up_debounce++;
         }
     } else {
-        button_left_debounce = 0;
+        button_up_debounce = 0;
     }
 
-    if (!gpio_get(DISPLAY_GPIO_BUTTON_RIGHT)) {
-        if (button_right_debounce <= BUTTON_DEBOUNCE_COUNT) {
-            button_right_debounce++;
+    if (!gpio_get(DISPLAY_GPIO_BUTTON_DOWN)) {
+        if (button_down_debounce <= BUTTON_DEBOUNCE_COUNT) {
+            button_down_debounce++;
         }
     } else {
-        button_right_debounce = 0;
+        button_down_debounce = 0;
     }
 }
