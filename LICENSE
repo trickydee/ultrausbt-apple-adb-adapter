@@ -1,9 +1,14 @@
 This project has a long history with a collection of updates from several
-people. This is being distributed under the GPL v3 (or later) license.
-    https://www.gnu.org/licenses/gpl-3.0.txt
+people. This firmware is licensed under the **GNU General Public License
+version 3 or later** (GPL-3.0-or-later).
 
-The following copyright notice should be included with distributions of 
+    Full license text: COPYING (GNU GPL v3)
+    https://www.gnu.org/licenses/gpl-3.0.txt
+    SPDX: GPL-3.0-or-later
+
+The following copyright notice should be included with distributions of
 this source code:
+    Copyright 2025-2026 Richard Sanderson
     Copyright 2021-2023 Tony Kuker
     Copyright 2022-2023 Rabbit Hole Computing LLC
     Copyright 2023 Tech by Androda, LLC
@@ -12,48 +17,48 @@ this source code:
     Copyright 2011 Jun WAKO <wakojun@gmail.com>
     Copyright 2013 Shay Green <gblargg@gmail.com>
 
-Other third party components include TinyUSB (USB device/host stack),
-Bluepad32 (Bluetooth HID / controller support on Pico W and Pico 2 W), and
-Simple-Circular-Queue; they are copyright their respective authors.
+Other third-party components include TinyUSB (MIT), Bluepad32 (Apache-2.0),
+and Simple-Circular-Queue; they are copyright their respective authors.
+See their LICENSE files under src/firmware/ when present.
 
 -----------------------------------------------------
 
 About this fork
 
-Firmware in this repository is distributed as **BT-USB-ADB-Adapter** (CMake target
-`BT-USB-ADB-Adapter-firmware`). It is a new fork of the prior HIDHopper ADB–based firmware and
-hardware lineage. It continues that work with new features and aims to provide
-a simple do-it-yourself Bluetooth interface for classic ADB Macintosh systems
-and the Apple IIgs.
+Firmware in this repository is distributed as **BT-USB-ADB-Adapter** (CMake
+target `BT-USB-ADB-Adapter-firmware`). It is a fork of the prior
+HIDHopper ADB–based firmware and hardware lineage, continued for the
+ultramegausb DIY adapter with Bluetooth, host mode, and related features
+for classic ADB Macintosh systems and the Apple IIgs.
 
 -----------------------------------------------------
 
-HIDHopper ADB is a rebranding of the ADBuino and QuokkADB code for Tech 
-by Androda, LLC.
-This fork changes the hardware and will offer a few useful tweaks.
+HIDHopper ADB is a rebranding of the ADBuino and QuokkADB code for Tech
+by Androda, LLC. That fork changes the hardware and adds product-specific
+tweaks. See: https://github.com/TechByAndroda/HIDHopper_ADB
 
 -----------------------------------------------------
 
-QuokkADB is a re-branding of the adbuino code for Rabbit Hole Computing, 
+QuokkADB is a re-branding of the adbuino code for Rabbit Hole Computing,
 LLC and adds support for the RP2040 microcontroller.
+    https://github.com/rabbitholecomputing/QuokkADB-firmware
 
-There are many copies of the adbuino code floating around. The original
-copy is intended to live at:
+The primary adbuino tree is intended to live at:
     https://github.com/akuker/adbuino
 
-Original ADBuino project was developed by Rob Braun to include a PS/2 interface:
-    http://synack.net/~bbraun/   and    http://synack.net/svn/adbduino/
-Difugue made additional updates for PS/2
+Original ADBuino / PS/2 work by Rob Braun:
+    http://synack.net/~bbraun/   and   http://synack.net/svn/adbduino/
+Difegue made additional updates for PS/2:
     https://tvc-16.science/adbuino-ps2.html
-USB Host port originally done by Tony Kuker
+    https://github.com/Difegue/Chaotic-Realm
+USB Host port originally done by Tony Kuker:
     https://github.com/akuker/adbuino
-
 
 -----------------------------------------------------
 
 The ADB code is mostly derived from: https://github.com/tmk/tmk_keyboard
 (https://github.com/tmk/tmk_keyboard/blob/master/tmk_core/protocol/adb.c)
-It was originally ADB host, and was adapted for device use by bbraun. 
+It was originally ADB host, and was adapted for device use by bbraun.
 Below is the license and credit for the original ADB host implementation.
 
 Copyright 2011 Jun WAKO <wakojun@gmail.com>

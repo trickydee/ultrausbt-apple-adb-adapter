@@ -1,10 +1,32 @@
 # BT-USB-ADB-Adapter
 
-**BT-USB-ADB-Adapter** is a modified (forked) version of adbuino and QuokkADB. It is a Raspberry Pi Pico based device that converts USB keyboard and mouse inputs (and Bluetooth on Pico W / Pico 2 W) to the Apple Desktop Bus (ADB) standard.
+**BT-USB-ADB-Adapter** converts USB keyboard and mouse input (and Bluetooth on Pico W / Pico 2 W) to Apple Desktop Bus (ADB) for vintage Macs and the Apple IIgs. It targets the **ultramegausb** DIY adapter — see [`docs/hardware.md`](docs/hardware.md).
 
-## Provenance
+## Lineage
 
-This firmware is a fork of [adbuino](https://github.com/Difegue/Chaotic-Realm) and [QuokkADB](https://github.com/rabbitholecomputing/QuokkADB-firmware), extended for USB + Bluetooth on Raspberry Pi Pico boards. It targets the **ultramegausb DIY ADB adapter** — see [`docs/hardware.md`](docs/hardware.md).
+This firmware descends from the adbuino / QuokkADB / HIDHopper ADB line:
+
+| Stage | Project | Link |
+|-------|---------|------|
+| ADB protocol (host → later device) | tmk_keyboard | [tmk/tmk_keyboard](https://github.com/tmk/tmk_keyboard) ([`adb.c`](https://github.com/tmk/tmk_keyboard/blob/master/tmk_core/protocol/adb.c)) |
+| Early PS/2 → ADB Arduino | bbraun adbduino | [synack.net adbduino](http://synack.net/svn/adbduino/) · [write-up index](http://synack.net/~bbraun/) |
+| PS/2 improvements | Difegue | [Chaotic-Realm / adbuino](https://github.com/Difegue/Chaotic-Realm) · [article](https://tvc-16.science/adbuino-ps2.html) |
+| USB host → ADB | akuker adbuino | [akuker/adbuino](https://github.com/akuker/adbuino) |
+| RP2040 / QuokkADB | Rabbit Hole Computing | [rabbitholecomputing/QuokkADB-firmware](https://github.com/rabbitholecomputing/QuokkADB-firmware) |
+| Pico product fork | HIDHopper ADB | [TechByAndroda/HIDHopper_ADB](https://github.com/TechByAndroda/HIDHopper_ADB) |
+| This tree | BT-USB-ADB-Adapter (ultramegausb) | [trickydee/ultramegausb-apple-adb](https://github.com/trickydee/ultramegausb-apple-adb) |
+
+Bluetooth HID uses [Bluepad32](https://github.com/ricardoquesada/bluepad32); USB uses [TinyUSB](https://github.com/hathach/tinyusb) (or the Pico SDK bundle).
+
+## License
+
+This project is **GPL-3.0-or-later**. The full GNU GPL v3 text is in [`COPYING`](COPYING); copyright and provenance notes are in [`LICENSE`](LICENSE).
+
+Earlier trees sometimes shipped a GPLv2 `COPYING` file alongside a GPLv3+ project notice. This repository uses **GPL v3 (or later)** throughout: `COPYING` is the GPLv3 license text.
+
+Third-party components keep their own terms (e.g. TinyUSB **MIT**, Bluepad32 **Apache-2.0**) — see their `LICENSE` files under `src/firmware/`.
+
+When you distribute UF2/binaries, provide corresponding source (this repo or a tagged release that builds that image).
 
 # Usage
 
@@ -17,11 +39,7 @@ See [`docs/hardware.md`](docs/hardware.md) for board wiring, power, and setup. *
    - Plug the adapter into the ADB bus
    - Power on the Mac
    - **No hot-plug** — do not unplug from ADB or remove USB devices while the Mac is running
-- **Host mode** (ADB accessories → PC): flash **`dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2`** from `./build-all.sh`; switch mode on the OLED (**ADB → USB**). Mac **off and disconnected**; power the Pico from USB (see [`docs/hardware.md`](docs/hardware.md)).
-
-# Background
-
-This is a fork of Difegue's version of the [adbuino](https://github.com/Difegue/Chaotic-Realm), which was a modified version of [bbraun's](http://synack.net/svn/adbduino/) PS/2 to ADB arduino sketch, with some extra code added to alleviate issues with his own PS/2 keyboard.  For Difegue's original write-up, please read more info [here.](https://tvc-16.science/adbuino-ps2.html).
+- **Host mode** (ADB accessories → PC): flash **`dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2`** from `./build-all.sh`; switch mode on the OLED (`*` toggle or Mode screen). Mac **off and disconnected**; power the Pico from USB (see [`docs/hardware.md`](docs/hardware.md)).
 
 ## Project documentation
 
@@ -29,6 +47,7 @@ This is a fork of Difegue's version of the [adbuino](https://github.com/Difegue/
 - [docs/bluetooth-pairing.md](docs/bluetooth-pairing.md) — BT pairing order, multi-device tips (keyboard + mouse + gamepad)
 - [docs/gamepad-support.md](docs/gamepad-support.md) — gamepad support (Bluetooth Phase B shipped; Gravis Phase C planned)
 - [docs/release-notes.md](docs/release-notes.md) — version history (2.2.1 BT pairing stability)
+- [docs/adb-host-mode.md](docs/adb-host-mode.md) — ADB → USB host mode
 
 # How to build and flash BT-USB-ADB-Adapter
 
@@ -62,7 +81,8 @@ Note: This software is intended to be compiled in an Ubuntu Linux environment.
 - [TMK Documentation](https://github.com/tmk/tmk_keyboard/wiki/Apple-Desktop-Bus)
 
 ## Other libraries
-- [TinyUSB Library](https://github.com/raspberrypi/tinyusb)
+- [TinyUSB](https://github.com/hathach/tinyusb)
+- [Bluepad32](https://github.com/ricardoquesada/bluepad32)
 - [MiSTER adb hardware emulation](https://github.com/mist-devel/plus_too/blob/master/adb.v)
 
 ## Development resources
