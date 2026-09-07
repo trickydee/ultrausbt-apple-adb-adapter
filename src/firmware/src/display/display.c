@@ -1,6 +1,6 @@
 /**
  * Display interface for SSD1306 OLED – Apple ADB / BT-USB-ADB-Adapter
- * Aligned with ULTRAMEGAUSB_OLED_UI_SPEC (splash, devices, map devices).
+ * Aligned with ULTRAUSBT_OLED_UI_SPEC (splash, devices, map devices).
  */
 
 #include "display/display.h"
@@ -166,7 +166,7 @@ void display_show_splash(void)
     ssd1306_clear(&disp);
 
     ssd1306_draw_string(&disp, 46, 0, 2, (char *)"ADB");
-    ssd1306_draw_string(&disp, 4, 24, 1, (char *)"ultramegausb.com");
+    ssd1306_draw_string(&disp, 4, 24, 1, (char *)"ultrausbt.com");
 
     snprintf(line, sizeof(line), "v%s", BT_USB_ADB_ADAPTER_VERSION_STRING);
     ssd1306_draw_string(&disp, 40, 40, 1, line);

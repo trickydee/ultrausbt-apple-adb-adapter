@@ -100,7 +100,7 @@ On **success**, CMake trees (`build/`, `build-debug/`, `build-adbmon/`) are **re
 
 **Quick dev build:** `./build.sh` or `make` → `src/firmware/build/src/BT-USB-ADB-Adapter-firmware.uf2` (configure board via CMake as needed).
 
-Other boards (`pico`, `pico_w`, `pico2`) can still be built manually with `cmake -DPICO_BOARD=…`. The DIY ultramegausb board targets **Pico 2 W**.
+Other boards (`pico`, `pico_w`, `pico2`) can still be built manually with `cmake -DPICO_BOARD=…`. The DIY ultrausbt board targets **Pico 2 W**.
 
 Requires `PICO_SDK_PATH` or the repo `.pico-sdk/` cache (see `build_common.sh`). Submodules are initialized automatically.
 
@@ -126,7 +126,7 @@ Do **not** repeat reverted experiments (shorter delays, `__not_in_flash_func` on
 
 ## Notes for editor / session restart (Mar 2025)
 
-**Git remote:** `origin` was switched to **https://github.com/trickydee/ultramegausb-apple-adb.git** (new private repo). Local **master** was pushed to remote as **main**. These branches were pushed to origin with the same names: **feature/bluetooth**, **feature/improvements**, **feature/joysticks**, **feature/display**. All set to track their `origin/` counterparts.
+**Git remote:** `origin` is **https://github.com/trickydee/ultrausbt-apple-adb.git** (renamed from ultramegausb-apple-adb). Product branding is **UltraUSBT**.
 
 **Build by branch:** Use **`./build-all.sh`** from `main`; SDK is resolved via `build_common.sh` (`.pico-sdk/` cache or `PICO_SDK_PATH`).
 

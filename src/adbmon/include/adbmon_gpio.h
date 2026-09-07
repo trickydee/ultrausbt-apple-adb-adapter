@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-// ultramegausb DIY board GPIO map (passive monitor uses IN only — see docs/hardware.md)
+// ultrausbt DIY board GPIO map (passive monitor uses IN only — see docs/hardware.md)
 #define ADBMON_LED_GPIO     25
 #define ADBMON_ADB_IN_GPIO  19
 #define ADBMON_ADB_OUT_GPIO 18

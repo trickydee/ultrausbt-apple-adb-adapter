@@ -55,7 +55,7 @@ Lineage: this firmware descends from QuokkADB and adbuino. Target hardware: [`ha
 
 ## 1.0.15
 
-- **Repository cleanup for this fork:** The tree is focused on the **ultramegausb** DIY Apple ADB adapter firmware (USB + Bluetooth via Pico / Pico 2), not on legacy **ADBuino** Arduino hardware or third-party retail adapter PCBs.
+- **Repository cleanup for this fork:** The tree is focused on the **ultrausbt** DIY Apple ADB adapter firmware (USB + Bluetooth via Pico / Pico 2), not on legacy **ADBuino** Arduino hardware or third-party retail adapter PCBs.
 - **Removed ADBuino-era firmware paths:** Unused ADBuino/PlatformIO Arduino target sources, the old `adbuino` CI workflow, and related utilities that only applied to that stack.
 - **Removed third-party hardware-design artifacts:** Legacy case CAD, KiCad/gerber bundles, and extra product images not used by this firmware project. Pinout images useful for DIY wiring (`adb_pinout.png`, Pico pinout) are retained under `images/`.
 - **Documentation layout:** User-facing docs live under `docs/` (including [`hardware.md`](hardware.md), `adb.md`, and notes such as `led-support.md`). The old top-level `doc/` folder is gone; `README` links updated accordingly.

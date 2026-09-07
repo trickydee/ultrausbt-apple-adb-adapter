@@ -1,6 +1,6 @@
 # adbmon — Pico ADB bus monitor
 
-Passive Apple Desktop Bus (ADB) traffic decoder for Raspberry Pi Pico / Pico 2 on the **ultramegausb DIY board** (see [`../docs/hardware.md`](../docs/hardware.md)).
+Passive Apple Desktop Bus (ADB) traffic decoder for Raspberry Pi Pico / Pico 2 on the **ultrausbt DIY board** (see [`../docs/hardware.md`](../docs/hardware.md)).
 
 ## What it does
 

@@ -1,6 +1,7 @@
-# Hardware — ultramegausb Apple ADB Adapter
+# Hardware — UltraUSBT Apple ADB Adapter
 
-KiCad project: **apple-adb.kicad_sch** (rev 1.1, ultramegausb.com).
+Reference KiCad project: **[`kicad/`](../kicad/)** (schematic / PCB for the DIY dual-port board).  
+Legacy note: schematic named **apple-adb.kicad_sch** (rev 1.1).
 
 Custom dual-port ADB pass-through board with BSS138 level shifting.
 

@@ -1,6 +1,6 @@
 # Bluetooth pairing hangs — handoff notes (Pico / Bluepad32 / dual-core)
 
-**Copied into ultramegausb-apple-adb** from `ultramegausb-atari-st-rpikbd/docs/BT_PAIRING_HANDOFF.md` (Atari ST IKBD emulator, fixes in **v22.1.0**). Keep in sync when the source doc changes.
+**Copied into ultrausbt-apple-adb** from `ultramegausb-atari-st-rpikbd/docs/BT_PAIRING_HANDOFF.md` (Atari ST IKBD emulator, fixes in **v22.1.0**). Keep in sync when the source doc changes.
 
 **Apple-ADB porting status:** **Done** — shipped in firmware **2.2.1**. See [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) for port checklist and Apple-specific extensions; user guide: [`bluetooth-pairing.md`](bluetooth-pairing.md). Tracked in [`FUTURE_WORK.md`](FUTURE_WORK.md) §1.
 

@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Common issues on the **ultramegausb** DIY ADB adapter. IIgs-specific tuning parameters live in [`iigs-debugging.md`](iigs-debugging.md). GPIO rollback history: [`adb-shared-gpio-rollback.md`](adb-shared-gpio-rollback.md).
+Common issues on the **ultrausbt** DIY ADB adapter. IIgs-specific tuning parameters live in [`iigs-debugging.md`](iigs-debugging.md). GPIO rollback history: [`adb-shared-gpio-rollback.md`](adb-shared-gpio-rollback.md).
 
 ---
 

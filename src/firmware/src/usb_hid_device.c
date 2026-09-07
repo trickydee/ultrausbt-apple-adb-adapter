@@ -60,7 +60,7 @@ static uint8_t const desc_configuration[] = {
 
 static char const *string_desc_arr[] = {
     (const char[]){0x09, 0x04},
-    "ultramegausb",
+    "ultrausbt",
     "ADB Host Bridge",
     "0001",
 };

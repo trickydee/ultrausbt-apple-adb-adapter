@@ -28,7 +28,7 @@ About this fork
 Firmware in this repository is distributed as **BT-USB-ADB-Adapter** (CMake
 target `BT-USB-ADB-Adapter-firmware`). It is a fork of the prior
 HIDHopper ADB–based firmware and hardware lineage, continued for the
-ultramegausb DIY adapter with Bluetooth, host mode, and related features
+ultrausbt DIY adapter with Bluetooth, host mode, and related features
 for classic ADB Macintosh systems and the Apple IIgs.
 
 -----------------------------------------------------

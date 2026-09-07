@@ -1,6 +1,6 @@
 # Future work
 
-Tracked improvements and features for **ultramegausb-apple-adb**. For a broader project backlog (joystick, adbmon, Wacom), see also [`todo.md`](todo.md).
+Tracked improvements and features for **ultrausbt-apple-adb**. For a broader project backlog (joystick, adbmon, Wacom), see also [`todo.md`](todo.md).
 
 ---
 
@@ -75,7 +75,7 @@ Reverted on `feature/joysticks` with no improvement: shorter pairing delays (10 
 ## 3. UI / OLED alignment
 
 **Priority:** Medium  
-**Status:** Implemented on `feature/ui-alignment` (splash / devices / map devices per ULTRAMEGAUSB spec)
+**Status:** Implemented on `feature/ui-alignment` (splash / devices / map devices per ULTRAUSBT spec)
 
 - [x] Three-screen flow, USB map, `˄+˯` pairing clear
 - [ ] Merge branch; verify on hardware

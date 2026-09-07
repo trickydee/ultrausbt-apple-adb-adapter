@@ -291,7 +291,7 @@ Triggered from OLED confirm or serial command:
 
 ### Phase 0 — Spec & spikes (this doc)
 
-- [ ] Confirm ultramegausb board USB and ADB wiring
+- [ ] Confirm ultrausbt board USB and ADB wiring
 - [ ] Spike: `dynamic_switch` + HID device on Pico
 - [ ] Spike: ADB master sends Talk R0, reads mouse reg from real trackball
 - [ ] adbmon trace of Mac host poll loop as reference fixture
@@ -325,7 +325,7 @@ Triggered from OLED confirm or serial command:
 |---|----------|--------|
 | 1 | OLED mode screen placement (new screen vs settings submenu) | UX — align with ui-alignment flow |
 | 2 | Hub hat supported in `ADB → USB` mode? | Likely **no** for v1 |
-| 3 | ADB bus power in host mode | On the ultramegausb board: Pico USB +5 V bridged past Schottky (see [`hardware.md`](hardware.md)); ensure DATA pull-up to +5 V when Mac is off |
+| 3 | ADB bus power in host mode | On the ultrausbt board: Pico USB +5 V bridged past Schottky (see [`hardware.md`](hardware.md)); ensure DATA pull-up to +5 V when Mac is off |
 | 4 | User education: never connect vintage Mac while in host mode | Safety / docs |
 | 5 | RP2350 / Pico 2 W: same single-PHY constraint? | Yes for native USB |
 | 6 | PIO USB second port — future “device + host” split? | Out of scope v1 |
