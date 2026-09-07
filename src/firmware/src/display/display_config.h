@@ -1,5 +1,5 @@
 /**
- * SSD1306 OLED display configuration for BT-USB-ADB-Adapter
+ * SSD1306 OLED display configuration for ultrausbt-Apple-ADB-adapter
  *
  * I2C pins on Display1 header (GP2–GP9 per schematic); chosen to avoid ADB GPIOs:
  *   ADB: 18 (out), 19 (in); LED: 25; UART: 0/1; Reset button: on RUN header

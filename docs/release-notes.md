@@ -1,4 +1,4 @@
-# BT-USB-ADB-Adapter – Release notes
+# ultrausbt-Apple-ADB-adapter – Release notes
 
 Lineage: this firmware descends from QuokkADB and adbuino. Target hardware: [`hardware.md`](hardware.md).
 
@@ -51,7 +51,7 @@ Lineage: this firmware descends from QuokkADB and adbuino. Target hardware: [`ha
 
 ## 1.0.16
 
-- **Product rename:** CMake project/target **`BT-USB-ADB-Adapter-firmware`**, UF2 outputs (`BT-USB-ADB-Adapter-firmware*.uf2`), boot banner, Bluetooth device name, and top-level docs now use **BT-USB-ADB-Adapter**.
+- **Product rename:** CMake project/target **`ultrausbt-Apple-ADB-adapter-firmware`**, UF2 outputs (`ultrausbt-Apple-ADB-adapter-firmware*.uf2`), boot banner, Bluetooth device name, and top-level docs now use **ultrausbt-Apple-ADB-adapter**.
 
 ## 1.0.15
 

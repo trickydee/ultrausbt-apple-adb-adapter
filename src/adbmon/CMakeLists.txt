@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
 
-set(PICO_BOARD_HEADER_DIRS ${CMAKE_SOURCE_DIR}/boards)
 include(pico_sdk_import.cmake)
 
 project(adbmon VERSION 0.2.3)

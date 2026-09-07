@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------
-//  BT-USB-ADB-Adapter
+//  ultrausbt-Apple-ADB-adapter
 //  Copyright 2023 Tech by Androda, LLC
 //  This project is based on adbuino and QuokkADB:
 //

@@ -8,7 +8,7 @@ Quick reference for pairing **keyboard**, **mouse**, and **gamepad** (Xbox / Sta
 
 | Image | When |
 |-------|------|
-| **`dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2`** | Normal use and **pairing tests** (release build) |
+| **`dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2`** | Normal use and **pairing tests** (release build) |
 | **`dist/...-host-debug.uf2`** | UART troubleshooting only — debug logging changes timing and can mask pairing bugs |
 
 Build both with `./build-all.sh` from the project root.
@@ -35,9 +35,9 @@ On the OLED **Map Devices** screen, hold **`˄+˯`** for **5 seconds** to wipe B
 
 ---
 
-## Mode: ADB → Mac only
+## Mode: ADB Device only
 
-Bluetooth pairing runs in **ADB → Mac** (device mode). In **ADB → USB** (host mode), the adapter does not bridge Bluetooth to the PC — switch back on the OLED before pairing. See [`adb-host-mode.md`](adb-host-mode.md).
+Bluetooth pairing runs in **ADB Device** mode (USB/BT → IIgs / Mac 68K / early PPC). In **ADB Host** mode, the adapter does not bridge Bluetooth to the modern PC/Mac — switch back on the OLED before pairing. See [`adb-host-mode.md`](adb-host-mode.md).
 
 ---
 

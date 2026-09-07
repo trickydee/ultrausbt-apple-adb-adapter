@@ -34,7 +34,7 @@ The Gravis path is **host-driven**: the Mac’s **cdev** issues **Listen** comma
 | **Gravis MouseStick II** | Reference device |
 | Gravis **cdev** / control panel installed | Performs **0x01 → 0x23** handler switch |
 | ADB bus monitor (**adbmon**) | Passive decode on DATA line → UART |
-| Optional: BT-USB-ADB-Adapter (not emulating) | Second ADB port for daisy-chain, or spare board flashed adbmon-only |
+| Optional: ultrausbt-Apple-ADB-adapter (not emulating) | Second ADB port for daisy-chain, or spare board flashed adbmon-only |
 
 **Mac off** for wiring changes; power on after chain is stable ([`hardware.md`](hardware.md)).
 

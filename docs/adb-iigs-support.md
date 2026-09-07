@@ -92,7 +92,7 @@ When `global_debug` is true, failed receives log short UART lines instead of old
 - `ADB RX fail: SYNC hi=<µs>`
 - `ADB RX fail: BIT b=<bit> lo=<µs> hi=<µs>`
 
-**Build with ADB UART debug:** CMake option **`ADB_DEBUG=ON`** defines `ADB_DEBUG` and forces **`global_debug = true`** in `src/firmware/lib/QuokkADB/src/quokkadb.cpp`. **`./build-all.sh`** produces **`dist/BT-USB-ADB-Adapter-firmware-pico2_w-host-debug.uf2`**.
+**Build with ADB UART debug:** CMake option **`ADB_DEBUG=ON`** defines `ADB_DEBUG` and forces **`global_debug = true`** in `src/firmware/lib/QuokkADB/src/quokkadb.cpp`. **`./build-all.sh`** produces **`dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host-debug.uf2`**.
 
 ---
 

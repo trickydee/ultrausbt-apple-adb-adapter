@@ -8,15 +8,15 @@ Common issues on the **ultrausbt** DIY ADB adapter. IIgs-specific tuning paramet
 
 | Symptom | Check |
 |---------|--------|
-| Wrong firmware flashed | Use **`dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2`** from `./build-all.sh` — one image with **ADB → Mac** and **ADB → USB** (OLED toggle). Do not flash a legacy device-only UF2 unless you built it manually. |
-| UART debug | Flash **`dist/BT-USB-ADB-Adapter-firmware-pico2_w-host-debug.uf2`**; connect GPIO **0** (Pico pin 1) @ **115200**. |
+| Wrong firmware flashed | Use **`dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2`** from `./build-all.sh` — one image with **ADB Device** and **ADB Host** (OLED toggle). Do not flash a legacy device-only UF2 unless you built it manually. |
+| UART debug | Flash **`dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host-debug.uf2`**; connect GPIO **0** (Pico pin 1) @ **115200**. |
 | Bus traces | Flash **`dist/adbmon-pico.uf2`** (passive monitor — does not emulate keyboard/mouse). See [`src/adbmon/README.md`](../src/adbmon/README.md). |
 
 ---
 
-## BT mouse jumps or stutters (ADB → Mac) — firmware 2.0.0 regression
+## BT mouse jumps or stutters (ADB Device mode) — firmware 2.0.0 regression
 
-**Symptom:** USB mouse fine; **Bluetooth** mouse movement occasionally **jumps** or sends wrong direction. Keyboard usually OK. Seen after **2.0.0** host-mode release when using the unified `-host` build in device mode.
+**Symptom:** USB mouse fine; **Bluetooth** mouse movement occasionally **jumps** or sends wrong direction. Keyboard usually OK. Seen after **2.0.0** host-mode release when using the unified `-host` build in ADB Device mode.
 
 **Cause (fixed in 2.1.0):** Shared ADB GPIO was changed to **tri-state** (open-collector release) for host development. Device mode **collision detection** in `adb_platform.cpp` assumes `data_hi()` **drives GP18 high** and checks `gpio_get(ADB_OUT_GPIO)` during TX. With tri-state, the pin reads low while the bus is high via R2 → false collisions → aborted `Send16bitRegister` → garbled mouse register 0.
 
@@ -36,7 +36,7 @@ Common issues on the **ultrausbt** DIY ADB adapter. IIgs-specific tuning paramet
 
 ---
 
-## ADB host mode (ADB → USB) — polling fails or no devices
+## ADB Host mode — polling fails or no devices
 
 Host mode needs **timing** in `adb_host.cpp` (not the shared GPIO rollback above):
 
@@ -56,8 +56,8 @@ Host mode needs **timing** in `adb_host.cpp` (not the shared GPIO rollback above
 
 ## Host vs device GPIO — do not conflate fixes
 
-| Change | Affects ADB → Mac? | Affects ADB → USB? |
-|--------|-------------------|-------------------|
+| Change | Affects ADB Device? | Affects ADB Host? |
+|--------|---------------------|-------------------|
 | 765 µs attention + RX preamble (`adb_host.cpp`) | No | **Yes** — required |
 | Shared tri-state `data_hi()` (2.0.0) | **Yes** — broke collision | Marginal for TX; not the main host fix |
 | Drive-high shared GPIO + `adb_host_gpio.h` (2.1.0) | **Yes** — restores device | Host keeps tri-state in host-only code |
@@ -72,7 +72,7 @@ If host enumeration or device replies are consistently wrong after wiring checks
 
 ## Bluetooth — multi-device pairing
 
-User guide: [`bluetooth-pairing.md`](bluetooth-pairing.md). Use the **release** UF2 from `./build-all.sh` (`dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2`) for pairing tests. The **debug** UF2 changes timing and can mask or trigger Heisenbugs. Full developer notes: [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md).
+User guide: [`bluetooth-pairing.md`](bluetooth-pairing.md). Use the **release** UF2 from `./build-all.sh` (`dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2`) for pairing tests. The **debug** UF2 changes timing and can mask or trigger Heisenbugs. Full developer notes: [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md).
 
 ### Recommended pair order
 

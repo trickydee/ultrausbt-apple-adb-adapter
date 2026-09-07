@@ -4,16 +4,16 @@
 
 This project uses a Raspberry Pi Pico to connect modern USB and Bluetooth devices such as keyboards, mice, trackballs, and gamepads to classic Apple Desktop Bus (ADB) computers — without needing USB on the vintage machine.
 
-It targets **68K Macintosh** (Classic / LC / Quadra-class), **early PowerPC** ADB Macs, and the **Apple IIgs**.
+It targets **68K Macintosh** (Classic / LC / Quadra-class), **early PowerPC** ADB Macs, and the **Apple IIgs**. **NeXT** machines have **not** been tested yet.
 
-The adapter is bi-directional:
+The adapter is bi-directional (OLED labels **ADB Dev** / **ADB Host** on the homescreen; **ADB Device** / **ADB Host** on the Mode menu):
 
-* **Device Mode** (default): modern USB/Bluetooth HID → emulated ADB keyboard and mouse on the vintage Mac / IIgs
-* **Host Mode**: real ADB keyboard / mouse / trackball → USB HID keyboard and mouse on a modern PC or Mac
+* **ADB Device** mode (default): attach USB and Bluetooth devices to an ADB host — Apple IIgs, Mac 68K, or early PowerPC ADB Macs
+* **ADB Host** mode: connect ADB devices (keyboard, mouse, trackball, …) to a USB host such as a modern PC or Mac
 
 Dual Mini-DIN ADB ports are wired as a **pass-through**: you can daisy-chain real ADB keyboards, mice, trackballs, and other devices alongside the adapter’s USB/BT emulation (see [`docs/adb-passthrough-hub.md`](./docs/adb-passthrough-hub.md)).
 
-On a **Pico 2 W** you can mix USB and Bluetooth devices. USB-only builds work on Pico / Pico 2 as well. Prefer **Pico 2 W** for the full feature set (Bluetooth + host/device toggle).
+On a **Pico 2 W** you can mix USB and Bluetooth devices. USB-only builds work on Pico / Pico 2 as well. Prefer **Pico 2 W** for the full feature set (Bluetooth + Device/Host toggle).
 
 **This firmware descends from the adbuino / QuokkADB / HIDHopper ADB line** (GPL). Upstream projects to credit:
 
@@ -23,7 +23,7 @@ Earlier roots include [bbraun’s adbduino](http://synack.net/svn/adbduino/), [D
 
 Current firmware: **v2.2.2** (`main`) · [Release notes](./docs/release-notes.md) · License: [GPL-3.0-or-later](./LICENSE) · [COPYING](./COPYING)
 
-Firmware CMake product name: **BT-USB-ADB-Adapter**.
+Firmware CMake product name: **ultrausbt-Apple-ADB-adapter**.
 
 ![ADB Pinout](./images/adb_pinout.png)
 
@@ -71,22 +71,24 @@ Connect devices to the Pico USB port (use a powered USB OTG hub if you need seve
 
 See **Bluetooth support** above. Pairing and clear-keys are OLED-driven.
 
-## Device Mode (USB/BT → vintage Mac / IIgs)
+## ADB Device mode (USB/BT → vintage ADB host)
 
-Default mode. Emulates ADB keyboard and mouse so modern peripherals work on:
+Default mode. Attach USB and Bluetooth keyboards, mice, trackballs, and (on Pico W / Pico 2 W) a gamepad to an ADB host:
 
-* 68K ADB Macs
-* Early PowerPC ADB Macs
 * Apple IIgs
+* Macintosh 68K (Classic / LC / Quadra-class)
+* Early PowerPC ADB Macs
+
+**NeXT** machines have **not** been tested yet.
 
 Pass-through port: real ADB devices can share the bus with the adapter.
 
-## Host Mode (ADB accessories → modern PC / Mac)
+## ADB Host mode (ADB devices → modern USB host)
 
-Run the adapter in reverse: talk to a real ADB keyboard, mouse, or trackball and present them as USB HID to a modern computer.
+Connect ADB devices (keyboard, mouse, trackball, …) to a USB host such as a modern PC or Mac. The adapter polls the ADB bus and presents them as USB HID.
 
-* Switch with **`*`** from any OLED screen, or use the **ADB Mode** page (`#` carousel → Mode; `˄`/`˯` select, `#` apply).
-* Vintage Mac should be **off and disconnected**; remove USB-A peripherals while in Host Mode (Bluetooth is not bridged to the PC in this mode).
+* Switch with **`*`** from any OLED screen, or use the **ADB Mode** page (`#` carousel → Mode; `˄`/`˯` select **ADB Host** / **ADB Device**, `#` apply). Homescreen shows **ADB Host** or **ADB Dev**.
+* Vintage Mac / IIgs should be **off and disconnected**; remove USB-A peripherals while in ADB Host mode (Bluetooth is not bridged to the PC in this mode).
 * Details: [`docs/adb-host-mode.md`](./docs/adb-host-mode.md).
 
 # OLED UI
@@ -95,10 +97,10 @@ An SSD1306 OLED and four buttons are supported on the UltraUSBT ADB board (optio
 
 | Label | Role |
 |-------|------|
-| **˄** (Up) | Mode screen: select ADB → Mac; with ˯: clear BT pairings |
-| **˯** (Down) | Mode screen: select ADB → USB; with ˄: clear BT pairings |
+| **˄** (Up) | Mode screen: select **ADB Host**; with ˯: clear BT pairings |
+| **˯** (Down) | Mode screen: select **ADB Device**; with ˄: clear BT pairings |
 | **#** (Center) | Advance screen carousel; Mode screen: apply |
-| **\*** | Toggle Device ↔ Host mode from any screen |
+| **\*** | Toggle ADB Device ↔ ADB Host from any screen |
 
 Carousel (host builds): Splash → Devices → Map Devices → ADB Bus → ADB Mode → Splash.
 
@@ -124,8 +126,8 @@ Flash the matching `.uf2` from `dist/` (hold **BOOTSEL**, copy to the RPI-RP2 dr
 
 Typical outputs:
 
-* `dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2` — release image (ADB → Mac and ADB → USB)
-* `dist/BT-USB-ADB-Adapter-firmware-pico2_w-host-debug.uf2` — UART debug @ 115200 on GP0
+* `dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2` — release image (**ADB Device** and **ADB Host**)
+* `dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host-debug.uf2` — UART debug @ 115200 on GP0
 
 If `PICO_SDK_PATH` is unset, the scripts clone the Pico SDK once under `.pico-sdk/`. Optional upstream TinyUSB: `git submodule update --init --recursive`.
 
@@ -136,7 +138,7 @@ If `PICO_SDK_PATH` is unset, the scripts clone the Pico SDK once under `.pico-sd
 | [`docs/release-notes.md`](./docs/release-notes.md) | Firmware changelog |
 | [`docs/troubleshooting.md`](./docs/troubleshooting.md) | Common issues, BT pairing, host timing |
 | [`docs/bluetooth-pairing.md`](./docs/bluetooth-pairing.md) | Multi-device Bluetooth tips |
-| [`docs/adb-host-mode.md`](./docs/adb-host-mode.md) | ADB → USB host mode |
+| [`docs/adb-host-mode.md`](./docs/adb-host-mode.md) | ADB Host mode (ADB devices → modern USB host) |
 | [`docs/adb-passthrough-hub.md`](./docs/adb-passthrough-hub.md) | Pass-through / hub behaviour |
 | [`docs/gamepad-support.md`](./docs/gamepad-support.md) | BT gamepad mapping |
 | [`docs/iigs-debugging.md`](./docs/iigs-debugging.md) | IIgs timing notes |
@@ -162,6 +164,6 @@ This fork also relies on:
 **Other UltraUSBT projects**
 
 * [Amiga USB/BT adapter](https://github.com/trickydee/ultrausbt-amiga)
-* Atari Mega ST/TT IKBD USB/BT adapter (related ultrausbt / ultramegausb trees)
+* Atari Mega ST/TT IKBD USB/BT adapter (related ultrausbt / ultrausbt trees)
 
-**This UltraUSBT Apple ADB tree** is maintained as [trickydee/ultrausbt-apple-adb](https://github.com/trickydee/ultrausbt-apple-adb).
+**This UltraUSBT Apple ADB tree** is maintained as [trickydee/ultrausbt-apple-adb-adapter](https://github.com/trickydee/ultrausbt-apple-adb-adapter).

@@ -1,6 +1,6 @@
 # Gamepad support (Bluetooth first, USB later)
 
-This document tracks **BT-USB-ADB-Adapter** gamepad work: goals, mapping options, flash/timing notes, and implementation status. For BT pairing order and multi-device tips, see [`bluetooth-pairing.md`](bluetooth-pairing.md).
+This document tracks **ultrausbt-Apple-ADB-adapter** gamepad work: goals, mapping options, flash/timing notes, and implementation status. For BT pairing order and multi-device tips, see [`bluetooth-pairing.md`](bluetooth-pairing.md).
 
 ## Goals
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build BT-USB-ADB-Adapter firmware and adbmon.
+# Build ultrausbt-Apple-ADB-adapter firmware and adbmon.
 #
 # Produces:
 #   - Unified adapter UF2 (ADB device + host modes, OLED toggle) for Pico 2 W
@@ -21,7 +21,7 @@ BUILD_DEBUG_DIR="${BUILD_DEBUG_DIR:-build-debug}"
 BUILD_ADBMON_DIR="${BUILD_ADBMON_DIR:-build-adbmon}"
 
 UF2="$(build_dir_uf2_rel)"
-UF2_DEBUG=src/BT-USB-ADB-Adapter-firmware-host-debug.uf2
+UF2_DEBUG=src/ultrausbt-Apple-ADB-adapter-firmware-host-debug.uf2
 ADBMON_UF2="$(adbmon_uf2_rel)"
 DIST_DIR=dist
 BUILD_SUCCESS=true
@@ -30,7 +30,7 @@ usage() {
     cat <<'EOF'
 Usage: ./build-all.sh [options]
 
-Builds the unified BT-USB-ADB-Adapter firmware (device + host toggle) for Pico 2 W,
+Builds the unified ultrausbt-Apple-ADB-adapter firmware (device + host toggle) for Pico 2 W,
 the UART debug build, and adbmon for Pico.
 
 Options:
@@ -79,7 +79,7 @@ for arg in "$@"; do
     esac
 done
 
-echo "=== BT-USB-ADB-Adapter build ==="
+echo "=== ultrausbt-Apple-ADB-adapter build ==="
 echo "Adapter: $ADAPTER_BOARD (device + host toggle, ADB_HOST_MODE=ON)"
 echo "Debug:   $ADAPTER_BOARD (ADB_DEBUG=ON)"
 if [ "$BUILD_ADBMON" = "1" ]; then
@@ -167,16 +167,16 @@ if [ "$BUILD_ADBMON" = "1" ]; then
 fi
 
 echo "Collecting UF2 artifacts into $DIST_DIR/ ..."
-collect_dist "$RELEASE_UF2" "BT-USB-ADB-Adapter-firmware-${ADAPTER_BOARD}-host.uf2"
-collect_dist "$DEBUG_UF2" "BT-USB-ADB-Adapter-firmware-${ADAPTER_BOARD}-host-debug.uf2"
+collect_dist "$RELEASE_UF2" "ultrausbt-Apple-ADB-adapter-firmware-${ADAPTER_BOARD}-host.uf2"
+collect_dist "$DEBUG_UF2" "ultrausbt-Apple-ADB-adapter-firmware-${ADAPTER_BOARD}-host-debug.uf2"
 if [ "$BUILD_ADBMON" = "1" ]; then
     collect_dist "$ADBMON_OUT" "adbmon-${ADBMON_BOARD}.uf2"
 fi
 echo ""
 
 echo "Flash (hold BOOTSEL, connect USB, copy UF2):"
-echo "  Adapter:  $DIST_DIR/BT-USB-ADB-Adapter-firmware-${ADAPTER_BOARD}-host.uf2"
-echo "  Debug:    $DIST_DIR/BT-USB-ADB-Adapter-firmware-${ADAPTER_BOARD}-host-debug.uf2"
+echo "  Adapter:  $DIST_DIR/ultrausbt-Apple-ADB-adapter-firmware-${ADAPTER_BOARD}-host.uf2"
+echo "  Debug:    $DIST_DIR/ultrausbt-Apple-ADB-adapter-firmware-${ADAPTER_BOARD}-host-debug.uf2"
 if [ "$BUILD_ADBMON" = "1" ]; then
     echo "  adbmon:   $DIST_DIR/adbmon-${ADBMON_BOARD}.uf2"
 fi

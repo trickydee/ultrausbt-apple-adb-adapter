@@ -129,9 +129,9 @@ void adb_gpio_init(void) {
 
 | Mode | Build | Check |
 |------|-------|-------|
-| ADB → Mac (device) | `pico2_w-host.uf2` | USB mouse, **BT mouse** (no jumps), BT keyboard |
-| ADB → USB (host) | same UF2, menu toggle | Keyboard + mouse + trackball poll; hot-plug rescan |
-| Collision (optional debug) | `-host-debug.uf2` | No spurious `MOUSE: Collision on sending register 0` in device mode |
+| ADB Device | `pico2_w-host.uf2` | USB mouse, **BT mouse** (no jumps), BT keyboard |
+| ADB Host | same UF2, menu toggle | Keyboard + mouse + trackball poll; hot-plug rescan |
+| Collision (optional debug) | `-host-debug.uf2` | No spurious `MOUSE: Collision on sending register 0` in ADB Device mode |
 
 ## Collision detection note
 

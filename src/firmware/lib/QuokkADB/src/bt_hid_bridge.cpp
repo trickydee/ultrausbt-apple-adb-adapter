@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  BT-USB-ADB-Adapter - Bluetooth HID bridge
+//  ultrausbt-Apple-ADB-adapter - Bluetooth HID bridge
 //  Feeds Bluepad32 keyboard/mouse/gamepad data into the same parsers as USB HID.
 //  Do not include uni.h here to avoid HID type conflicts with TinyUSB.
 //----------------------------------------------------------------------------

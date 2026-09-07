@@ -1,4 +1,4 @@
-# BT-USB-ADB-Adapter — top-level build
+# ultrausbt-Apple-ADB-adapter — top-level build
 # Builds the Pico firmware (QuokkADB) in src/firmware.
 #
 # Prerequisites:
@@ -17,13 +17,13 @@ OUTPUT_DIR   := $(BUILD_DIR)/src
 
 all: build
 
-build: $(OUTPUT_DIR)/BT-USB-ADB-Adapter-firmware.uf2
+build: $(OUTPUT_DIR)/ultrausbt-Apple-ADB-adapter-firmware.uf2
 
-$(OUTPUT_DIR)/BT-USB-ADB-Adapter-firmware.uf2: $(BUILD_DIR)/Makefile
+$(OUTPUT_DIR)/ultrausbt-Apple-ADB-adapter-firmware.uf2: $(BUILD_DIR)/Makefile
 	$(MAKE) -C $(BUILD_DIR)
 	@echo ""
 	@echo "Build complete. Outputs in $(OUTPUT_DIR)/"
-	@echo "  UF2 for flashing: $(OUTPUT_DIR)/BT-USB-ADB-Adapter-firmware.uf2"
+	@echo "  UF2 for flashing: $(OUTPUT_DIR)/ultrausbt-Apple-ADB-adapter-firmware.uf2"
 
 $(BUILD_DIR)/Makefile:
 	mkdir -p $(BUILD_DIR)
@@ -34,7 +34,7 @@ clean:
 	@echo "Cleaned $(BUILD_DIR)"
 
 help:
-	@echo "BT-USB-ADB-Adapter build targets:"
+	@echo "ultrausbt-Apple-ADB-adapter build targets:"
 	@echo "  make / make build   Build Pico firmware (default)"
 	@echo "  make clean          Remove build directory"
 	@echo "  make help           Show this help"

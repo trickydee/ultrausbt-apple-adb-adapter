@@ -1,7 +1,7 @@
 #ifndef _PICO_BTSTACK_BTSTACK_CONFIG_H
 #define _PICO_BTSTACK_BTSTACK_CONFIG_H
 
-// BTstack configuration for BT-USB-ADB-Adapter (Bluepad32)
+// BTstack configuration for ultrausbt-Apple-ADB-adapter (Bluepad32)
 // Based on bluepad32/examples/pico_w/src/btstack_config.h
 
 #define ENABLE_LOG_INFO

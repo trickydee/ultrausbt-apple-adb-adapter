@@ -1,6 +1,6 @@
 # Future work
 
-Tracked improvements and features for **ultrausbt-apple-adb**. For a broader project backlog (joystick, adbmon, Wacom), see also [`todo.md`](todo.md).
+Tracked improvements and features for **ultrausbt-apple-adb-adapter**. For a broader project backlog (joystick, adbmon, Wacom), see also [`todo.md`](todo.md).
 
 ---
 
@@ -14,7 +14,7 @@ Tracked improvements and features for **ultrausbt-apple-adb**. For a broader pro
 
 | Document | Purpose |
 |----------|---------|
-| [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) | Canonical fix recipe (from ultramegausb-atari-st-rpikbd **v22.1.0**) |
+| [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) | Canonical fix recipe (from ultrausbt-atari-st-rpikbd **v22.1.0**) |
 | [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) | Port status, Apple-specific fixes, test matrix |
 | [`troubleshooting.md`](troubleshooting.md) | User-facing BT pairing / multi-device notes |
 | [`gamepad-support.md`](gamepad-support.md) | Gamepad Phase B + pairing cross-link |

@@ -1,5 +1,5 @@
 /**
- * bluepad32 initialization for BT-USB-ADB-Adapter
+ * bluepad32 initialization for ultrausbt-Apple-ADB-adapter
  * Separate from main to avoid HID type conflicts between TinyUSB and btstack
  */
 

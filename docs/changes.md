@@ -1,4 +1,4 @@
-# BT-USB-ADB-Adapter – Changes
+# ultrausbt-Apple-ADB-adapter – Changes
 
 Lineage: this tree descends from QuokkADB and adbuino. Target hardware is documented in [`hardware.md`](hardware.md).
 
@@ -6,8 +6,8 @@ Lineage: this tree descends from QuokkADB and adbuino. Target hardware is docume
 
 The firmware version is defined in one place and used in the serial/boot banner and anywhere the firmware identifies itself (e.g. ADB “version” response).
 
-- **Where to set it:** `src/firmware/CMakeLists.txt` — use `project(BT-USB-ADB-Adapter-firmware VERSION x.y.z)`. Use semantic-style versions (e.g. `1.0.0`); bump when you release or tag.
-- **Where it appears:** `PLATFORM_FW_VER_STRING` in the QuokkADB `platform_config.h` (product name **BT-USB-ADB-Adapter** and version from CMake), printed at boot and in response to version queries.
+- **Where to set it:** `src/firmware/CMakeLists.txt` — use `project(ultrausbt-Apple-ADB-adapter-firmware VERSION x.y.z)`. Use semantic-style versions (e.g. `1.0.0`); bump when you release or tag.
+- **Where it appears:** `PLATFORM_FW_VER_STRING` in the QuokkADB `platform_config.h` (product name **ultrausbt-Apple-ADB-adapter** and version from CMake), printed at boot and in response to version queries.
 
 To bump the version: edit the `VERSION` in that `project()` line and rebuild.
 
@@ -90,15 +90,15 @@ From the project root, **`./build-all.sh`** produces three UF2s in **`dist/`**:
 
 | Artifact | Board | CMake | Build dir |
 |----------|-------|-------|-----------|
-| `BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2` | Pico 2 W | `ADB_HOST_MODE=ON` | `build/` |
-| `BT-USB-ADB-Adapter-firmware-pico2_w-host-debug.uf2` | Pico 2 W | `ADB_HOST_MODE=ON`, `ADB_DEBUG=ON` | `build-debug/` |
+| `ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2` | Pico 2 W | `ADB_HOST_MODE=ON` | `build/` |
+| `ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host-debug.uf2` | Pico 2 W | `ADB_HOST_MODE=ON`, `ADB_DEBUG=ON` | `build-debug/` |
 | `adbmon-pico.uf2` | Pico | adbmon project | `build-adbmon/` |
 
 The **host** UF2 is the unified product image: **ADB → Mac** (default) and **ADB → USB** (OLED toggle). Skip adbmon with `./build-all.sh --no-adbmon`.
 
 On **success**, CMake trees (`build/`, `build-debug/`, `build-adbmon/`) are **removed** after UF2s are copied to `dist/`. Set **`BUILD_KEEP_DIRS=1`** to keep them for incremental rebuilds.
 
-**Quick dev build:** `./build.sh` or `make` → `src/firmware/build/src/BT-USB-ADB-Adapter-firmware.uf2` (configure board via CMake as needed).
+**Quick dev build:** `./build.sh` or `make` → `src/firmware/build/src/ultrausbt-Apple-ADB-adapter-firmware.uf2` (configure board via CMake as needed).
 
 Other boards (`pico`, `pico_w`, `pico2`) can still be built manually with `cmake -DPICO_BOARD=…`. The DIY ultrausbt board targets **Pico 2 W**.
 
@@ -110,7 +110,7 @@ Random BLE pairing hangs on Pico W / Pico 2 W are **fixed** in firmware **2.2.1*
 
 **Reference docs:**
 
-- [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) — canonical fix recipe (from ultramegausb-atari-st-rpikbd v22.1.0).
+- [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) — canonical fix recipe (from ultrausbt-atari-st-rpikbd v22.1.0).
 - [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) — port status, Apple-specific fixes (keyboard/gamepad merge, defer Mac ADB reset), test matrix.
 - [`troubleshooting.md`](troubleshooting.md) — user-facing pairing order and symptom → fix.
 
@@ -126,7 +126,7 @@ Do **not** repeat reverted experiments (shorter delays, `__not_in_flash_func` on
 
 ## Notes for editor / session restart (Mar 2025)
 
-**Git remote:** `origin` is **https://github.com/trickydee/ultrausbt-apple-adb.git** (renamed from ultramegausb-apple-adb). Product branding is **UltraUSBT**.
+**Git remote:** `origin` is **https://github.com/trickydee/ultrausbt-apple-adb-adapter.git**. Product name / CMake target: **ultrausbt-Apple-ADB-adapter**.
 
 **Build by branch:** Use **`./build-all.sh`** from `main`; SDK is resolved via `build_common.sh` (`.pico-sdk/` cache or `PICO_SDK_PATH`).
 

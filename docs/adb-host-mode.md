@@ -1,23 +1,27 @@
 # ADB host mode — product spec
 
-**Status:** **MVP shipped (2026-06-28)** — firmware **2.0.0** / **2.1.0** (GPIO split) / **2.2.0** (host reliability); flash `dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2` from `./build-all.sh`  
-**Related:** [`FUTURE_WORK.md`](FUTURE_WORK.md) §10, [`hardware.md`](hardware.md), [`adb-passthrough-hub.md`](adb-passthrough-hub.md), [`adb-host-mode-capture.md`](adb-host-mode-capture.md), [`troubleshooting.md`](troubleshooting.md), [`bluetooth-pairing.md`](bluetooth-pairing.md) (BT pairing is **ADB → Mac** only)
+**Status:** **MVP shipped (2026-06-28)** — firmware **2.0.0** / **2.1.0** (GPIO split) / **2.2.0** (host reliability); flash `dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2` from `./build-all.sh`  
+**Related:** [`FUTURE_WORK.md`](FUTURE_WORK.md) §10, [`hardware.md`](hardware.md), [`adb-passthrough-hub.md`](adb-passthrough-hub.md), [`adb-host-mode-capture.md`](adb-host-mode-capture.md), [`troubleshooting.md`](troubleshooting.md), [`bluetooth-pairing.md`](bluetooth-pairing.md) (BT pairing is **ADB Device** mode only)
 
 ---
 
 ## 1. Goal
 
-Add a **second operating mode** to the existing BT-USB-ADB-Adapter firmware:
+Add a **second operating mode** to the existing ultrausbt-Apple-ADB-adapter firmware:
 
-| Mode (today) | **ADB host mode (proposed)** |
-|--------------|------------------------------|
+| **ADB Device** (default) | **ADB Host** |
+|--------------------------|--------------|
 | USB/BT HID **in** → ADB **device** out | ADB accessories **in** → USB HID **device** out |
-| Vintage Mac is the ADB bus master | Pico is the ADB bus master |
+| Vintage Mac / IIgs is the ADB bus master | Pico is the ADB bus master |
 | Pico USB port is a **host** (keyboard/mouse) | Pico USB port is a **device** (to modern PC/Mac) |
 
-**Primary use case:** plug a real **ADB keyboard and/or mouse** into the adapter’s ADB port(s), **switch to ADB host mode manually**, connect the Pico’s USB to a modern computer, and have the PC see a standard USB keyboard and mouse.
+**ADB Device** mode: attach USB and Bluetooth devices to an ADB host — Apple IIgs, Mac 68K, or early PowerPC ADB Macs. **NeXT** machines have **not** been tested yet.
 
-**Mode selection:** **Manual only** for v1 (and likely permanently). The user explicitly chooses **ADB device mode** (USB/BT → vintage Mac) or **ADB host mode** (ADB accessories → PC). No automatic switching based on VBUS or bus traffic.
+**ADB Host** mode: connect ADB devices (keyboard, mouse, trackball, …) to a USB host such as a modern PC or Mac.
+
+**Primary use case (Host):** plug a real **ADB keyboard and/or mouse** into the adapter’s ADB port(s), **switch to ADB Host manually**, connect the Pico’s USB to a modern computer, and have the PC see a standard USB keyboard and mouse.
+
+**Mode selection:** **Manual only** for v1 (and likely permanently). The user explicitly chooses **ADB Device** or **ADB Host** on the OLED. No automatic switching based on VBUS or bus traffic.
 
 ---
 
@@ -37,10 +41,12 @@ Automatic host/device detection is technically possible (VBUS, USB enumeration, 
 
 ### 2.2 User-facing modes
 
-| Mode | OLED label (draft) | ADB role | USB role | Typical setup |
-|------|-------------------|----------|----------|---------------|
-| **Device** (default) | `ADB → Mac` | Slave (today) | Host — USB-A / BT HID in | USB kbd/mouse → adapter → vintage Mac |
-| **Host** | `ADB → USB` | Master (poll bus) | Device — HID to PC | ADB kbd/mouse → adapter → PC via Pico USB |
+| Mode | Homescreen | Mode menu | ADB role | USB role | Typical setup |
+|------|------------|-----------|----------|----------|---------------|
+| **ADB Device** (default) | `ADB Dev` | `ADB Device` | Slave | Host — USB-A / BT HID in | USB/BT peripherals → adapter → IIgs / Mac 68K / early PPC |
+| **ADB Host** | `ADB Host` | `ADB Host` | Master (poll bus) | Device — HID to PC | ADB kbd/mouse → adapter → modern PC/Mac |
+
+**NeXT** has not been tested in ADB Device mode.
 
 A third mode (**monitor** / adbmon) remains a separate build or future screen — not part of host-mode v1.
 
@@ -48,14 +54,14 @@ A third mode (**monitor** / adbmon) remains a separate build or future screen �
 
 **At runtime (primary):**
 
-1. **Quick toggle:** press the **`*`** button (GP6) from **any** OLED screen — flips between **ADB → Mac** and **ADB → USB**, persists, returns to splash.
-2. **Mode menu:** cycle with **`#`** (center) to the **ADB Mode** screen → **`˄`** = ADB→Mac, **`˯`** = ADB→USB, **`#`** = apply.
-3. OLED splash shows active mode (`Mode: ADB>Mac` / `ADB>USB`).
+1. **Quick toggle:** press the **`*`** button (GP6) from **any** OLED screen — flips between **ADB Device** and **ADB Host**, persists, returns to splash (banner updates immediately).
+2. **Mode menu:** cycle with **`#`** (center) to the **ADB Mode** screen → **`˄`** = ADB Host, **`˯`** = ADB Device, **`#`** = apply.
+3. OLED splash shows active mode (`ADB Dev` / `ADB Host`).
 
 **Persisted default:**
 
 - Store in `FlashSettings` (new byte or `reserved_bytes` slot): `ADB_MODE_DEVICE` | `ADB_MODE_HOST`.
-- On cold boot, start in the **saved** mode (default **device** for existing users).
+- On cold boot, start in the **saved** mode (default **ADB Device** for existing users).
 
 **Headless / serial (optional):**
 
@@ -65,21 +71,21 @@ A third mode (**monitor** / adbmon) remains a separate build or future screen �
 
 ### 2.4 Physical setup checklist (document in user guide)
 
-**Switching to ADB host mode (`ADB → USB`):**
+**Switching to ADB Host mode:**
 
-1. **Vintage Mac off**; adapter **not** acting as bus slave to a running Mac.
+1. **Vintage Mac / IIgs off**; adapter **not** acting as bus slave to a running ADB host.
 2. ADB keyboard/mouse plugged into adapter ADB port(s).
-3. **Remove** USB-A peripherals (and disable BT pairing use — host mode does not bridge BT).
-4. Select **ADB → USB** on OLED (`*` toggle or Mode screen); wait for mode switch complete (brief LED pattern).
-5. Connect Pico **native USB** to modern PC.
-6. PC should enumerate a USB keyboard + mouse.
+3. **Remove** USB-A peripherals (and disable BT pairing use — ADB Host mode does not bridge BT).
+4. Select **ADB Host** on OLED (`*` toggle or Mode screen); wait for mode switch complete (brief LED pattern).
+5. Connect Pico **native USB** to modern PC or Mac.
+6. The USB host should enumerate a USB keyboard + mouse.
 
-**Switching back to device mode (`ADB → Mac`):**
+**Switching back to ADB Device mode:**
 
-1. Disconnect Pico from PC (or leave connected only if not in host mode — prefer disconnect).
-2. Select **ADB → Mac** on OLED (`*` toggle or Mode screen).
-3. Attach USB keyboard/mouse (and pair Bluetooth in **ADB → Mac** mode — see [`bluetooth-pairing.md`](bluetooth-pairing.md)).
-4. **Mac off** → plug adapter into ADB → power on Mac (per [`hardware.md`](hardware.md)).
+1. Disconnect Pico from the modern PC (or leave connected only if not in ADB Host mode — prefer disconnect).
+2. Select **ADB Device** on OLED (`*` toggle or Mode screen).
+3. Attach USB keyboard/mouse (and pair Bluetooth in **ADB Device** mode — see [`bluetooth-pairing.md`](bluetooth-pairing.md)).
+4. **Mac / IIgs off** → plug adapter into ADB → power on the ADB host (per [`hardware.md`](hardware.md)).
 
 ### 2.5 USB port constraint (unchanged)
 
@@ -334,8 +340,8 @@ Triggered from OLED confirm or serial command:
 
 ## 10. Success criteria (Phase 1)
 
-- [x] User can select **ADB → Mac** vs **ADB → USB** on OLED, with flash persistence — **2026-06-28**
-- [x] After switch to host mode: ADB keyboard + mouse → PC via Pico USB works — **2026-06-28**
+- [x] User can select **ADB Device** vs **ADB Host** on OLED, with flash persistence — **2026-06-28**
+- [x] After switch to ADB Host: ADB keyboard + mouse → modern PC/Mac via Pico USB works — **2026-06-28**
 - [x] After switch back: USB/BT peripherals → vintage Mac works (GPIO split **2.1.0** fixes BT mouse) — **2026-06-28**
 - [x] Splash / **ADB Bus** screen shows active mode and device status — **2026-06-28**
 - [x] Unified `-host` build with runtime toggle — **2026-06-28**
@@ -348,14 +354,14 @@ Shipped in **`./build-all.sh`**:
 
 | UF2 | Flags |
 |-----|--------|
-| `dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2` | `ADB_HOST_MODE=ON` |
-| `dist/BT-USB-ADB-Adapter-firmware-pico2_w-host-debug.uf2` | `ADB_HOST_MODE=ON`, `ADB_DEBUG=ON` |
+| `dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2` | `ADB_HOST_MODE=ON` |
+| `dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host-debug.uf2` | `ADB_HOST_MODE=ON`, `ADB_DEBUG=ON` |
 
 ```cmake
 option(ADB_HOST_MODE "Enable ADB host → USB HID mode (runtime switch)" OFF)
 ```
 
-When ON at compile time: dual-mode FSM + host bus master code. **Default runtime mode: ADB device** (ADB → Mac). User switches via OLED.
+When ON at compile time: dual-mode FSM + host bus master code. **Default runtime mode: ADB Device**. User switches via OLED (**ADB Dev** / **ADB Host** on splash).
 
 ### Host bus timing (required)
 

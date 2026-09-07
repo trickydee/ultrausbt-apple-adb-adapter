@@ -2,12 +2,12 @@
 
 **Apple ADB status:** **Port complete** on branch **`feature/BT-alignment`** — see [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) for checklist and Apple-specific extensions (keyboard/gamepad merge, defer Mac ADB reset).
 
-**Audience:** LLM or developer porting **ultrausbt-apple-adb** to the same BLE gamepad pairing fix already shipped on Atari ST (v22.1.0) and **ultramegausb-amiga** (`feature/BT-Pairing-align`).
+**Audience:** LLM or developer porting **ultrausbt-apple-adb-adapter** to the same BLE gamepad pairing fix already shipped on Atari ST (v22.1.0) and **ultrausbt-amiga** (`feature/BT-Pairing-align`).
 
 **Start here:** [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) (family-wide root cause).  
 **This repo status:** [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) (port complete + Apple extras).  
-**Canonical source:** `ultramegausb-atari-st-rpikbd` — tag/branch with **v22.1.0** pairing fix.  
-**Sibling port (completed):** `ultramegausb-amiga` — branch **`feature/BT-Pairing-align`** (firmware **v2.2.11**).
+**Canonical source:** `ultrausbt-atari-st-rpikbd` — tag/branch with **v22.1.0** pairing fix.  
+**Sibling port (completed):** `ultrausbt-amiga` — branch **`feature/BT-Pairing-align`** (firmware **v2.2.11**).
 
 ---
 
@@ -141,7 +141,7 @@ If you ever save user settings during pairing, defer flash writes while `core1_g
 
 ### 6. Do **not** repeat failed experiments
 
-Documented in [`changes.md`](changes.md) and Amiga [`doc/cleanup.md`](../../../ultramegausb-amiga/doc/cleanup.md) (if available):
+Documented in [`changes.md`](changes.md) and Amiga [`doc/cleanup.md`](../../../ultrausbt-amiga/doc/cleanup.md) (if available):
 
 - Shorter delays (10 ms resume) without full recipe
 - `__not_in_flash_func` on pause path only
@@ -201,7 +201,7 @@ Test on **Pico W** and **Pico 2 W** if both are supported targets.
 
 ## LLM starter prompt (paste into Apple ADB session)
 
-> **Context:** ultrausbt-apple-adb (Pico W / Pico 2 W). Core 0 = ADB + Bluepad32 + OLED. Core 1 = TinyUSB `tuh_task()` from XIP (`quokkadb.cpp`). **Problem:** BLE gamepad pairing (Stadia, Xbox) hangs or leaves USB host frozen while KB/mouse on BT work. **Root cause:** multicore flash race — BTstack TLV writes via `flash_safe_execute` while Core 1 runs from flash. **Canonical fix:** Atari v22.1.0. **Completed sibling port:** ultramegausb-amiga branch `feature/BT-Pairing-align` (v2.2.11). **Read:** `docs/BT_PAIRING_HANDOFF.md`, `docs/BT_PAIRING_PORT_AMIGA_REFERENCE.md`, `docs/BT_PAIRING_APPLE_ADB.md`. **Port:** refcounted pause in `bt_host_coop.c`; `__wfe()` in Core 1 pause loop; `bt_callback_busy_wait_ms` only in `bluepad32_platform.c`; 30 ms discovery settle + 100 ms pre-resume; no double-pause on connect; watchdog + force resume on key wipe. **Flash:** `flashsettings.cpp` already below TLV — no sector move. **Test:** KB + mouse + Stadia + Xbox on hardware before merge.
+> **Context:** ultrausbt-apple-adb-adapter (Pico W / Pico 2 W). Core 0 = ADB + Bluepad32 + OLED. Core 1 = TinyUSB `tuh_task()` from XIP (`quokkadb.cpp`). **Problem:** BLE gamepad pairing (Stadia, Xbox) hangs or leaves USB host frozen while KB/mouse on BT work. **Root cause:** multicore flash race — BTstack TLV writes via `flash_safe_execute` while Core 1 runs from flash. **Canonical fix:** Atari v22.1.0. **Completed sibling port:** ultrausbt-amiga branch `feature/BT-Pairing-align` (v2.2.11). **Read:** `docs/BT_PAIRING_HANDOFF.md`, `docs/BT_PAIRING_PORT_AMIGA_REFERENCE.md`, `docs/BT_PAIRING_APPLE_ADB.md`. **Port:** refcounted pause in `bt_host_coop.c`; `__wfe()` in Core 1 pause loop; `bt_callback_busy_wait_ms` only in `bluepad32_platform.c`; 30 ms discovery settle + 100 ms pre-resume; no double-pause on connect; watchdog + force resume on key wipe. **Flash:** `flashsettings.cpp` already below TLV — no sector move. **Test:** KB + mouse + Stadia + Xbox on hardware before merge.
 
 ---
 

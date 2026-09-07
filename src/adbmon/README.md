@@ -34,8 +34,8 @@ From the **repo root** (recommended — uses shared SDK cache and copies to `dis
 
 ```bash
 ./build-all.sh
-# → dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2      (adapter, unified device+host)
-# → dist/BT-USB-ADB-Adapter-firmware-pico2_w-host-debug.uf2 (adapter + UART debug)
+# → dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2      (adapter, unified device+host)
+# → dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host-debug.uf2 (adapter + UART debug)
 # → dist/adbmon-pico.uf2                                    (passive bus monitor)
 ```
 
@@ -77,7 +77,7 @@ Artifacts: `adbmon.uf2`, `adbmon.elf` (under the build directory).
 2. Connect the Pico on QuokkADB hardware to an **inline** ADB chain (host → adapter ADB port → downstream devices).
 3. Open serial at 115200 (USB CDC device or UART TX on GPIO 0 / Pico pin 1).
 
-**Important:** This firmware does **not** emulate keyboard or mouse. Use it only when you want to observe bus traffic. For normal adapter use, flash the main adapter UF2 from `dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2`.
+**Important:** This firmware does **not** emulate keyboard or mouse. Use it only when you want to observe bus traffic. For normal adapter use, flash the main adapter UF2 from `dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2`.
 
 ## Layout
 

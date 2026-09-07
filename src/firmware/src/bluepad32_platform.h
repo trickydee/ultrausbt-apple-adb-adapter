@@ -1,5 +1,5 @@
 /**
- * bluepad32 custom platform API for BT-USB-ADB-Adapter (keyboard, mouse, gamepad)
+ * bluepad32 custom platform API for ultrausbt-Apple-ADB-adapter (keyboard, mouse, gamepad)
  */
 
 #ifndef _BLUEPAD32_PLATFORM_H

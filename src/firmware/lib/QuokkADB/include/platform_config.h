@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------
-//  BT-USB-ADB-Adapter
+//  ultrausbt-Apple-ADB-adapter
 //  This project is based on QuokkADB:
 //
 //	QuokkaADB ADB keyboard and mouse adapter
@@ -26,15 +26,15 @@
 //---------------------------------------------------------------------------
 #pragma once
 
-// Version: BT-USB-ADB-Adapter uses version from CMake (BT_USB_ADB_ADAPTER_VERSION_STRING). Otherwise QuokkADB defaults.
+// Version: ultrausbt-Apple-ADB-adapter uses version from CMake (BT_USB_ADB_ADAPTER_VERSION_STRING). Otherwise QuokkADB defaults.
 #ifdef BT_USB_ADB_ADAPTER_VERSION_STRING
 #define PLATFORM_FW_VERSION BT_USB_ADB_ADAPTER_VERSION_STRING
-#define PRODUCT_NAME "BT-USB-ADB-Adapter"
+#define PRODUCT_NAME "ultrausbt-Apple-ADB-adapter"
 #else
 #define FW_VER_NUM      "0.2.4"
 #define FW_VER_SUFFIX   "beta"
 #define PLATFORM_FW_VERSION FW_VER_NUM "-" FW_VER_SUFFIX
-#define PRODUCT_NAME "Blue-QuokkADB"
+#define PRODUCT_NAME "ultrausbt-Apple-ADB-adapter"
 #endif
 #define PLATFORM_FW_VER_STRING PRODUCT_NAME " firmware: " PLATFORM_FW_VERSION " " __DATE__ " " __TIME__ " "
 

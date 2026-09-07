@@ -25,8 +25,8 @@ See their LICENSE files under src/firmware/ when present.
 
 About this fork
 
-Firmware in this repository is distributed as **BT-USB-ADB-Adapter** (CMake
-target `BT-USB-ADB-Adapter-firmware`). It is a fork of the prior
+Firmware in this repository is distributed as **ultrausbt-Apple-ADB-adapter** (CMake
+target `ultrausbt-Apple-ADB-adapter-firmware`). It is a fork of the prior
 HIDHopper ADB–based firmware and hardware lineage, continued for the
 ultrausbt DIY adapter with Bluetooth, host mode, and related features
 for classic ADB Macintosh systems and the Apple IIgs.

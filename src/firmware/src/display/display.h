@@ -1,5 +1,5 @@
 /**
- * Display interface for SSD1306 OLED (Apple ADB / BT-USB-ADB-Adapter)
+ * Display interface for SSD1306 OLED (Apple ADB / ultrausbt-Apple-ADB-adapter)
  */
 
 #ifndef BT_USB_ADB_ADAPTER_DISPLAY_H

@@ -1,5 +1,5 @@
 /**
- * Display interface for SSD1306 OLED – Apple ADB / BT-USB-ADB-Adapter
+ * Display interface for SSD1306 OLED – Apple ADB / ultrausbt-Apple-ADB-adapter
  * Aligned with ULTRAUSBT_OLED_UI_SPEC (splash, devices, map devices).
  */
 
@@ -165,16 +165,20 @@ void display_show_splash(void)
 
     ssd1306_clear(&disp);
 
-    ssd1306_draw_string(&disp, 46, 0, 2, (char *)"ADB");
+    /* Scale-2 title (glyph pitch 16 px): "ADB Host" = 128 px, "ADB Dev" = 112 px. */
+#if ADB_HOST_MODE
+    if (adb_mode_is_host()) {
+        ssd1306_draw_string(&disp, 0, 0, 2, (char *)"ADB Host");
+    } else {
+        ssd1306_draw_string(&disp, 8, 0, 2, (char *)"ADB Dev");
+    }
+#else
+    ssd1306_draw_string(&disp, 8, 0, 2, (char *)"ADB Dev");
+#endif
     ssd1306_draw_string(&disp, 4, 24, 1, (char *)"ultrausbt.com");
 
     snprintf(line, sizeof(line), "v%s", BT_USB_ADB_ADAPTER_VERSION_STRING);
     ssd1306_draw_string(&disp, 40, 40, 1, line);
-
-#if ADB_HOST_MODE
-    snprintf(line, sizeof(line), "Mode: %s", adb_mode_is_host() ? "ADB>USB" : "ADB>Mac");
-    ssd1306_draw_string(&disp, 0, 48, 1, line);
-#endif
 
 #if ADB_HOST_MODE
     if (adb_mode_host_active()) {
@@ -324,8 +328,8 @@ void display_show_adb_bus(void)
     ssd1306_draw_string(&disp, 0, 0, 1, (char *)"ADB Bus");
 
     if (!adb_mode_host_active()) {
-        ssd1306_draw_string(&disp, 0, 18, 1, (char *)"ADB>Mac mode");
-        ssd1306_draw_string(&disp, 0, 30, 1, (char *)"Switch to ADB>USB");
+        ssd1306_draw_string(&disp, 0, 18, 1, (char *)"ADB Device mode");
+        ssd1306_draw_string(&disp, 0, 30, 1, (char *)"Switch to ADB Host");
         ssd1306_draw_string(&disp, 0, 55, 1, (char *)"to scan bus");
     } else if (adb_host_status.count == 0) {
         ssd1306_draw_string(&disp, 0, 18, 1, (char *)"Scanning...");
@@ -370,12 +374,13 @@ void display_show_mode(void)
     ssd1306_clear(&disp);
     ssd1306_draw_string(&disp, 0, 0, 1, (char *)"ADB Mode");
 
-    if (mode_ui_selection == ADB_MODE_DEVICE) {
-        ssd1306_draw_string(&disp, 0, 16, 1, (char *)"> ADB > Mac");
-        ssd1306_draw_string(&disp, 0, 28, 1, (char *)"  ADB > USB");
+    /* Menu order: Host, then Device (matches ˄ / ˯). */
+    if (mode_ui_selection == ADB_MODE_HOST) {
+        ssd1306_draw_string(&disp, 0, 16, 1, (char *)"> ADB Host");
+        ssd1306_draw_string(&disp, 0, 28, 1, (char *)"  ADB Device");
     } else {
-        ssd1306_draw_string(&disp, 0, 16, 1, (char *)"  ADB > Mac");
-        ssd1306_draw_string(&disp, 0, 28, 1, (char *)"> ADB > USB");
+        ssd1306_draw_string(&disp, 0, 16, 1, (char *)"  ADB Host");
+        ssd1306_draw_string(&disp, 0, 28, 1, (char *)"> ADB Device");
     }
 
     ssd1306_draw_string(&disp, 0, 44, 1, (char *)"USB kbd/mouse OFF");
@@ -387,11 +392,11 @@ void display_show_mode(void)
 static void mode_screen_apply(void)
 {
     adb_mode_request(mode_ui_selection, true);
-    adb_mode_apply_pending();
+    adb_mode_apply_pending(); /* s_mode updates before splash redraw */
     display_show_splash();
 }
 
-/** Toggle ADB → Mac / ADB → USB from any screen (* button). */
+/** Toggle ADB Host / ADB Device from any screen (* button). */
 static void mode_toggle_from_star(void)
 {
     mode_ui_selection = (adb_mode_get() == ADB_MODE_HOST) ? ADB_MODE_DEVICE : ADB_MODE_HOST;
@@ -564,12 +569,12 @@ void display_handle_buttons(void)
 #if ADB_HOST_MODE
     if (current_screen == DISPLAY_SCREEN_MODE) {
         if (!gpio_get(DISPLAY_GPIO_BUTTON_UP) && button_up_debounce == BUTTON_DEBOUNCE_COUNT) {
-            mode_ui_selection = ADB_MODE_DEVICE;
+            mode_ui_selection = ADB_MODE_HOST;
             display_show_mode();
             button_up_debounce = 0;
         }
         if (!gpio_get(DISPLAY_GPIO_BUTTON_DOWN) && button_down_debounce == BUTTON_DEBOUNCE_COUNT) {
-            mode_ui_selection = ADB_MODE_HOST;
+            mode_ui_selection = ADB_MODE_DEVICE;
             display_show_mode();
             button_down_debounce = 0;
         }

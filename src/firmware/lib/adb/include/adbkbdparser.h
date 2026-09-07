@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-//  BT-USB-ADB-Adapter
+//  ultrausbt-Apple-ADB-adapter
 //  This project is based on ADBuino and QuokkADB:
 //
 //  ADBuino & QuokkADB ADB keyboard and mouse adapter

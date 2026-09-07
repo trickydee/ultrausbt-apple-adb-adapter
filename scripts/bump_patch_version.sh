@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Increment patch version in src/firmware/CMakeLists.txt:
-#   project(BT-USB-ADB-Adapter-firmware VERSION X.Y.Z) -> X.Y.(Z+1)
+#   project(ultrausbt-Apple-ADB-adapter-firmware VERSION X.Y.Z) -> X.Y.(Z+1)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -10,7 +10,7 @@ if [ ! -f "$cmake_file" ]; then
   exit 1
 fi
 
-current="$(sed -nE 's/.*project\(BT-USB-ADB-Adapter-firmware VERSION ([0-9]+)\.([0-9]+)\.([0-9]+)\).*/\1.\2.\3/p' "$cmake_file" | head -n1)"
+current="$(sed -nE 's/.*project\(ultrausbt-Apple-ADB-adapter-firmware VERSION ([0-9]+)\.([0-9]+)\.([0-9]+)\).*/\1.\2.\3/p' "$cmake_file" | head -n1)"
 if [ -z "$current" ]; then
   echo "Error: could not parse current version from $cmake_file"
   exit 1
@@ -23,7 +23,7 @@ patch="${current##*.}"
 next_patch=$((patch + 1))
 next="${major}.${minor}.${next_patch}"
 
-sed -i.bak -E "s/project\\(BT-USB-ADB-Adapter-firmware VERSION [0-9]+\\.[0-9]+\\.[0-9]+\\)/project(BT-USB-ADB-Adapter-firmware VERSION ${next})/" "$cmake_file"
+sed -i.bak -E "s/project\\(ultrausbt-Apple-ADB-adapter-firmware VERSION [0-9]+\\.[0-9]+\\.[0-9]+\\)/project(ultrausbt-Apple-ADB-adapter-firmware VERSION ${next})/" "$cmake_file"
 rm -f "${cmake_file}.bak"
 
 echo "Version bumped: ${current} -> ${next}"

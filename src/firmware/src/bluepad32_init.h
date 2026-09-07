@@ -1,5 +1,5 @@
 /**
- * bluepad32 initialization header for BT-USB-ADB-Adapter
+ * bluepad32 initialization header for ultrausbt-Apple-ADB-adapter
  */
 
 #ifndef _BLUEPAD32_INIT_H

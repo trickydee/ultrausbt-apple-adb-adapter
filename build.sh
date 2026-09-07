@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build BT-USB-ADB-Adapter Pico firmware from project root.
+# Build ultrausbt-Apple-ADB-adapter Pico firmware from project root.
 # Optional: upstream TinyUSB from submodule src/firmware/tinyusb (init with git submodule update --init --recursive).
 
 set -euo pipefail
@@ -18,4 +18,4 @@ cmake_build_dir "$BUILD_DIR"
 
 echo ""
 echo "Build complete. Outputs in $BUILD_DIR/src/"
-echo "  UF2 for flashing: $BUILD_DIR/src/BT-USB-ADB-Adapter-firmware.uf2"
+echo "  UF2 for flashing: $BUILD_DIR/src/ultrausbt-Apple-ADB-adapter-firmware.uf2"

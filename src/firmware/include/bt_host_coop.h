@@ -2,7 +2,7 @@
  * Core 0 (Bluetooth / ADB) ↔ Core 1 (USB host) cooperation.
  * Refcounted pause during BLE gamepad enumeration so Core 1 stops calling
  * tuh_task() from XIP while BTstack writes pairing TLV via flash_safe_execute().
- * Pattern from ultramegausb-atari-st-rpikbd v22.1.0 / ultramegausb-amiga.
+ * Pattern from ultrausbt-atari-st-rpikbd v22.1.0 / ultrausbt-amiga.
  */
 
 #ifndef BT_HOST_COOP_H

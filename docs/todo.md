@@ -1,6 +1,6 @@
 # Project TODO
 
-This document tracks upcoming development work for the BT-USB-ADB-Adapter firmware.
+This document tracks upcoming development work for the ultrausbt-Apple-ADB-adapter firmware.
 
 For a prioritized future-work list, see [`FUTURE_WORK.md`](FUTURE_WORK.md). **Bluetooth pairing stability** shipped in **2.2.1** (see [`bluetooth-pairing.md`](bluetooth-pairing.md)).
 

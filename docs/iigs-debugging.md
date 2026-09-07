@@ -140,7 +140,7 @@ See [`troubleshooting.md`](troubleshooting.md) § “BT mouse jumps”.
 
 **Fix / guidance:**
 
-- Flash **release** UF2 for pairing tests (`dist/BT-USB-ADB-Adapter-firmware-pico2_w-host.uf2`).
+- Flash **release** UF2 for pairing tests (`dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2`).
 - Pair in order: **mouse → keyboard → gamepad** (Xbox/Stadia last).
 - Firmware **2.2.1+** (`feature/BT-alignment`): defer Mac global ADB reset during BT setup; always-merge keyboard + gamepad key reports.
 

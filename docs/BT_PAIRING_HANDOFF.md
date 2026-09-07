@@ -1,6 +1,6 @@
 # Bluetooth pairing hangs — handoff notes (Pico / Bluepad32 / dual-core)
 
-**Copied into ultrausbt-apple-adb** from `ultramegausb-atari-st-rpikbd/docs/BT_PAIRING_HANDOFF.md` (Atari ST IKBD emulator, fixes in **v22.1.0**). Keep in sync when the source doc changes.
+**Copied into ultrausbt-apple-adb-adapter** from `ultrausbt-atari-st-rpikbd/docs/BT_PAIRING_HANDOFF.md` (Atari ST IKBD emulator, fixes in **v22.1.0**). Keep in sync when the source doc changes.
 
 **Apple-ADB porting status:** **Done** — shipped in firmware **2.2.1**. See [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) for port checklist and Apple-specific extensions; user guide: [`bluetooth-pairing.md`](bluetooth-pairing.md). Tracked in [`FUTURE_WORK.md`](FUTURE_WORK.md) §1.
 
@@ -8,7 +8,7 @@
 
 **Audience:** LLM or developer working on another Pico 2 W HID host (e.g. Apple ADB adapter) that sees **random Bluetooth pairing hangs** while keyboards/mice work until a gamepad pairs.
 
-**Source project:** ultramegausb-atari-st-rpikbd (Atari ST IKBD emulator). Fixes shipped in **v22.1.0** (`RELEASE_NOTES.md` §22.1.0). This doc distills what we saw and what we changed — patterns apply to any **dual-core firmware** where Core 0 runs USB/BT/UI and Core 1 runs a **tight loop from flash (XIP)**.
+**Source project:** ultrausbt-atari-st-rpikbd (Atari ST IKBD emulator). Fixes shipped in **v22.1.0** (`RELEASE_NOTES.md` §22.1.0). This doc distills what we saw and what we changed — patterns apply to any **dual-core firmware** where Core 0 runs USB/BT/UI and Core 1 runs a **tight loop from flash (XIP)**.
 
 ---
 

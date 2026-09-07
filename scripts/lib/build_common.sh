@@ -88,7 +88,7 @@ host_cores() {
 }
 
 build_dir_uf2_rel() {
-  echo "src/BT-USB-ADB-Adapter-firmware.uf2"
+  echo "src/ultrausbt-Apple-ADB-adapter-firmware.uf2"
 }
 
 cmake_build_dir() {
