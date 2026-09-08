@@ -10,6 +10,10 @@ Lineage: this firmware descends from QuokkADB and adbuino. Target hardware: [`ha
 ## 2.2.3
 
 - **ADB Host typing:** Emit a USB HID report after each ADB Talk R0 key event (press+release in one poll no longer vanishes); queue keyboard reports for Core 1; HID `bInterval` **1 ms**; keyboard poll **8 ms**; defer LED Talk R2 while keys are flowing.
+- **Product / branding:** CMake target, UF2 names, boot banner, and Bluetooth device name use **ultrausbt-Apple-ADB-adapter**; repo **[ultrausbt-apple-adb-adapter](https://github.com/trickydee/ultrausbt-apple-adb-adapter)**; README aligned with the ultrausbt Amiga layout.
+- **OLED modes:** Homescreen shows **ADB Dev** / **ADB Host**; Mode menu lists **ADB Host** / **ADB Device** (`*` toggles from any screen; banner refreshes on apply).
+- **Docs:** **ADB Device** = USB/BT peripherals → IIgs / Mac 68K / early PowerPC ADB hosts (**NeXT** not tested); **ADB Host** = ADB keyboard/mouse/trackball → modern PC or Mac USB. See README and [`adb-host-mode.md`](adb-host-mode.md).
+- **Cleanup:** Drop unused QuokkADB/PlatformIO board headers and `rename_quokkadb_binaries.sh`; builds use stock Pico SDK board definitions.
 
 ## 2.2.2
 
@@ -32,16 +36,16 @@ Lineage: this firmware descends from QuokkADB and adbuino. Target hardware: [`ha
 
 ## 2.1.0
 
-- **Device/host GPIO split:** Restore pre-2.0 drive-high ADB GPIO in shared code for **ADB>Mac** device mode (fixes BT mouse jumps and collision detection). Host open-collector GPIO moved to `adb_host_gpio.h` only; host timing (765 µs attention, RX preamble) unchanged.
+- **Device/host GPIO split:** Restore pre-2.0 drive-high ADB GPIO in shared code for **ADB Device** mode (fixes BT mouse jumps and collision detection). Host open-collector GPIO moved to `adb_host_gpio.h` only; host timing (765 µs attention, RX preamble) unchanged.
 - **Docs:** [`adb-shared-gpio-rollback.md`](adb-shared-gpio-rollback.md), [`troubleshooting.md`](troubleshooting.md); **`build-all.sh`** simplified to Pico 2 W adapter + debug + adbmon.
 
 ## 2.0.0
 
-- **ADB host mode (major):** New **ADB>USB** operating mode polls vintage ADB keyboards and pointing devices on the passthrough bus and presents them as a composite USB HID keyboard/mouse to a modern PC. Manual mode switch via OLED; persisted in flash.
+- **ADB Host mode (major):** New **ADB Host** operating mode polls vintage ADB keyboards and pointing devices on the passthrough bus and presents them as a composite USB HID keyboard/mouse to a modern PC or Mac. Manual mode switch via OLED; persisted in flash.
 - **Multi-device bus master:** Address-aware enumeration supports keyboard @0x2 plus multiple pointing devices (e.g. mouse @0x3, relocated trackball @0xF). Mac-style trackball relocation, periodic hot-plug rescan with bus reset, and QMK-aligned attention/timing.
-- **OLED ADB Bus screen:** Shows configured vs working devices per address (`OK` / `--`), with splash summary in host mode.
+- **OLED ADB Bus screen:** Shows configured vs working devices per address (`OK` / `--`), with splash summary in ADB Host mode.
 - **adbmon:** Standalone bus monitor firmware and capture docs for comparing host behaviour against real Mac traces.
-- **Hardware docs:** DIY board pinout and GPIO map (GP18/19 ADB, GP25 LED); HIDHopper references removed.
+- **Hardware docs:** DIY board pinout and GPIO map (GP18/19 ADB, GP25 LED); HIDHopper references removed from hardware docs (lineage still credited in README / LICENSE).
 
 ## 1.0.18
 
