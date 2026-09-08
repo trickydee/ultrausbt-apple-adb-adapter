@@ -21,7 +21,7 @@ On a **Pico 2 W** you can mix USB and Bluetooth devices. USB-only builds work on
 
 Earlier roots include [bbraun’s adbduino](http://synack.net/svn/adbduino/), [Difegue’s updates](https://tvc-16.science/adbuino-ps2.html), and [tmk_keyboard](https://github.com/tmk/tmk_keyboard) ADB code.
 
-Current firmware: **v2.2.2** (`main`) · [Release notes](./docs/release-notes.md) · License: [GPL-3.0-or-later](./LICENSE) · [COPYING](./COPYING)
+Current firmware: **v2.2.3** (`main`) · [Release notes](./docs/release-notes.md) · License: [GPL-3.0-or-later](./LICENSE) · [COPYING](./COPYING)
 
 Firmware CMake product name: **ultrausbt-Apple-ADB-adapter**.
 

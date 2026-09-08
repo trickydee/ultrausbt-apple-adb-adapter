@@ -17,16 +17,23 @@ static uint8_t const desc_hid_report[] = {
     TUD_HID_REPORT_DESC_MOUSE(HID_REPORT_ID(REPORT_ID_MOUSE)),
 };
 
-static uint8_t s_kbd_mod;
-static uint8_t s_kbd_keys[6];
 static uint8_t s_mouse_buttons;
 static int8_t s_mouse_x;
 static int8_t s_mouse_y;
 static int8_t s_mouse_wheel;
-static bool s_kbd_dirty;
 static bool s_mouse_dirty;
 static uint8_t s_usb_leds;
 static uint8_t s_caps_pulse_phase;
+
+/* Queue keyboard reports so press+release in one ADB Talk R0 are not coalesced away. */
+#define KBD_REPORT_Q 16
+typedef struct {
+    uint8_t mod;
+    uint8_t keys[6];
+} kbd_report_t;
+static kbd_report_t s_kbd_q[KBD_REPORT_Q];
+static volatile uint8_t s_kbd_q_head;
+static volatile uint8_t s_kbd_q_tail;
 
 #define USB_VID 0x2E8A
 #define USB_PID 0xADB0
@@ -54,8 +61,9 @@ enum { ITF_NUM_HID = 0, ITF_NUM_TOTAL = 1 };
 
 static uint8_t const desc_configuration[] = {
     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0, 100),
+    /* bInterval=1: drain queued key events as fast as the USB host allows */
     TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report), EPNUM_HID,
-                       CFG_TUD_HID_EP_BUFSIZE, 10),
+                       CFG_TUD_HID_EP_BUFSIZE, 1),
 };
 
 static char const *string_desc_arr[] = {
@@ -67,9 +75,15 @@ static char const *string_desc_arr[] = {
 
 void usb_hid_send_keyboard(uint8_t modifier, const uint8_t keycodes[6])
 {
-    s_kbd_mod = modifier;
-    memcpy(s_kbd_keys, keycodes, 6);
-    s_kbd_dirty = true;
+    uint8_t head = s_kbd_q_head;
+    uint8_t next = (uint8_t)((head + 1u) % KBD_REPORT_Q);
+    if (next == s_kbd_q_tail) {
+        /* Full: drop oldest so newest transitions still reach the host. */
+        s_kbd_q_tail = (uint8_t)((s_kbd_q_tail + 1u) % KBD_REPORT_Q);
+    }
+    s_kbd_q[head].mod = modifier;
+    memcpy(s_kbd_q[head].keys, keycodes, 6);
+    s_kbd_q_head = next;
 }
 
 void usb_hid_send_mouse(uint8_t buttons, int8_t dx, int8_t dy, int8_t wheel)
@@ -110,9 +124,10 @@ void usb_hid_device_task(void)
         }
         return;
     }
-    if (s_kbd_dirty && tud_hid_ready()) {
-        s_kbd_dirty = false;
-        tud_hid_keyboard_report(REPORT_ID_KEYBOARD, s_kbd_mod, s_kbd_keys);
+    if (s_kbd_q_tail != s_kbd_q_head && tud_hid_ready()) {
+        uint8_t tail = s_kbd_q_tail;
+        tud_hid_keyboard_report(REPORT_ID_KEYBOARD, s_kbd_q[tail].mod, s_kbd_q[tail].keys);
+        s_kbd_q_tail = (uint8_t)((tail + 1u) % KBD_REPORT_Q);
     }
     if (s_mouse_dirty && tud_hid_ready()) {
         s_mouse_dirty = false;

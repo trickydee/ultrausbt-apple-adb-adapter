@@ -7,6 +7,10 @@ Lineage: this firmware descends from QuokkADB and adbuino. Target hardware: [`ha
 - **Bluetooth gamepad:** One BT gamepad slot in Bluepad32 (`uni_gamepad_t`, `bluepad32_get_gamepad` / `bluepad32_get_gamepad_count`). **Phase B shipped:** gamepad → **HID keyboard** (D-pad/buttons) and **left stick → mouse** via `bt_hid_bridge` / `KeyboardPrs` + `MousePrs` (see [gamepad-support.md](gamepad-support.md)). OLED **Devices** / **Bluetooth names:** BT gamepad **count**, **G1** name, and optional live **`BT GP:`** legend when a pad is connected.
 - **Phase C (planned):** Native Gravis MouseStick II handler **0x23** — see [`FUTURE_WORK.md`](FUTURE_WORK.md) §2 / §11.
 
+## 2.2.3
+
+- **ADB Host typing:** Emit a USB HID report after each ADB Talk R0 key event (press+release in one poll no longer vanishes); queue keyboard reports for Core 1; HID `bInterval` **1 ms**; keyboard poll **8 ms**; defer LED Talk R2 while keys are flowing.
+
 ## 2.2.2
 
 - **ADB host mode keyboard:** Fix **`a`** key missing — ADB keycode **`0x00`** is valid (Mac QWERTY `a`); host translator wrongly treated `0` as empty. Only **`0xFF`** (`ADB_REG_0_NO_KEY`) means no key.

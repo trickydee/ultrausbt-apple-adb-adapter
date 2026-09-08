@@ -161,14 +161,16 @@ extern "C" void adb_to_usb_keyboard_reg0(uint16_t reg0)
         return;
     }
 
+    /* Emit after each ADB event. Fast taps often pack down+up in one Talk R0;
+     * a single final HID report would drop the press entirely. */
     if (adb_keycode_valid(key1)) {
         push_key(key1, key1_up);
+        usb_hid_send_keyboard(s_mod, s_keys);
     }
     if (adb_keycode_valid(key2)) {
         push_key(key2, key2_up);
+        usb_hid_send_keyboard(s_mod, s_keys);
     }
-
-    usb_hid_send_keyboard(s_mod, s_keys);
 }
 
 extern "C" void adb_to_usb_mouse_reg0(uint16_t reg0)

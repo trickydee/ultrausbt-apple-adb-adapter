@@ -814,7 +814,8 @@ void AdbHost::poll_device_slot(DeviceSlot *slot, uint32_t now)
     if (slot->kind == DevKind::Keyboard) {
         if (reg0 != 0 && reg0_caps_released((uint16_t)reg0)) {
             sync_keyboard_leds_from_device(slot->addr);
-        } else {
+        } else if (reg0 == 0) {
+            /* LED Talk R2 only on idle R0 — keep the hot path free for key Talks. */
             poll_keyboard_r2(slot, now);
         }
         if (reg0 == 0) {

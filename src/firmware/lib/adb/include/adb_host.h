@@ -36,7 +36,7 @@ private:
     static constexpr uint8_t kMaxPointing = 3;
     static constexpr uint32_t kRescanMs = 3000;
     static constexpr uint32_t kRescanActiveMs = 30000;
-    static constexpr uint32_t kKeyboardPollMs = 12;
+    static constexpr uint32_t kKeyboardPollMs = 8;
     static constexpr uint32_t kPointingPollMs = 24;
     static constexpr uint32_t kProbePollAttempts = 16;
     static constexpr uint32_t kRxLogMinMs = 100;

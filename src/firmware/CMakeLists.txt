@@ -9,7 +9,7 @@ endif ()
 # note: this must happen before project()
 include(pico_sdk_import.cmake)
 
-project(ultrausbt-Apple-ADB-adapter-firmware VERSION 2.2.2)
+project(ultrausbt-Apple-ADB-adapter-firmware VERSION 2.2.3)
 
 # Single source of truth for firmware version (bump when releasing; used in banner and docs)
 add_compile_definitions(BT_USB_ADB_ADAPTER_VERSION_STRING=\"${PROJECT_VERSION}\")

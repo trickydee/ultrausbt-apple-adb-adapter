@@ -30,9 +30,9 @@ Common issues on the **ultrausbt** DIY ADB adapter. IIgs-specific tuning paramet
 
 **Symptom:** Fast typing drops keys; debug log alternates `RX Talk R0` OK with `RX fail (Tlt err=-1 t=0) IN=high`. Worse on `-host-debug` UF2.
 
-**Cause:** RX preamble treated `wait_data_hi()` returning **0 µs** (bus already high) as failure. UART logging stretched timing and increased false failures.
+**Cause:** RX preamble treated `wait_data_hi()` returning **0 µs** (bus already high) as failure. UART logging stretched timing and increased false failures. Separately, ADB Talk R0 can pack **press + release** in one response — coalescing to a single USB HID report dropped quick taps; HID endpoint interval was also 10 ms.
 
-**Fix (host-mode improvements):** ADB-spec RX preamble — wait for bus high after command, then low for device start bit. Keyboard poll **≥12 ms**; pointing devices **24 ms**; no blind poll of ghost mouse addresses; light rescan (no global reset) while devices are working.
+**Fix (host-mode improvements):** ADB-spec RX preamble — wait for bus high after command, then low for device start bit. Keyboard poll **8 ms**; pointing devices **24 ms**; per-event HID report queue; HID `bInterval` **1 ms**; no blind poll of ghost mouse addresses; light rescan (no global reset) while devices are working. Prefer **release** UF2 for typing tests.
 
 ---
 
