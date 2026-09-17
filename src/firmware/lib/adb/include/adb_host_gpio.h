@@ -6,7 +6,7 @@
  * Device mode uses drive-high via AdbInterfacePlatform in adb_platform.h.
  * Do not include this header outside adb_host.cpp.
  *
- * Archived shared 2.0.0 version: docs/adb-shared-gpio-rollback.md
+ * Archived shared 2.0.0 version: docs/archive/adb-shared-gpio-rollback.md
  */
 
 #include "quokkadb_gpio.h"

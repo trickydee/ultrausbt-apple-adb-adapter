@@ -1,8 +1,10 @@
+> **Archived.** See [`docs/archive/README.md`](README.md).
+
 # Bluetooth pairing hangs — handoff notes (Pico / Bluepad32 / dual-core)
 
 **Copied into ultrausbt-apple-adb-adapter** from `ultrausbt-atari-st-rpikbd/docs/BT_PAIRING_HANDOFF.md` (Atari ST IKBD emulator, fixes in **v22.1.0**). Keep in sync when the source doc changes.
 
-**Apple-ADB porting status:** **Done** — shipped in firmware **2.2.1**. See [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) for port checklist and Apple-specific extensions; user guide: [`bluetooth-pairing.md`](bluetooth-pairing.md). Tracked in [`FUTURE_WORK.md`](FUTURE_WORK.md) §1.
+**Apple-ADB porting status:** **Done** — shipped in firmware **2.2.1**. See [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md); user guide: [`bluetooth-pairing.md`](../bluetooth-pairing.md). Summary in [`FUTURE_WORK.md`](../FUTURE_WORK.md) (Done table).
 
 ---
 
@@ -193,10 +195,10 @@ Gate verbose `[DIAG]` logs behind `ENABLE_SERIAL_LOGGING` — they **change timi
 | Document | Content |
 |----------|---------|
 | [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) | Apple ADB port status, checklist, Apple-specific fixes |
-| [`bluetooth-pairing.md`](bluetooth-pairing.md) | User-facing pair order and troubleshooting |
-| [`troubleshooting.md`](troubleshooting.md) § Bluetooth | Symptom → fix for multi-device pairing |
-| [`FUTURE_WORK.md`](FUTURE_WORK.md) §1 | Pairing stability — done on `feature/BT-alignment` |
-| [`gamepad-support.md`](gamepad-support.md) | BT gamepad Phase B + pairing hooks |
+| [`bluetooth-pairing.md`](../bluetooth-pairing.md) | User-facing pair order and troubleshooting |
+| [`troubleshooting.md`](../troubleshooting.md) § Bluetooth | Symptom → fix for multi-device pairing |
+| [`FUTURE_WORK.md`](../FUTURE_WORK.md) §1 | Pairing stability — done on `feature/BT-alignment` |
+| [`gamepad-support.md`](../gamepad-support.md) | BT gamepad Phase B + pairing hooks |
 
 ---
 

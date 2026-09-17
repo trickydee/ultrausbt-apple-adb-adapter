@@ -5,7 +5,7 @@ Primary reference target today: **trackball + Quadra 700** (same OS you will use
 
 **Related:** [`adb-host-mode.md`](adb-host-mode.md), [`gravis-mousestick-ii-plan.md`](gravis-mousestick-ii-plan.md) (Gravis / MouseStick later), [`FUTURE_WORK.md`](FUTURE_WORK.md) §5 (ADBMON).
 
-Save captures under `docs/fixtures/adb-host/` with descriptive names.
+Save captures under [`fixtures/adb-host/`](fixtures/adb-host/) with descriptive names (existing Quadra 700 + trackball set: H1–H5).
 
 ---
 

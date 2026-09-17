@@ -1,6 +1,6 @@
 /**
  * Bluetooth gamepad pairing timing — aligned with Atari v22.1.0 / Amiga v2.2.11.
- * See docs/BT_PAIRING_HANDOFF.md.
+ * See docs/archive/BT_PAIRING_HANDOFF.md.
  */
 
 #ifndef BT_PAIRING_CONFIG_H

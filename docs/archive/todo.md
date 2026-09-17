@@ -1,8 +1,10 @@
+> **Archived.** See [`docs/archive/README.md`](README.md).
+
 # Project TODO
 
 This document tracks upcoming development work for the ultrausbt-Apple-ADB-adapter firmware.
 
-For a prioritized future-work list, see [`FUTURE_WORK.md`](FUTURE_WORK.md). **Bluetooth pairing stability** shipped in **2.2.1** (see [`bluetooth-pairing.md`](bluetooth-pairing.md)).
+For a prioritized future-work list, see [`FUTURE_WORK.md`](../FUTURE_WORK.md). **Bluetooth pairing stability** shipped in **2.2.1** (see [`bluetooth-pairing.md`](../bluetooth-pairing.md)).
 
 ## 1) Add Gravis Flightstick support (Bluetooth + USB)
 
@@ -109,7 +111,7 @@ Create a Pico-native ADB monitor/diagnostic tool that captures ADB traffic with 
 Support USB graphics tablets (digitizers) that report **absolute** X/Y (and typically pressure/tilt), and drive the host using **Apple ADB Wacom-style** semantics so classic Mac drivers can treat the device like a real Wacom tablet.
 
 ### Reference material
-- Captured on-wire / register layout notes: `docs/wacom.md` (hardware capture from a KT-0405-A; use as a guide, validate against Apple/Wacom documentation for your target OS).
+- Captured on-wire / register layout notes: `docs/fixtures/wacom.md` (hardware capture from a KT-0405-A; use as a guide, validate against Apple/Wacom documentation for your target OS).
 
 ### Scope
 - USB HID: tablet/digitizer usage (not the current relative mouse path).
@@ -120,7 +122,7 @@ Support USB graphics tablets (digitizers) that report **absolute** X/Y (and typi
 ### Implementation tasks
 - Add a tablet HID report parser (report ID, absolute X/Y, pressure where present).
 - Implement coordinate scaling/mapping from USB logical range to ADB Wacom ranges.
-- Extend ADB device model beyond relative `mousereg0` (see current mouse path in `adbmouseparser.cpp`) with tablet-specific register packing per `docs/wacom.md` and Apple docs.
+- Extend ADB device model beyond relative `mousereg0` (see current mouse path in `adbmouseparser.cpp`) with tablet-specific register packing per `docs/fixtures/wacom.md` and Apple docs.
 - Handle ADB Talk/Listen sequences tablets expect (may differ from keyboard/mouse).
 - Add CMake feature flag(s) and document build/runtime limits.
 - Document supported tablet models and fallbacks (e.g. degrade to relative mouse) if needed.

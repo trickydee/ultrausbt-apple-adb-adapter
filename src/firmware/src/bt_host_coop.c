@@ -1,6 +1,6 @@
 /**
  * Refcounted Core 1 USB-host pause for BLE gamepad pairing (multicore flash race).
- * See bt_host_coop.h and docs/BT_PAIRING_PORT_AMIGA_REFERENCE.md.
+ * See bt_host_coop.h and docs/archive/BT_PAIRING_PORT_AMIGA_REFERENCE.md.
  */
 
 #include "bt_host_coop.h"

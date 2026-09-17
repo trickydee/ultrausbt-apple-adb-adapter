@@ -1,6 +1,6 @@
 # Bluetooth pairing guide
 
-Quick reference for pairing **keyboard**, **mouse**, and **gamepad** (Xbox / Stadia) on **Pico W** and **Pico 2 W** builds. Developer details: [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md).
+Quick reference for pairing **keyboard**, **mouse**, and **gamepad** (Xbox / Stadia) on **Pico W** and **Pico 2 W** builds. Developer details: [`BT_PAIRING_APPLE_ADB.md`](archive/BT_PAIRING_APPLE_ADB.md).
 
 ---
 
@@ -68,5 +68,5 @@ Shipped in firmware **2.2.1**:
 
 - [`troubleshooting.md`](troubleshooting.md) — BT mouse GPIO, host mode, multi-device pairing
 - [`gamepad-support.md`](gamepad-support.md) — gamepad button/stick mapping (Phase B)
-- [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) — canonical developer recipe (Atari v22.1.0)
+- [`BT_PAIRING_HANDOFF.md`](archive/BT_PAIRING_HANDOFF.md) — canonical developer recipe (Atari v22.1.0)
 - [`FUTURE_WORK.md`](FUTURE_WORK.md) §1 — pairing stability status

@@ -1,3 +1,5 @@
+> **Archived.** See [`docs/archive/README.md`](README.md).
+
 # Align IIgs ADB support with Apple IIgs Hardware Reference
 
 This document records **gaps** between the current firmware (see `feature/IIGS-Fixes` timing work in `src/firmware/lib/adb/`) and **`docs/adb-iigs-hardware-reference.md`** (Apple IIgs Hardware Reference, Chapter 6, Table 6-8). It proposes **concrete code changes** and an **implementation plan**—no behavior is changed by this file alone.

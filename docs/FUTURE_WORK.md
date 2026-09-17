@@ -1,289 +1,132 @@
 # Future work
 
-Tracked improvements and features for **ultrausbt-apple-adb-adapter**. For a broader project backlog (joystick, adbmon, Wacom), see also [`todo.md`](todo.md).
+Roadmap for **ultrausbt-apple-adb-adapter**. Changelog: [`release-notes.md`](release-notes.md). Archived backlog notes: [`archive/todo.md`](archive/todo.md).
 
 ---
 
-## 1. Bluetooth pairing stability (Pico W / Pico 2 W)
+## Done (keep for context)
 
-**Priority:** High  
-**Status:** **Done** — shipped in firmware **2.2.1** (see [`release-notes.md`](release-notes.md))
-**Symptom:** Random hangs when pairing BLE devices — especially **gamepad** while keyboard/mouse are connected; intermittent keyboard pairing stalls (e.g. MX Keys M). Heisenbug: verbose UART can mask the race.
+| Item | Version | Notes |
+|------|---------|--------|
+| Bluetooth pairing stability (Atari/Amiga recipe + Apple extras) | **2.2.1** | User guide: [`bluetooth-pairing.md`](bluetooth-pairing.md); history: [`archive/`](archive/) |
+| ADB Host mode MVP + GPIO split + reliability | **2.0.0–2.2.0** | Guide: [`adb-host-mode.md`](adb-host-mode.md) |
+| ADB Host fast typing (HID queue / 8 ms poll) | **2.2.3** | |
+| OLED Device/Host labels + `*` toggle | **2.2.3** era | Splash `ADB Dev` / `ADB Host` |
+| Standalone adbmon UF2 | **2026-06-28** | [`src/adbmon/README.md`](../src/adbmon/README.md) |
+| Gamepad Phase A+B (BT → keys + mouse) | — | [`gamepad-support.md`](gamepad-support.md) |
 
-### References
-
-| Document | Purpose |
-|----------|---------|
-| [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) | Canonical fix recipe (from ultrausbt-atari-st-rpikbd **v22.1.0**) |
-| [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) | Port status, Apple-specific fixes, test matrix |
-| [`troubleshooting.md`](troubleshooting.md) | User-facing BT pairing / multi-device notes |
-| [`gamepad-support.md`](gamepad-support.md) | Gamepad Phase B + pairing cross-link |
-
-### Shipped (Atari/Amiga recipe)
-
-- [x] Refcounted Core 1 pause (`bt_host_coop.c`)
-- [x] Core 1 pause loop: `__wfe()` instead of `busy_wait_us` spin
-- [x] `bt_callback_busy_wait_ms()` — **no `sleep_ms` in Bluepad32 callbacks**
-- [x] 30 ms settle after pause on gamepad discovery
-- [x] 100 ms busy-wait before resume in `on_device_ready` (all device types)
-- [x] `core1_wait_for_pause_active()` before BTstack flash activity
-- [x] No double-pause on `device_connected`
-- [x] Resume on disconnect if `pause_depth > 0`; force-release on key wipe
-- [x] Tunable constants in `bt_pairing_config.h`
-- [x] 45 s pause watchdog (`core1_bt_pause_watchdog_tick()`)
-
-### Shipped (Apple ADB follow-ons)
-
-- [x] Always-merge BT keyboard + gamepad via `peek_*` before `KeyboardPrs.Parse()` (`bt_hid_bridge.cpp`)
-- [x] Defer Mac global ADB reset during BT link setup + `BT_POST_READY_ADB_SETTLE_MS` (2500 ms)
-- [x] Clear orphan slots on failed connect; reset gamepad mouse latch on disconnect
-
-### Remaining / optional
-
-- [x] Merge to `main`; bump `CMakeLists.txt` version to **2.2.1**
-- [ ] Hardware retest matrix on **release** UF2 (Pico W + Pico 2 W; Mac cold boot + Xbox-first)
-- [ ] Optional `pause_depth` / phase diagnostics (gate behind `ADB_DEBUG`)
-- [ ] **125 MHz** vs Atari’s **225 MHz** for CYW43 — evaluate only if hangs persist after merge
-
-### Do not repeat without cause
-
-Reverted on `feature/joysticks` with no improvement: shorter pairing delays (10 ms), `__not_in_flash_func` on Core 1 pause path, display off during pair. See [`changes.md`](changes.md).
-
-### Open questions
-
-- **125 MHz** system clock vs Atari’s **225 MHz** for CYW43 — port is green at 125 MHz; clock is a separate experiment.
-- Keyboard/mouse pairing without Core 1 pause — Atari handoff says short path; MX Keys stalls may return; revisit if reported post-merge.
-- Mac cold boot + Xbox-first pair order — defer-ADB-reset mitigates; confirm on release hardware.
+Optional follow-ups (not blocking): release-UF2 retest matrix (Pico W + Pico 2 W; Mac cold boot + Xbox-first); `pause_depth` diagnostics behind `ADB_DEBUG`; **125 MHz vs 225 MHz** CYW43 clock experiment if hangs return.
 
 ---
 
-## 2. Gamepad — native ADB / Gravis (Phase C)
+## 1. Gamepad — native ADB / Gravis (Phase C)
 
 **Priority:** Medium  
-**Status:** Phase A+B shipped (BT gamepad → keyboard+mouse emulation); **pairing stability done** in **2.2.1**; Phase C planned  
-**Reference:** [`gamepad-support.md`](gamepad-support.md), [`gravis_mousestick_ii.md`](gravis_mousestick_ii.md)
+**Status:** Phase A+B shipped; Phase C planned  
+**Reference:** [`gamepad-support.md`](gamepad-support.md), [`gravis_mousestick_ii.md`](gravis_mousestick_ii.md), [`gravis-mousestick-ii-plan.md`](gravis-mousestick-ii-plan.md)
 
-- [ ] Detect ADB handler switch to **0x23**; implement Talk 0 / Talk 1 per Gravis docs
+- [ ] Detect ADB handler switch to **0x23**; Talk 0 / Talk 1 per Gravis docs
 - [ ] Map BT gamepad axes/buttons to native ADB joystick reports
-- [ ] USB HID gamepads via TinyUSB → same bridge as Bluetooth
-- [ ] User-toggle modes + persisted keymap (`FlashSettings` — re-verify flash layout)
+- [ ] USB HID gamepads → same bridge as Bluetooth
+- [ ] User-toggle modes + persisted keymap (`FlashSettings`)
 
-**See also §11** for full MouseStick II emulation with modern gamepads and Gravis client software (likely depends on §10 ADBMON).
-
----
-
-## 3. UI / OLED alignment
-
-**Priority:** Medium  
-**Status:** Implemented on `feature/ui-alignment` (splash / devices / map devices per ULTRAUSBT spec)
-
-- [x] Three-screen flow, USB map, `˄+˯` pairing clear
-- [ ] Merge branch; verify on hardware
+Full product goal (gamepad + Gravis cdev): **§6**. Prefer adbmon captures of a real MouseStick II first (**§3**).
 
 ---
 
-## 7. ADB passthrough hub — Phase 2 (active repeater)
+## 2. ADB passthrough hub — Phase 2
 
 **Priority:** Medium  
-**Status:** Phase 1 done — relocated addresses; see [`adb-passthrough-hub.md`](adb-passthrough-hub.md)
+**Status:** Phase 1 done (relocated addresses) — [`adb-passthrough-hub.md`](adb-passthrough-hub.md)
 
-- [x] Hub mode: spec enumeration (defaults **0x02/0x03**, host Listen **0xFE**, collision); OLED footer
 - [ ] OLED / button toggle for hub mode and custom addresses
 - [ ] PIO bit-level repeater if hardware uses split host/device segments
 - [ ] Optional proxy: forward Talk to downstream when adapter is passive listener
 
 ---
 
-## 4. Joystick / Gravis Flightstick (broader)
+## 3. ADBMON — extend monitor + optional hardware
 
-**Priority:** Lower  
-**Reference:** [`todo.md`](todo.md) §1
+**Priority:** Medium (high leverage for hub, Gravis, IIgs)  
+**Status:** Standalone firmware shipped — extend capture / UX
 
-USB + BLE joystick support, normalized event model, mapping profiles, rate limiting. Depends on stable BT pairing and gamepad foundation.
+- [ ] Modes: raw edge dump; stricter timing toggles
+- [ ] Multi-byte Talk payloads (Gravis 7-byte R0)
+- [ ] OLED live view; adapter-integrated monitor toggle
+- [ ] Export snippets into [`fixtures/`](fixtures/) for regression
+- [ ] Optional inline interposer PCB (high-Z tap, activity LEDs)
 
----
-
-## 5. ADBMON — ADB bus monitor (on-adapter + diagnostic hardware)
-
-**Priority:** Medium (high leverage for hub, Gravis, IIgs timing)  
-**Status:** **Partial — standalone firmware shipped 2026-06-28** — see [`src/adbmon/README.md`](../src/adbmon/README.md), [`todo.md`](todo.md) §2
-
-### Use case
-
-Enable the adapter (or a dedicated monitor build) to **debug traffic on the ADB bus** — essential for hub handoff, enumeration, SRQ behaviour, and reverse-engineering protocols (e.g. Gravis handler **0x23**).
-
-### Output paths
-
-| Path | Idea |
-|------|------|
-| **Serial (UART / USB CDC)** | Full decoded trace: Attention, command byte (addr / Talk·Listen / register), payload, SRQ extension, timing (µs). Ring-buffered so logging does not perturb bit timing. |
-| **OLED** | Compact live view: last command, addresses, SRQ/collision flags, rolling hex — for bench use without a host PC. Optional dedicated “monitor” screen in the UI flow. |
-
-### Firmware tasks (adapter-integrated or `adbmon` build target)
-
-- [x] Passive **DATA line** capture (GPIO snoop) with timestamps — **2026-06-28** (`src/adbmon`)
-- [x] Decode frames: Attention, command byte, Talk/Listen payload, SRQ, global reset — **2026-06-28**
-- [x] **Monitor-only** standalone UF2 — does not emulate keyboard/mouse — **2026-06-28** (`./build-all.sh` → `dist/adbmon-pico.uf2`)
-- [x] Serial (UART + USB CDC) trace output — **2026-06-28**
-- [ ] Modes: raw edge dump, strict vs lenient timing toggles (partial — CMake flags exist)
-- [ ] Multi-byte Talk payloads (Gravis 7-byte register 0)
-- [ ] OLED live view (shared UI with main firmware)
-- [ ] Adapter-integrated monitor mode (runtime toggle)
-- [ ] Export snippets for regression fixtures (compare traces across firmware versions)
-
-### Diagnostic board (optional hardware)
-
-- [ ] Inline interposer PCB (ADB in/out), high-impedance monitor tap, activity LEDs — see [`todo.md`](todo.md) §2
-- [ ] Validate capture does not alter host/device behaviour
-
-### Unblocks
-
-- [`adb-passthrough-hub.md`](adb-passthrough-hub.md) — SRQ handoff, address relocation verification
-- **§9** intelligent mouse SRQ — observe when host Talks which address
-- **§11** Gravis MouseStick II — capture real stick traffic for Talk 0/1 reference
+Captures today: [`fixtures/adb-host/`](fixtures/adb-host/). Checklist: [`adb-host-mode-capture.md`](adb-host-mode-capture.md).
 
 ---
 
-## 6. USB tablet → ADB Wacom
-
-**Priority:** Lower  
-**Reference:** [`todo.md`](todo.md) §3, [`wacom.md`](wacom.md)
-
-Absolute positioning, pressure, Wacom-style ADB register packing.
-
----
-
-## 8. Multiple ADB pointing devices (separate cursors)
-
-**Priority:** Lower  
-**Status:** **Partial — host mode multi-device polling shipped 2026-06-28**; device-mode USB/BT merge unchanged
-
-### Current behaviour
-
-- **ADB → Mac (device mode):** one `mouse_addr` on the bus; `bt_hid_bridge` sums deltas from up to two BT mice plus gamepad stick into a single `MousePrs` stream.
-- **ADB → USB (host mode):** keyboard @0x2 plus up to three pointing devices (@0x3, @0xE, @0xF) with address-aware classification and hot-plug rescan — **2026-06-28**.
-- Chained physical ADB devices (trackball, Gravis stick) are separate bus participants with their own addresses after host enumeration.
-
-### Future option (device mode / multi-cursor on Mac)
-
-- [ ] Expose **second (and third) ADB mouse instances** at unique addresses (e.g. **0x03**, **0x04**, **0x06**) for multi-cursor scenarios on classic Mac / IIgs
-- [ ] Per-device routing: USB port / BT slot / gamepad stick → dedicated ADB address
-- [ ] Hub mode: coordinate with downstream **0x03** trackball so adapter USB/BT mice relocate without stealing the downstream default
-- [ ] OLED map screen: show which logical device maps to which ADB address
-- [ ] Mac OS limits: document which systems support multiple pointing devices vs a single “primary” mouse
-
----
-
-## 9. Intelligent mouse SRQ (hub + chained trackball)
+## 4. Intelligent mouse SRQ (hub + chained trackball)
 
 **Priority:** Medium  
-**Status:** Open — hub mouse SRQ experiments **reverted** (movement hitches); default remains keyboard SRQ only. See [`adb-passthrough-hub.md`](adb-passthrough-hub.md) and [`iigs-debugging.md`](iigs-debugging.md) §10.
+**Status:** Open — hub mouse-SRQ experiments reverted; default remains keyboard SRQ only  
+**Reference:** [`adb-passthrough-hub.md`](adb-passthrough-hub.md), [`iigs-debugging.md`](iigs-debugging.md)
 
-### Problem
-
-`ADB_IIGS_MOUSE_SUPPRESS_SRQ` (default **ON**) stops the adapter from asserting **mouse SRQ** on the ADB bus. That avoids IIgs BASIC slowdown when USB/BT mice move, but with a **chained trackball** on **0x03**:
-
-- While the trackball moves, the host polls **0x03** often.
-- When the trackball goes idle, the host may **stop polling 0x03** if neither the trackball nor the adapter SRQs.
-- USB/BT mouse movement and left click sit in `mousepending` with no bus wake-up until **keyboard SRQ** (e.g. a key, or right-click in ctrl-click mode which enqueues Ctrl).
-
-### Interim behaviour
-
-- **Hub mode OFF:** unchanged — keyboard SRQ only (IIgs-friendly).
-- **Hub mode ON:** mouse SRQ **not** asserted on the wire (same as non-hub; interim hub SRQ experiments reverted — caused movement hitches). USB/BT mouse may appear idle after trackball use until keyboard SRQ wakes the bus; see §9.
-
-### Future: smarter detection (not just hub toggle)
-
-- [ ] Detect when a **downstream pointing device** is present at the shared/default mouse address (trackball SRQ / Talk **0xC** activity / register-3 collision history) and enable mouse SRQ only in that configuration — not for every hub-mode user who might still want IIgs BASIC performance.
-- [ ] Optional **runtime policy**: suppress / auto / always for mouse SRQ (OLED or flash setting), independent of full hub mode.
-- [ ] Consider **piggyback** strategies (e.g. brief keyboard SRQ co-assert) vs continuous mouse SRQ if BASIC slowdown returns on IIgs + trackball setups.
-- [ ] Document Mac vs IIgs expectations in [`adb-passthrough-hub.md`](adb-passthrough-hub.md).
+- [ ] Enable mouse SRQ only when a downstream pointer is detected (not blanket hub-on)
+- [ ] Runtime policy: suppress / auto / always (OLED or flash)
+- [ ] Document Mac vs IIgs expectations in the hub doc
 
 ---
 
-## 10. ADB Host mode (ADB accessories → USB host)
+## 5. Device-mode multi-cursor (separate ADB mice)
 
-**Priority:** Medium  
-**Status:** **Complete (MVP) — 2026-06-28** — firmware **2.0.0** + GPIO split **2.1.0** + host reliability **2.2.0**; see [`adb-host-mode.md`](adb-host-mode.md), [`troubleshooting.md`](troubleshooting.md)
+**Priority:** Lower  
+**Status:** Host mode already polls multiple pointers; device mode still one `mouse_addr`
 
-### Use case
-
-Plug **real ADB accessories** (keyboard, mouse, trackball) into the adapter and present them to a **USB host** (Mac/PC/Pi) as standard USB HID — e.g. use a vintage ADB keyboard on a modern machine.
-
-**Mode selection is manual:** user picks **ADB → Mac** (default, today’s USB/BT bridge) or **ADB → USB** on the OLED before changing wiring. See [`adb-host-mode.md`](adb-host-mode.md).
-
-### Architecture sketch
-
-| Today (device mode) | Host mode (proposed) |
-|---------------------|----------------------|
-| USB/BT → emulated ADB kbd/mouse | ADB Talk/Listen → USB HID reports |
-| Core 1: TinyUSB **host** (input devices) | Core 1: TinyUSB **device** (to PC) |
-| Core 0: ADB **device** GPIO bit-bang | Core 0: ADB **host** — issue Talk/Listen, enumerate bus |
-
-Modes are **mutually exclusive** — user switches explicitly; one USB stack active at a time.
-
-### Shipped (2026-06-28)
-
-- [x] Manual OLED mode switch **ADB → Mac** / **ADB → USB**, persisted in flash
-- [x] Unified **Pico 2 W** build (`ADB_HOST_MODE=ON`) with runtime toggle
-- [x] ADB bus master: global reset, Talk R3 enumeration, keyboard + multi pointing-device poll
-- [x] Mac-style trackball relocation; periodic hot-plug rescan (~3 s)
-- [x] USB HID composite to PC; **ADB Bus** OLED screen (configured vs working)
-- [x] Host timing: **765 µs** attention + RX preamble (`adb_host.cpp`)
-- [x] Device/host GPIO split (`adb_host_gpio.h`) — collision fix **2.1.0**
-- [x] **Manual mode switch** — no auto-detect from VBUS or ADB traffic (v1)
-- [x] **Mutually exclusive USB roles** — cannot host USB-A peripherals and present HID to PC simultaneously on native USB
-
-### Open questions / follow-ups
-
-- [ ] Electrical / bus power policy in ADB host mode
-- [ ] Hub hat support matrix in `ADB → USB` mode
-- [ ] Coexistence with passthrough hub logic when Pico is bus master
-- [ ] Optional: VBUS hint on mode screen only — not auto-switch
-
-### References
-
-- Apple enumeration / collision model — [`ADB_Overview`](https://en.wikipedia.org/wiki/Apple_Desktop_Bus) (see also project `docs/` ADB notes)
-- [`adb-passthrough-hub.md`](adb-passthrough-hub.md) — shared-bus topology
+- [ ] Second/third ADB mouse instances at unique addresses
+- [ ] Per-device routing USB/BT → ADB address; OLED map
+- [ ] Document which Mac OS versions support multiple pointers
 
 ---
 
-## 11. Full Gravis MouseStick II emulation (modern gamepad + Gravis cdev)
+## 6. Full Gravis MouseStick II (gamepad + Gravis cdev)
 
-**Priority:** Medium (after §2 Phase C foundations and ideally §5 ADBMON)  
-**Status:** Not started — Phase B ships MouseStick-**like** handler **0x01** (stick → mouse + keys); native **0x23** not implemented  
-**Reference:** [`gamepad-support.md`](gamepad-support.md) mode 2, [`gravis_mousestick_ii.md`](gravis_mousestick_ii.md), [`gravis-mousestick-ii-plan.md`](gravis-mousestick-ii-plan.md), [`adb_device_list.md`](adb_device_list.md)
+**Priority:** Medium (after §1 / §3)  
+**Status:** Not started — Phase B is handler **0x01** only  
+**Reference:** [`gravis-mousestick-ii-plan.md`](gravis-mousestick-ii-plan.md), [`adb_device_list.md`](adb_device_list.md)
 
-### Use case
+- [ ] Capture real stick (or known-good Mac + cdev) with adbmon
+- [ ] Handler **0x01 → 0x23**; Talk 1 protocol ids; Talk 0 7-/3-byte forms
+- [ ] USB + BT gamepads on the same native path; OLED shows active handler
 
-Use a **modern Bluetooth/USB gamepad** with **Gravis MouseStick II client software** on a vintage Mac (handler switch to **0x23**, Talk 0 seven-byte / three-byte reports, Talk 1 protocol id). Games and control panels that expect a real MouseStick II should see authentic register payloads, not keyboard emulation.
+---
 
-### Why ADBMON (§5) matters
+## 7. Joystick / Gravis Flightstick (broader)
 
-Handler **0x23** behaviour is host-driven and payload-specific. Capturing **real MouseStick II** (or compatible) traffic on the bus — Talk 0/1 sequences, timing, button/axis encoding — de-risks emulation. **Sniff first, implement second.**
+**Priority:** Lower  
 
-- [ ] Record reference traces with §5 ADBMON (real stick or known-good Mac + cdev)
-- [ ] Document handler switch **0x01 → 0x23** and Listen R3 side effects
-- [ ] Implement Talk **1** (`0x03 0x00` / `0x04 0x00` protocol ids)
-- [ ] Implement Talk **0** 7-byte and 3-byte forms; map gamepad axes/buttons per captured reference
-- [ ] USB HID gamepads → same native path as BT (TinyUSB host)
-- [ ] Test matrix: Mac with Gravis cdev, titles from `adb_device_list.md`, IIgs where applicable
-- [ ] OLED: show active handler (**0x01** vs **0x23**), not user-selected — host-driven only
+USB + BLE joystick support, normalized event model, mapping profiles, rate limiting. Builds on gamepad foundation.
 
-### Relationship to §2
+---
 
-§2 **Phase C** is the umbrella (handler detection + Talk 0/1). §11 is the **product goal**: gamepad + Gravis software compatibility, with explicit dependency on bus capture for fidelity.
+## 8. USB tablet → ADB Wacom
+
+**Priority:** Lower  
+**Reference:** [`fixtures/wacom.md`](fixtures/wacom.md)
+
+Absolute positioning / pressure; Wacom-style ADB register packing. Large feature — after relative mouse path stays stable.
+
+---
+
+## 9. ADB Host follow-ups
+
+**Priority:** Lower  
+**Guide:** [`adb-host-mode.md`](adb-host-mode.md)
+
+- [ ] Bus power policy documentation
+- [ ] Hub-hat behaviour when Pico is bus master
+- [ ] Coexistence with passthrough hub logic
+- [ ] Optional VBUS hint on Mode screen (not auto-switch)
 
 ---
 
 ## Suggested order
 
-1. ~~**Bluetooth pairing stability** — unblocks reliable multi-device BT (KB + mouse + gamepad).~~ **Done** in **2.2.1**; hardware retest optional.
-2. **ADBMON (§5)** — extend capture (Gravis payloads, OLED, adapter-integrated toggle).
-3. **UI alignment** — merge when ready; independent of pairing but benefits from stable BT counts/names.
-4. **Intelligent mouse SRQ (§9)** — refine hub/trackball detection; use ADBMON traces to validate.
-5. **Full Gravis MouseStick II (§11)** — after ADBMON reference captures; extends §2 Phase C.
-6. **Device-mode multi-cursor (§8)** — separate USB/BT mice to distinct ADB addresses on vintage Mac.
-7. Joystick / Wacom — larger features after core HID paths are stable.
-
-~~6. **ADB Host mode (§10)** — shipped 2026-06-28.~~
+1. Extend **ADBMON (§3)** — Gravis payloads, fixtures, optional OLED  
+2. **Intelligent mouse SRQ (§4)** — hub/trackball wake  
+3. **Gravis MouseStick II (§6)** after real-stick captures  
+4. Hub Phase 2 / multi-cursor / joystick / Wacom as capacity allows  

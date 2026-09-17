@@ -34,7 +34,7 @@ This is a **Pico SDK** setting, not defined in our `CMakeLists.txt`, but every b
 | `ADB_ATTENTION_LO_MIN_US` | `CACHE STRING` (integer µs) | `500` | Minimum **attention low** duration (µs) accepted in `ReceiveCommand`. Table 6-8 allows ~560–1040 µs on IIgs; `500` is a practical floor with measurement slack. Change for A/B tuning (e.g. `450`). Wired into the **`adb`** library as `ADB_ATTENTION_LO_MIN_US`. |
 | `ADB_STRICT_DUTY_CYCLE_DECODE` | `option` | `OFF` | **`ON`:** decode received bits using **35% / 65%** low-time thresholds (IIgs-style). **`OFF`:** **midpoint** decode (more tolerant). Strict mode has regressed on some hosts; default stays off. |
 | `ADB_STRICT_SYNC_WINDOW` | `option` | `OFF` | **`ON`:** sync window **42–91 µs** (IIgs envelope). **`OFF`:** tolerant **40–95 µs** window. Used in `ReceiveCommand` sync check. |
-| `ADB_HOST_MODE` | `option` | `OFF` | When `ON`, compiles ADB bus master + USB HID device stack; runtime OLED toggle between **ADB → Mac** and **ADB → USB**. **`build-all.sh`** enables this for the product UF2. |
+| `ADB_HOST_MODE` | `option` | `OFF` | When `ON`, compiles ADB bus master + USB HID device stack; runtime OLED toggle between **ADB Device** and **ADB Host**. **`build-all.sh`** enables this for the product UF2. |
 | `ADB_IIGS_MOUSE_SUPPRESS_SRQ` | `option` | `ON` | **`ON`:** mouse does **not** extend the SRQ line; keyboard SRQ only. Reduces IIgs **BASIC slowdown** when the mouse moves. **`OFF`:** legacy behavior (mouse can participate in SRQ). Set `OFF` only if you need to compare or hit an edge case. |
 
 ---
@@ -63,7 +63,9 @@ This is a **Pico SDK** setting, not defined in our `CMakeLists.txt`, but every b
 
 ## See also
 
-- `docs/troubleshooting.md` — BT mouse GPIO regression, host timing.
-- `docs/iigs-debugging.md` — suggested order for trying options on IIgs.
-- `docs/align-iigs-support-to-hardware-reference.md` — how options map to the IIgs hardware reference.
-- `docs/release-notes.md` — when defaults changed.
+- [`troubleshooting.md`](troubleshooting.md) — BT mouse GPIO regression, host timing  
+- [`iigs-debugging.md`](iigs-debugging.md) — suggested order for trying options on IIgs  
+- [`adb-iigs-support.md`](adb-iigs-support.md) / [`adb-iigs-hardware-reference.md`](adb-iigs-hardware-reference.md) — IIgs timing  
+- [`archive/align-iigs-support-to-hardware-reference.md`](archive/align-iigs-support-to-hardware-reference.md) — historical gap plan  
+- [`release-notes.md`](release-notes.md) — when defaults changed  
+- [`changes.md`](changes.md) — version / SDK notes  

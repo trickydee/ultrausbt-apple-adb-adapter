@@ -142,8 +142,12 @@ If `PICO_SDK_PATH` is unset, the scripts clone the Pico SDK once under `.pico-sd
 | [`docs/adb-passthrough-hub.md`](./docs/adb-passthrough-hub.md) | Pass-through / hub behaviour |
 | [`docs/gamepad-support.md`](./docs/gamepad-support.md) | BT gamepad mapping |
 | [`docs/iigs-debugging.md`](./docs/iigs-debugging.md) | IIgs timing notes |
-| [`docs/FUTURE_WORK.md`](./docs/FUTURE_WORK.md) | Roadmap |
 | [`docs/hardware.md`](./docs/hardware.md) | Board / GPIO |
+| [`docs/build-flags.md`](./docs/build-flags.md) | CMake options |
+| [`docs/FUTURE_WORK.md`](./docs/FUTURE_WORK.md) | Roadmap |
+| [`docs/changes.md`](./docs/changes.md) | Version / SDK build notes |
+| [`docs/archive/`](./docs/archive/) | Historical port / design notes |
+| [`docs/fixtures/`](./docs/fixtures/) | ADB captures (adbmon, Wacom, SE/30) |
 
 # Acknowledgements
 

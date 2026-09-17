@@ -1,9 +1,11 @@
+> **Archived.** See [`docs/archive/README.md`](README.md).
+
 # Bluetooth pairing — Apple ADB adapter port notes
 
 **Status:** **Done** — shipped in firmware **2.2.1**.
 **Canonical fix recipe:** [`BT_PAIRING_HANDOFF.md`](BT_PAIRING_HANDOFF.md) (from ultrausbt-atari-st-rpikbd v22.1.0).  
 **Sibling port (done):** [`BT_PAIRING_PORT_AMIGA_REFERENCE.md`](BT_PAIRING_PORT_AMIGA_REFERENCE.md) — ultrausbt-amiga `feature/BT-Pairing-align` (v2.2.11).  
-**Related:** [`gamepad-support.md`](gamepad-support.md), [`bluetooth-pairing.md`](bluetooth-pairing.md) (user guide), [`troubleshooting.md`](troubleshooting.md), [`changes.md`](changes.md).
+**Related:** [`gamepad-support.md`](../gamepad-support.md), [`bluetooth-pairing.md`](../bluetooth-pairing.md) (user guide), [`troubleshooting.md`](../troubleshooting.md), [`changes.md`](../changes.md).
 
 This document maps the Atari handoff to **ultrausbt-apple-adb-adapter** firmware: what was ported, Apple-specific fixes beyond the Atari recipe, prior experiments, and the hardware test matrix.
 
@@ -86,7 +88,7 @@ These fixes were required after the base port; they are **not** in the Atari han
 
 ## Prior experiments on this repo (do not repeat without cause)
 
-Documented in [`changes.md`](changes.md) — all **reverted**, **no pairing improvement** observed:
+Documented in [`changes.md`](../changes.md) — all **reverted**, **no pairing improvement** observed:
 
 1. Shortening pairing delays (50 ms / 200 ms → 10 ms).
 2. `__not_in_flash_func` on the Core 1 pause path.
@@ -142,4 +144,4 @@ Run on **Pico W** and **Pico 2 W**, **release** firmware (verbose UART off — i
 
 ## LLM session paste (Apple ADB context)
 
-> **Context:** ultrausbt-apple-adb-adapter (Pico W / Pico 2 W). Core 0 = ADB + Bluepad32 + OLED. Core 1 = TinyUSB `tuh_task()` from XIP. **Port complete** on `feature/BT-alignment`: refcounted pause + `__wfe()` + `bt_callback_busy_wait_ms` + 30 ms settle + 100 ms pre-resume + no connect double-pause + watchdog. **Apple extras:** `peek_keyboard`/`peek_gamepad` always-merge in `bt_hid_bridge.cpp`; `bluepad32_bt_defer_adb_reset()` + 2.5 s post-ready settle; force-release pause on disconnect. **Read:** `docs/BT_PAIRING_HANDOFF.md`, this file, `docs/troubleshooting.md` § Bluetooth. **Test:** KB + mouse + Stadia/Xbox on Pico W and Pico 2 W with release UF2; Mac cold boot pair-order matrix.
+> **Context:** ultrausbt-apple-adb-adapter (Pico W / Pico 2 W). Core 0 = ADB + Bluepad32 + OLED. Core 1 = TinyUSB `tuh_task()` from XIP. **Port complete** on `feature/BT-alignment`: refcounted pause + `__wfe()` + `bt_callback_busy_wait_ms` + 30 ms settle + 100 ms pre-resume + no connect double-pause + watchdog. **Apple extras:** `peek_keyboard`/`peek_gamepad` always-merge in `bt_hid_bridge.cpp`; `bluepad32_bt_defer_adb_reset()` + 2.5 s post-ready settle; force-release pause on disconnect. **Read:** `docs/archive/BT_PAIRING_HANDOFF.md`, this file, `docs/troubleshooting.md` § Bluetooth. **Test:** KB + mouse + Stadia/Xbox on Pico W and Pico 2 W with release UF2; Mac cold boot pair-order matrix.

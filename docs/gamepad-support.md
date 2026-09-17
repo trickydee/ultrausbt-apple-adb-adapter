@@ -41,7 +41,7 @@ The tree at `/Users/rich/Documents/Code/3rd party/amigahid-pico` (local clone) w
 
 **Do not** pause for generic `"gamepad"` name strings — reduces false pauses.
 
-See [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md), [`troubleshooting.md`](troubleshooting.md) § Bluetooth.
+See [`BT_PAIRING_APPLE_ADB.md`](archive/BT_PAIRING_APPLE_ADB.md), [`troubleshooting.md`](troubleshooting.md) § Bluetooth.
 
 ## Flash and BTstack
 
@@ -126,7 +126,7 @@ Characters are appended only while the control is active: `^` `v` `<` `>` (D-pad
 - **Mode 2:** Detect ADB **handler switch** to **0x23**; implement **Talk 0 / Talk 1** per `docs/gravis_mousestick_ii.md`; map Bluetooth gamepad axes/buttons into 7-byte / 3-byte reports as appropriate.
 - **Mode 3:** User **toggle** + persisted **custom keymap** (extend `FlashSettings` carefully; re-verify flash layout).
 - USB HID gamepads via TinyUSB → same bridge as Bluetooth.
-- **Core 1 pause / pairing stability** — **Done** on `feature/BT-alignment`; see [`FUTURE_WORK.md`](FUTURE_WORK.md) §1, [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md), [`troubleshooting.md`](troubleshooting.md) § Bluetooth.
+- **Core 1 pause / pairing stability** — **Done** in **2.2.1**; see [`FUTURE_WORK.md`](FUTURE_WORK.md), [`archive/BT_PAIRING_APPLE_ADB.md`](archive/BT_PAIRING_APPLE_ADB.md), [`troubleshooting.md`](troubleshooting.md) § Bluetooth.
 
 ## Version
 

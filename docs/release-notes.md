@@ -25,7 +25,7 @@ Lineage: this firmware descends from QuokkADB and adbuino. Target hardware: [`ha
 - **Multi-device BT input:** Always-merge keyboard + gamepad key reports via `bluepad32_peek_keyboard()` / `bluepad32_peek_gamepad()` before `KeyboardPrs.Parse()` — fixes keyboard queue flood when Xbox pairs before keyboard.
 - **Mac boot + BT pairing:** Defer Mac global ADB reset while BT link is forming or within 2.5 s after `device_ready` (`bluepad32_bt_defer_adb_reset()`) — fixes mouse dead on ADB when pairing during Mac cold boot.
 - **Xbox reconnect:** Force-release Core 1 pause on disconnect and key wipe; clear orphan slots on failed connect.
-- **Docs:** [`bluetooth-pairing.md`](bluetooth-pairing.md), [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md), [`troubleshooting.md`](troubleshooting.md) § Bluetooth, [`FUTURE_WORK.md`](FUTURE_WORK.md) §1 marked done.
+- **Docs:** [`bluetooth-pairing.md`](bluetooth-pairing.md), [`BT_PAIRING_APPLE_ADB.md`](archive/BT_PAIRING_APPLE_ADB.md), [`troubleshooting.md`](troubleshooting.md) § Bluetooth, [`FUTURE_WORK.md`](FUTURE_WORK.md) §1 marked done.
 
 ## 2.2.0
 
@@ -37,7 +37,7 @@ Lineage: this firmware descends from QuokkADB and adbuino. Target hardware: [`ha
 ## 2.1.0
 
 - **Device/host GPIO split:** Restore pre-2.0 drive-high ADB GPIO in shared code for **ADB Device** mode (fixes BT mouse jumps and collision detection). Host open-collector GPIO moved to `adb_host_gpio.h` only; host timing (765 µs attention, RX preamble) unchanged.
-- **Docs:** [`adb-shared-gpio-rollback.md`](adb-shared-gpio-rollback.md), [`troubleshooting.md`](troubleshooting.md); **`build-all.sh`** simplified to Pico 2 W adapter + debug + adbmon.
+- **Docs:** [`adb-shared-gpio-rollback.md`](archive/adb-shared-gpio-rollback.md), [`troubleshooting.md`](troubleshooting.md); **`build-all.sh`** simplified to Pico 2 W adapter + debug + adbmon.
 
 ## 2.0.0
 

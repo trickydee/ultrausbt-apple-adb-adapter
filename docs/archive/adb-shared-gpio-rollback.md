@@ -1,8 +1,10 @@
+> **Archived.** See [`docs/archive/README.md`](README.md).
+
 # ADB shared GPIO rollback (device vs host)
 
 **Branch:** `feature/fix-device-host-modes`  
 **Date:** 2026-06-24  
-**Related:** [`adb-host-mode.md`](adb-host-mode.md), release **2.0.0** (`3508160`), fix **2.1.0** (`62611dc`). Troubleshooting: [`troubleshooting.md`](troubleshooting.md).
+**Related:** [`adb-host-mode.md`](adb-host-mode.md), release **2.0.0** (`3508160`), fix **2.1.0** (`62611dc`). Troubleshooting: [`troubleshooting.md`](../troubleshooting.md).
 
 ## Problem
 

@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Common issues on the **ultrausbt** DIY ADB adapter. IIgs-specific tuning parameters live in [`iigs-debugging.md`](iigs-debugging.md). GPIO rollback history: [`adb-shared-gpio-rollback.md`](adb-shared-gpio-rollback.md).
+Common issues on the **ultrausbt** DIY ADB adapter. IIgs-specific tuning parameters live in [`iigs-debugging.md`](iigs-debugging.md). GPIO rollback history: [`adb-shared-gpio-rollback.md`](archive/adb-shared-gpio-rollback.md).
 
 ---
 
@@ -22,7 +22,7 @@ Common issues on the **ultrausbt** DIY ADB adapter. IIgs-specific tuning paramet
 
 **Fix (2.1.0+):** Shared `adb_platform.h` / `quokkadb_gpio.cpp` restored to **drive-high** for device mode. Host-only tri-state lives in `adb_host_gpio.h` (used only by `adb_host.cpp`).
 
-**If it returns:** Flash **2.1.0** or later. With debug UF2, watch for `MOUSE: Collision on sending register 0`. Do **not** re-apply tri-state to shared platform code without a runtime mode split — see [`adb-shared-gpio-rollback.md`](adb-shared-gpio-rollback.md).
+**If it returns:** Flash **2.1.0** or later. With debug UF2, watch for `MOUSE: Collision on sending register 0`. Do **not** re-apply tri-state to shared platform code without a runtime mode split — see [`adb-shared-gpio-rollback.md`](archive/adb-shared-gpio-rollback.md).
 
 ---
 
@@ -48,7 +48,7 @@ Host mode needs **timing** in `adb_host.cpp` (not the shared GPIO rollback above
 
 **Symptom if wrong:** enumeration fails, `Tlt` / `start` / `sync` / `BIT` RX errors in UART debug, keyboard/mouse never appear on PC.
 
-**Restore reference:** [`adb-shared-gpio-rollback.md`](adb-shared-gpio-rollback.md) § “If host mode breaks”; compare `adb_host.cpp` to commit `62611dc` or later.
+**Restore reference:** [`adb-shared-gpio-rollback.md`](archive/adb-shared-gpio-rollback.md) § “If host mode breaks”; compare `adb_host.cpp` to commit `62611dc` or later.
 
 **Setup:** Vintage Mac **off and disconnected**; power Pico from USB; ADB accessories on pass-through ports only. See [`hardware.md`](hardware.md) and [`adb-host-mode.md`](adb-host-mode.md).
 
@@ -72,7 +72,7 @@ If host enumeration or device replies are consistently wrong after wiring checks
 
 ## Bluetooth — multi-device pairing
 
-User guide: [`bluetooth-pairing.md`](bluetooth-pairing.md). Use the **release** UF2 from `./build-all.sh` (`dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2`) for pairing tests. The **debug** UF2 changes timing and can mask or trigger Heisenbugs. Full developer notes: [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md).
+User guide: [`bluetooth-pairing.md`](bluetooth-pairing.md). Use the **release** UF2 from `./build-all.sh` (`dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2`) for pairing tests. The **debug** UF2 changes timing and can mask or trigger Heisenbugs. Full developer notes: [`BT_PAIRING_APPLE_ADB.md`](archive/BT_PAIRING_APPLE_ADB.md).
 
 ### Recommended pair order
 
@@ -131,5 +131,5 @@ Often **non-fatal** on MX Keys / MX Master. If the device reaches “device read
 - [`adb-passthrough-hub.md`](adb-passthrough-hub.md) — hub + chained trackball SRQ behaviour
 - [`adb-host-mode.md`](adb-host-mode.md) — host mode setup and architecture
 - [`release-notes.md`](release-notes.md) — version history (2.1.0 GPIO split, 2.2.1 BT pairing)
-- [`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md) — developer pairing port notes
+- [`BT_PAIRING_APPLE_ADB.md`](archive/BT_PAIRING_APPLE_ADB.md) — developer pairing port notes
 - [`gamepad-support.md`](gamepad-support.md) — BT gamepad mapping and pairing cross-link

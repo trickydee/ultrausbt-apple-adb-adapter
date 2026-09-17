@@ -295,7 +295,7 @@ Without Phase 0, add significant trial-and-error time.
 |------|------------|
 | 7-byte Talk too slow for Tlt | Pre-build buffer in main loop; send only in `ProcessCommand`; profile with GPIO toggle |
 | BT timing vs ADB | Keep `bluepad32_poll()` **outside** `ReceiveCommand()` (see [`gamepad-support.md`](gamepad-support.md)) |
-| BT keyboard + gamepad on one parser | Phase B merges reports via `peek_keyboard` / `peek_gamepad` before `Parse()` — Gravis Phase C must preserve this when adding native **0x23** Talk payloads ([`BT_PAIRING_APPLE_ADB.md`](BT_PAIRING_APPLE_ADB.md)) |
+| BT keyboard + gamepad on one parser | Phase B merges reports via `peek_keyboard` / `peek_gamepad` before `Parse()` — Gravis Phase C must preserve this when adding native **0x23** Talk payloads ([`BT_PAIRING_APPLE_ADB.md`](archive/BT_PAIRING_APPLE_ADB.md)) |
 | Address **0x03** clash with hub trackball | Hub mode: relocate BT-Gravis to **0x04+** after host enumeration |
 | Doc wrong on button bits | Fixtures **V11** are authoritative |
 | cdev version differences | Capture Mac + cdev version in every fixture file |
