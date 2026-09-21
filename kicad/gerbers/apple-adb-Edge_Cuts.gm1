@@ -1,0 +1,23 @@
+%TF.GenerationSoftware,KiCad,Pcbnew,9.0.7*%
+%TF.CreationDate,2026-09-21T22:58:04+01:00*%
+%TF.ProjectId,apple-adb,6170706c-652d-4616-9462-2e6b69636164,1.2*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+G04 Created by KiCad (PCBNEW 9.0.7) date 2026-09-21 22:58:04*
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+%TA.AperFunction,Profile*%
+%ADD10C,0.100000*%
+%TD*%
+G04 APERTURE END LIST*
+D10*
+X180200000Y-51000000D02*
+X227400000Y-51000000D01*
+X227400000Y-120000000D01*
+X180200000Y-120000000D01*
+X180200000Y-51000000D01*
+M02*
