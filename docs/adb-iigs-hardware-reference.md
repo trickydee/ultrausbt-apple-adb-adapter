@@ -77,5 +77,5 @@ The **IIgs Hardware Reference** is the document that explicitly gives **560–10
 
 ## Related project notes
 
-- `docs/adb-iigs-support.md` — firmware differences (`feature/display` vs `feature/IIGS-Fixes`).
+- `docs/adb-iigs-support.md` — firmware differences for IIgs receive timing (historical comparison notes).
 - `docs/iigs-debugging.md` — debugging ideas for fast typing / IIGS behavior.

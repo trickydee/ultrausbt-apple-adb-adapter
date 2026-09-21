@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Troubleshooting guide
+    url: https://github.com/trickydee/ultrausbt-apple-adb-adapter/blob/main/docs/troubleshooting.md
+    about: Check common USB, Bluetooth, and ADB issues before filing.
+  - name: Release notes
+    url: https://github.com/trickydee/ultrausbt-apple-adb-adapter/blob/main/docs/release-notes.md
+    about: See what changed in recent firmware versions.

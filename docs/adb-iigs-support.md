@@ -1,6 +1,6 @@
-# ADB receive timing: Apple IIgs support (`feature/IIGS-Fixes`)
+# ADB receive timing: Apple IIgs support
 
-This document summarizes how ADB **host→device receive** behavior on branch **`feature/IIGS-Fixes`** differs from **`feature/display`** (and the same code paths before the IIgs-oriented commits). The goal is reliable command and register reads when the host is an Apple IIgs, whose attention and bit timing can differ from “typical” 68000-era Macs.
+This document summarizes how ADB **host→device receive** behavior changed for Apple IIgs reliability (historical comparison vs the earlier display-era code paths). Tables below may still name old development branches for archaeology; the behaviour described is in current `main` firmware. The goal is reliable command and register reads when the host is an Apple IIgs, whose attention and bit timing can differ from “typical” 68000-era Macs.
 
 Implementation lives in:
 

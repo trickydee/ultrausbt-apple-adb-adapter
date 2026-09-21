@@ -31,6 +31,12 @@ HIDHopper ADB–based firmware and hardware lineage, continued for the
 ultrausbt DIY adapter with Bluetooth, host mode, and related features
 for classic ADB Macintosh systems and the Apple IIgs.
 
+Reference hardware under `kicad/` (when present) is the UltraUSBT DIY
+adapter design and is **not** a redistribution of HIDHopper or other
+NonCommercial CAD. Unless a separate license file is added beside those
+KiCad sources, treat board files as Copyright 2025-2026 Richard Sanderson
+and contact the maintainer before commercial reuse.
+
 -----------------------------------------------------
 
 HIDHopper ADB is a rebranding of the ADBuino and QuokkADB code for Tech

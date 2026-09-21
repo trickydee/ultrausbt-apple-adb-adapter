@@ -27,9 +27,9 @@ Behavior follows the **real Gravis MouseStick II** split documented in `docs/gra
 
 ## Reference: amigahid-pico (historical)
 
-The tree at `/Users/rich/Documents/Code/3rd party/amigahid-pico` (local clone) was the **pre-fix** reference for gamepad plumbing. **Pairing stability** in this firmware follows the **Atari v22.1.0 / Amiga v2.2.11** recipe — not the old amigahid `sleep_ms(50/10)` connect-pause pattern.
+An earlier **amigahid-pico** tree was the **pre-fix** reference for gamepad plumbing. **Pairing stability** in this firmware follows the **Atari v22.1.0 / Amiga v2.2.11** recipe — not the old amigahid `sleep_ms(50/10)` connect-pause pattern.
 
-**Stadia / Xbox enumeration (this firmware — shipped on `feature/BT-alignment`):**
+**Stadia / Xbox enumeration (this firmware — shipped in 2.2.1):**
 
 - **Discovery only:** If CoD **`0x0508`** or name contains **Stadia** / **Xbox** / **XBOX**, Core 1 USB host is paused via `core1_pause_for_bt_enumeration()` → `core1_wait_for_pause_active(20)` → `bt_callback_busy_wait_ms(30)` (`BT_GAMEPAD_DISCOVERY_SETTLE_MS`).
 - **`on_device_connected`:** Empty — **no** second pause (avoids stuck `pause_depth`).
@@ -130,4 +130,4 @@ Characters are appended only while the control is active: `^` `v` `<` `>` (D-pad
 
 ## Version
 
-Document aligned with firmware **2.2.1** (`feature/BT-alignment`); see [`release-notes.md`](release-notes.md).
+Document aligned with firmware **2.2.1+**; see [`release-notes.md`](release-notes.md).

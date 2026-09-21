@@ -1,0 +1,32 @@
+name: Feature request
+description: New capability, platform support, or UX improvement
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check `docs/FUTURE_WORK.md` — your idea may already be on the roadmap.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / use case
+      description: What are you trying to do on which vintage or modern host?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Optional sketch of behaviour, OLED flow, or protocol support.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: Contribution
+      options:
+        - label: I can help test on real hardware
+        - label: I can help with a pull request

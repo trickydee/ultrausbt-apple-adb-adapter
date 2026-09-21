@@ -43,3 +43,9 @@ dist/
 
 # Local branch cleanup list (merged or obsolete; safe to delete locally/remotely)
 docs/branches-to-clear.md
+
+# Local scratch / abandoned build trees (never publish)
+dustbin/
+
+# Maintainer/LLM org playbook for sibling UltraUSBT repos (keep untracked)
+ORG_TEMPLATE.local.md

@@ -1,0 +1,80 @@
+name: Firmware / software bug
+description: Unexpected behaviour in firmware, USB/BT bridging, or OLED UI
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve UltraUSBT. Please search existing issues first.
+        For wiring and pairing basics, see `docs/troubleshooting.md`.
+  - type: input
+    id: version
+    attributes:
+      label: Firmware version
+      description: e.g. 2.2.3 or UF2 filename from dist/Releases
+      placeholder: ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2
+    validations:
+      required: true
+  - type: dropdown
+    id: board
+    attributes:
+      label: Board / Pico variant
+      options:
+        - Pico 2 W (recommended)
+        - Pico W
+        - Pico 2
+        - Pico
+        - Other / custom UltraUSBT PCB
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Adapter mode
+      options:
+        - ADB Device (USB/BT → vintage host)
+        - ADB Host (ADB devices → modern USB host)
+        - Not sure / both
+    validations:
+      required: true
+  - type: dropdown
+    id: vintage
+    attributes:
+      label: Vintage system (if Device mode)
+      options:
+        - Apple IIgs
+        - Macintosh 68K
+        - PowerPC ADB Mac
+        - NeXT (experimental)
+        - N/A (Host mode or other)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Expected vs actual behaviour.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: peripherals
+    attributes:
+      label: Peripherals
+      description: USB/BT keyboard, mouse, gamepad models; any ADB pass-through devices.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / OLED observations
+      description: UART debug build output, OLED screenshots description, etc.
