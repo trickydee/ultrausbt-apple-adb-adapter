@@ -94,7 +94,13 @@ build_dir_uf2_rel() {
 cmake_build_dir() {
   local build_dir=$1
   shift
-  cmake -B "$build_dir" -S "src/firmware" "$@"
+  local bluepad32_source="${BLUEPAD32_SOURCE_DIR:-$(firmware_repo_root)/src/firmware/bluepad32}"
+  if [ ! -f "$bluepad32_source/src/components/bluepad32/CMakeLists.txt" ]; then
+    echo "Error: invalid Bluepad32 checkout: $bluepad32_source" >&2
+    return 1
+  fi
+  cmake -B "$build_dir" -S "src/firmware" \
+    -DBLUEPAD32_SOURCE_DIR="$bluepad32_source" "$@" || return 1
   cmake --build "$build_dir" -j"$(host_cores)"
 }
 
@@ -109,6 +115,6 @@ cmake_build_adbmon_dir() {
     echo "Error: src/adbmon/CMakeLists.txt not found."
     exit 1
   fi
-  cmake -B "$build_dir" -S "src/adbmon" "$@"
+  cmake -B "$build_dir" -S "src/adbmon" "$@" || return 1
   cmake --build "$build_dir" -j"$(host_cores)"
 }

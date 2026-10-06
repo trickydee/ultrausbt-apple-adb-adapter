@@ -9,7 +9,7 @@ endif ()
 # note: this must happen before project()
 include(pico_sdk_import.cmake)
 
-project(ultrausbt-Apple-ADB-adapter-firmware VERSION 2.2.3)
+project(ultrausbt-Apple-ADB-adapter-firmware VERSION 2.3.1)
 
 # Single source of truth for firmware version (bump when releasing; used in banner and docs)
 add_compile_definitions(BT_USB_ADB_ADAPTER_VERSION_STRING=\"${PROJECT_VERSION}\")
@@ -122,16 +122,25 @@ add_subdirectory(lib/usb/src)
 
 # Bluepad32: add init/platform sources, includes, and link (wireless boards only)
 if(ENABLE_BLUEPAD32)
-    add_subdirectory(${CMAKE_SOURCE_DIR}/bluepad32/src/components/bluepad32 libbluepad32)
+    set(BLUEPAD32_SOURCE_DIR "${CMAKE_SOURCE_DIR}/bluepad32" CACHE PATH "Bluepad32 source checkout (default: pinned submodule)")
+    if(NOT EXISTS "${BLUEPAD32_SOURCE_DIR}/src/components/bluepad32/CMakeLists.txt")
+        message(FATAL_ERROR "Invalid Bluepad32 checkout: ${BLUEPAD32_SOURCE_DIR}")
+    endif()
+    message(STATUS "Bluepad32 source: ${BLUEPAD32_SOURCE_DIR}")
+    add_subdirectory("${BLUEPAD32_SOURCE_DIR}/src/components/bluepad32" libbluepad32)
+    # New Bluepad32 spelling, existing SDK ABI. Never force C headers into assembly.
+    target_compile_options(bluepad32 PRIVATE
+        "$<$<COMPILE_LANGUAGE:C>:-include${CMAKE_SOURCE_DIR}/src/bluepad32_sdk_compat.h>")
     target_include_directories(bluepad32 PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
     target_sources(ultrausbt-Apple-ADB-adapter-firmware PRIVATE
         ${CMAKE_SOURCE_DIR}/src/bluepad32_init.c
         ${CMAKE_SOURCE_DIR}/src/bluepad32_platform.c
+        ${CMAKE_SOURCE_DIR}/src/bluepad32_names.c
     )
     target_include_directories(ultrausbt-Apple-ADB-adapter-firmware PRIVATE
         ${CMAKE_SOURCE_DIR}/include
-        ${CMAKE_SOURCE_DIR}/bluepad32/src/components/bluepad32/include
+        ${BLUEPAD32_SOURCE_DIR}/src/components/bluepad32/include
         ${CMAKE_SOURCE_DIR}/src
         ${PICO_SDK_PATH}/lib/btstack/src
         ${PICO_SDK_PATH}/src/boards/include
@@ -149,7 +158,7 @@ if(ENABLE_BLUEPAD32)
         )
     endif()
     target_include_directories(QuokkADB PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
-    target_include_directories(QuokkADB PRIVATE ${CMAKE_SOURCE_DIR}/bluepad32/src/components/bluepad32/include)
+    target_include_directories(QuokkADB PRIVATE ${BLUEPAD32_SOURCE_DIR}/src/components/bluepad32/include)
     target_link_libraries(ultrausbt-Apple-ADB-adapter-firmware
         pico_cyw43_arch_none
         pico_btstack_ble

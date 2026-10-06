@@ -14,6 +14,7 @@
 
 #include "sdkconfig.h"
 #include "bluepad32_platform.h"
+#include "bluepad32_names.h"
 #include "bt_host_coop.h"
 #include "bt_pairing_config.h"
 #include "uni_hid_device.h"
@@ -183,24 +184,28 @@ static void clear_slot(uni_hid_device_t* d, uni_hid_device_t** device_map, int m
     }
 }
 
-static bt_keyboard_storage_t* get_keyboard_storage(uni_hid_device_t* d) {
-    int idx = find_slot(d, keyboard_device_map, MAX_BT_KEYBOARDS);
+static bt_keyboard_storage_t* get_keyboard_storage(uni_hid_device_t* d, bool allocate) {
+    int idx = allocate ? find_slot(d, keyboard_device_map, MAX_BT_KEYBOARDS)
+                       : find_existing_slot(d, keyboard_device_map, MAX_BT_KEYBOARDS);
     return idx >= 0 ? &bt_keyboards[idx] : NULL;
 }
 
-static bt_mouse_storage_t* get_mouse_storage(uni_hid_device_t* d) {
-    int idx = find_slot(d, mouse_device_map, MAX_BT_MICE);
+static bt_mouse_storage_t* get_mouse_storage(uni_hid_device_t* d, bool allocate) {
+    int idx = allocate ? find_slot(d, mouse_device_map, MAX_BT_MICE)
+                       : find_existing_slot(d, mouse_device_map, MAX_BT_MICE);
     return idx >= 0 ? &bt_mice[idx] : NULL;
 }
 
-static bt_gamepad_storage_t* get_gamepad_storage(uni_hid_device_t* d) {
-    int idx = find_slot(d, gamepad_device_map, MAX_BT_GAMEPADS);
+static bt_gamepad_storage_t* get_gamepad_storage(uni_hid_device_t* d, bool allocate) {
+    int idx = allocate ? find_slot(d, gamepad_device_map, MAX_BT_GAMEPADS)
+                       : find_existing_slot(d, gamepad_device_map, MAX_BT_GAMEPADS);
     return idx >= 0 ? &bt_gamepads[idx] : NULL;
 }
 
 static void my_platform_init(int argc, const char** argv) {
     ARG_UNUSED(argc);
     ARG_UNUSED(argv);
+    logi("[bt] 2.3.1 native bonded reconnect test; persistent names + ready-only slots; scanning/pairing ON; advertisement debug OFF\n");
     logi("bluepad32_platform: init\n");
 }
 
@@ -215,6 +220,9 @@ static void my_platform_on_init_complete(void) {
 }
 
 static uni_error_t my_platform_on_device_discovered(bd_addr_t addr, const char* name, uint16_t cod, uint8_t rssi) {
+    // Native bonded reconnects arrive with empty name / CoD=0 after Bluepad32
+    // validates bond and address type. Keep admission here unchanged; ordinary
+    // discovery filtering remains in Bluepad32.
     ARG_UNUSED(rssi);
     if (name && name[0] != '\0') {
         store_pending_name_by_addr(addr, name);
@@ -245,7 +253,7 @@ static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
     bool was_ready = false;
 
     if (find_existing_slot(d, keyboard_device_map, MAX_BT_KEYBOARDS) >= 0) {
-        bt_keyboard_storage_t* kb_storage = get_keyboard_storage(d);
+        bt_keyboard_storage_t* kb_storage = get_keyboard_storage(d, false);
         if (kb_storage) {
             was_ready = kb_storage->connected;
             kb_storage->connected = false;
@@ -257,7 +265,7 @@ static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
     }
 
     if (find_existing_slot(d, mouse_device_map, MAX_BT_MICE) >= 0) {
-        bt_mouse_storage_t* mouse_storage = get_mouse_storage(d);
+        bt_mouse_storage_t* mouse_storage = get_mouse_storage(d, false);
         if (mouse_storage) {
             was_ready = was_ready || mouse_storage->connected;
             mouse_storage->connected = false;
@@ -269,7 +277,7 @@ static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
     }
 
     if (find_existing_slot(d, gamepad_device_map, MAX_BT_GAMEPADS) >= 0) {
-        bt_gamepad_storage_t* gp_storage = get_gamepad_storage(d);
+        bt_gamepad_storage_t* gp_storage = get_gamepad_storage(d, false);
         if (gp_storage) {
             was_ready = was_ready || gp_storage->connected;
             gp_storage->connected = false;
@@ -280,6 +288,10 @@ static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
         gamepad_visual_clear();
         clear_slot(d, gamepad_device_map, MAX_BT_GAMEPADS);
     }
+
+    bd_addr_t addr;
+    uni_bt_conn_get_address(&d->conn, addr);
+    clear_pending_name_by_addr(addr);
 
     if (!was_ready) {
         bt_link_mark_connect_finished();
@@ -292,6 +304,14 @@ static uni_error_t my_platform_on_device_ready(uni_hid_device_t* d) {
     bd_addr_t addr;
     uni_bt_conn_get_address(&d->conn, addr);
     const char* stored_name = get_pending_name_by_addr(addr);
+    // Ready runs after BLE security/service discovery, when the bond index exists.
+    // A genuine discovery name wins over the generic directed-reconnect fallback.
+    if (d->conn.protocol == UNI_BT_CONN_PROTOCOL_BLE) {
+        if (bluepad32_name_is_generic(d->name) && !bluepad32_name_is_generic(stored_name))
+            uni_hid_device_set_name(d, stored_name);
+        ultrausbt_restore_ble_name(d);
+        ultrausbt_save_ble_name(d);
+    }
     const char* device_name = NULL;
     if (uni_hid_device_has_name(d) && d->name[0] != '\0') {
         device_name = d->name;
@@ -300,7 +320,7 @@ static uni_error_t my_platform_on_device_ready(uni_hid_device_t* d) {
     }
 
     if (uni_hid_device_is_keyboard(d)) {
-        bt_keyboard_storage_t* storage = get_keyboard_storage(d);
+        bt_keyboard_storage_t* storage = get_keyboard_storage(d, true);
         if (storage) {
             storage->connected = true;
             storage->updated = false;
@@ -313,7 +333,7 @@ static uni_error_t my_platform_on_device_ready(uni_hid_device_t* d) {
         }
         logi("bluepad32_platform: keyboard ready\n");
     } else if (uni_hid_device_is_mouse(d)) {
-        bt_mouse_storage_t* storage = get_mouse_storage(d);
+        bt_mouse_storage_t* storage = get_mouse_storage(d, true);
         if (storage) {
             storage->connected = true;
             storage->updated = false;
@@ -326,7 +346,7 @@ static uni_error_t my_platform_on_device_ready(uni_hid_device_t* d) {
         }
         logi("bluepad32_platform: mouse ready\n");
     } else if (uni_hid_device_is_gamepad(d)) {
-        bt_gamepad_storage_t* storage = get_gamepad_storage(d);
+        bt_gamepad_storage_t* storage = get_gamepad_storage(d, true);
         if (storage) {
             storage->connected = true;
             storage->updated = false;
@@ -362,43 +382,23 @@ static uni_error_t my_platform_on_device_ready(uni_hid_device_t* d) {
 static void my_platform_on_controller_data(uni_hid_device_t* d, uni_controller_t* ctl) {
     switch (ctl->klass) {
         case UNI_CONTROLLER_CLASS_KEYBOARD: {
-            bt_keyboard_storage_t* storage = get_keyboard_storage(d);
-            if (storage) {
-                if (!storage->connected) {
-                    storage->connected = true;
-                    if (storage->name[0] == '\0') {
-                        if (uni_hid_device_has_name(d) && d->name[0] != '\0') {
-                            snprintf(storage->name, sizeof(storage->name), "%.*s", (int)(sizeof(storage->name) - 1), d->name);
-                        } else {
-                            snprintf(storage->name, sizeof(storage->name), "Keyboard");
-                        }
-                    }
-                }
+            bt_keyboard_storage_t* storage = get_keyboard_storage(d, false);
+            if (storage && storage->connected) {
                 storage->keyboard = ctl->keyboard;
                 storage->updated = true;
             }
             break;
         }
         case UNI_CONTROLLER_CLASS_MOUSE: {
-            bt_mouse_storage_t* storage = get_mouse_storage(d);
-            if (storage) {
-                if (!storage->connected) {
-                    storage->connected = true;
-                    if (storage->name[0] == '\0') {
-                        if (uni_hid_device_has_name(d) && d->name[0] != '\0') {
-                            snprintf(storage->name, sizeof(storage->name), "%.*s", (int)(sizeof(storage->name) - 1), d->name);
-                        } else {
-                            snprintf(storage->name, sizeof(storage->name), "Mouse");
-                        }
-                    }
-                }
+            bt_mouse_storage_t* storage = get_mouse_storage(d, false);
+            if (storage && storage->connected) {
                 storage->mouse = ctl->mouse;
                 storage->updated = true;
             }
             break;
         }
         case UNI_CONTROLLER_CLASS_GAMEPAD: {
-            bt_gamepad_storage_t* storage = get_gamepad_storage(d);
+            bt_gamepad_storage_t* storage = get_gamepad_storage(d, false);
             /* Same as amigahid-pico: ignore gamepad reports until on_device_ready() marked connected. */
             if (storage && storage->connected) {
                 storage->gamepad = ctl->gamepad;
@@ -443,7 +443,33 @@ struct uni_platform* get_my_platform(void) {
     return &plat;
 }
 
+// Public input and display APIs share connected-device ordering, not storage indices.
+static int keyboard_slot_at(int index) {
+    if (index < 0) return -1;
+    for (int i = 0; i < MAX_BT_KEYBOARDS; i++) {
+        if (bt_keyboards[i].connected && index-- == 0) return i;
+    }
+    return -1;
+}
+
+static int mouse_slot_at(int index) {
+    if (index < 0) return -1;
+    for (int i = 0; i < MAX_BT_MICE; i++) {
+        if (bt_mice[i].connected && index-- == 0) return i;
+    }
+    return -1;
+}
+
+static int gamepad_slot_at(int index) {
+    if (index < 0) return -1;
+    for (int i = 0; i < MAX_BT_GAMEPADS; i++) {
+        if (bt_gamepads[i].connected && index-- == 0) return i;
+    }
+    return -1;
+}
+
 bool bluepad32_get_keyboard(int idx, void* out_keyboard) {
+    idx = keyboard_slot_at(idx);
     if (idx < 0 || idx >= MAX_BT_KEYBOARDS || !out_keyboard) return false;
     if (bt_keyboards[idx].connected && bt_keyboards[idx].updated) {
         *(uni_keyboard_t*)out_keyboard = bt_keyboards[idx].keyboard;
@@ -454,6 +480,7 @@ bool bluepad32_get_keyboard(int idx, void* out_keyboard) {
 }
 
 bool bluepad32_peek_keyboard(int idx, void* out_keyboard) {
+    idx = keyboard_slot_at(idx);
     if (idx < 0 || idx >= MAX_BT_KEYBOARDS || !out_keyboard) return false;
     if (!bt_keyboards[idx].connected) return false;
     *(uni_keyboard_t*)out_keyboard = bt_keyboards[idx].keyboard;
@@ -469,6 +496,7 @@ int bluepad32_get_keyboard_count(void) {
 }
 
 bool bluepad32_get_mouse(int idx, void* out_mouse) {
+    idx = mouse_slot_at(idx);
     if (idx < 0 || idx >= MAX_BT_MICE || !out_mouse) return false;
     if (bt_mice[idx].connected && bt_mice[idx].updated) {
         *(uni_mouse_t*)out_mouse = bt_mice[idx].mouse;
@@ -479,6 +507,7 @@ bool bluepad32_get_mouse(int idx, void* out_mouse) {
 }
 
 bool bluepad32_peek_mouse(int idx, void* out_mouse) {
+    idx = mouse_slot_at(idx);
     if (idx < 0 || idx >= MAX_BT_MICE || !out_mouse) return false;
     if (!bt_mice[idx].connected) return false;
     *(uni_mouse_t*)out_mouse = bt_mice[idx].mouse;
@@ -494,6 +523,7 @@ int bluepad32_get_mouse_count(void) {
 }
 
 bool bluepad32_get_gamepad(int idx, void* out_gamepad) {
+    idx = gamepad_slot_at(idx);
     if (idx < 0 || idx >= MAX_BT_GAMEPADS || !out_gamepad) return false;
     if (bt_gamepads[idx].connected && bt_gamepads[idx].updated) {
         *(uni_gamepad_t*)out_gamepad = bt_gamepads[idx].gamepad;
@@ -504,6 +534,7 @@ bool bluepad32_get_gamepad(int idx, void* out_gamepad) {
 }
 
 bool bluepad32_peek_gamepad(int idx, void* out_gamepad) {
+    idx = gamepad_slot_at(idx);
     if (idx < 0 || idx >= MAX_BT_GAMEPADS || !out_gamepad) return false;
     if (!bt_gamepads[idx].connected) return false;
     *(uni_gamepad_t*)out_gamepad = bt_gamepads[idx].gamepad;
@@ -529,6 +560,8 @@ void bluepad32_delete_pairing_keys(void) {
     core1_force_release_bt_pause();
     s_bt_awaiting_ready = 0;
     s_bt_settle_until_us = 0;
+    ultrausbt_clear_ble_names();
+    memset(pending_names_by_addr, 0, sizeof(pending_names_by_addr));
     uni_bt_del_keys_unsafe();
 }
 
@@ -547,17 +580,13 @@ bool bluepad32_bt_defer_adb_reset(void) {
 }
 
 const char* bluepad32_get_device_name(char device_type, int idx) {
-    if (idx < 0) return NULL;
-    if (device_type == 'K' && idx < MAX_BT_KEYBOARDS && bt_keyboards[idx].connected) {
-        return bt_keyboards[idx].name;
+    int slot;
+    switch (device_type) {
+        case 'K': slot = keyboard_slot_at(idx); return slot >= 0 ? bt_keyboards[slot].name : NULL;
+        case 'M': slot = mouse_slot_at(idx); return slot >= 0 ? bt_mice[slot].name : NULL;
+        case 'G': slot = gamepad_slot_at(idx); return slot >= 0 ? bt_gamepads[slot].name : NULL;
+        default: return NULL;
     }
-    if (device_type == 'M' && idx < MAX_BT_MICE && bt_mice[idx].connected) {
-        return bt_mice[idx].name;
-    }
-    if (device_type == 'G' && idx < MAX_BT_GAMEPADS && bt_gamepads[idx].connected) {
-        return bt_gamepads[idx].name;
-    }
-    return NULL;
 }
 
 #endif // ENABLE_BLUEPAD32

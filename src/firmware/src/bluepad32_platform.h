@@ -16,6 +16,7 @@ extern "C" {
 #define BLUEPAD32_MAX_BT_KEYBOARDS 2
 #define BLUEPAD32_MAX_BT_MICE 2
 
+// All indices below enumerate connected devices; holes in storage are skipped.
 // Get keyboard data for index (0 .. BLUEPAD32_MAX_BT_KEYBOARDS-1). out_keyboard must match uni_keyboard_t layout.
 // Returns true if connected and has new data; clears updated flag.
 bool bluepad32_get_keyboard(int idx, void* out_keyboard);
