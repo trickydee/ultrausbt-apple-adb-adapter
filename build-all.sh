@@ -44,6 +44,7 @@ Environment:
   BUILD_RELEASE_DIR       CMake build tree for release (default: build)
   BUILD_DEBUG_DIR         CMake build tree for debug (default: build-debug)
   BUILD_ADBMON_DIR        CMake build tree for adbmon (default: build-adbmon)
+  BLUEPAD32_SOURCE_DIR   Optional external checkout (default: pinned submodule)
   BUILD_KEEP_DIRS=1       Keep CMake build trees after success (default: remove)
 EOF
 }
@@ -164,6 +165,12 @@ check_uf2 "$RELEASE_UF2" "Adapter release"
 check_uf2 "$DEBUG_UF2" "Adapter debug (UART)"
 if [ "$BUILD_ADBMON" = "1" ]; then
     check_uf2 "$ADBMON_OUT" "adbmon ($ADBMON_BOARD)"
+fi
+
+# Failed configure/build must never publish an older UF2 from a reused tree.
+if [ "$BUILD_SUCCESS" = false ]; then
+    echo "Build failed; dist artifacts have not been replaced." >&2
+    exit 1
 fi
 
 echo "Collecting UF2 artifacts into $DIST_DIR/ ..."
