@@ -4,4 +4,4 @@
 [submodule "src/firmware/bluepad32"]
 	path = src/firmware/bluepad32
 	url = https://github.com/trickydee/bluepad32.git
-	branch = codex/ble-reconnect-pr
+	branch = codex/ble-reconnect-develop-20261122

@@ -290,7 +290,7 @@ static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
     }
 
     bd_addr_t addr;
-    uni_bt_conn_get_address(&d->conn, addr);
+    memcpy(addr, d->conn.btaddr, sizeof(addr));
     clear_pending_name_by_addr(addr);
 
     if (!was_ready) {
@@ -302,7 +302,7 @@ static uni_error_t my_platform_on_device_ready(uni_hid_device_t* d) {
     logi("bluepad32_platform: device ready\n");
 
     bd_addr_t addr;
-    uni_bt_conn_get_address(&d->conn, addr);
+    memcpy(addr, d->conn.btaddr, sizeof(addr));
     const char* stored_name = get_pending_name_by_addr(addr);
     // Ready runs after BLE security/service discovery, when the bond index exists.
     // A genuine discovery name wins over the generic directed-reconnect fallback.

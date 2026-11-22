@@ -2,20 +2,22 @@
 
 The adapter integration is committed as `3868b1e` on
 `feature/bluepad32-logi-mx-investigations`. The default build now uses the published
-reconnect implementation from [Bluepad32 PR #236](https://github.com/ricardoquesada/bluepad32/pull/236)
-through the pinned [trickydee fork](https://github.com/trickydee/bluepad32).
+reconnect implementation rebased onto upstream develop `ec42eb1` through the pinned
+[trickydee fork](https://github.com/trickydee/bluepad32). The original reconnect
+proposal is [Bluepad32 PR #236](https://github.com/ricardoquesada/bluepad32/pull/236).
 The pre-existing edit to `docs/release-notes.md` remains unrelated and uncommitted.
 
 ## Sources and hardware
 
 - Bluepad32 submodule: `src/firmware/bluepad32`, exact published revision
-  `f7e94489be6ae29064a98c24c090dc5a5917c177`. PR #236 was open at verification.
-  `branch = codex/ble-reconnect-pr` records the fork branch; normal submodule
+  `06aed0361eb094f9ca6b6029da88ef60a200af95`, based on upstream `ec42eb1`.
+  `branch = codex/ble-reconnect-develop-20261122` records the fork branch; normal submodule
   updates still use the committed gitlink, not the moving branch tip.
   No external checkout or local reconnect patch is required.
-- This replaces the previous submodule pin `36f08ca`, whose custom BLE mouse-button
-  persistence patch is not present in the published PR revision. Test held-button
-  dragging across movement-only reports on affected mice before release.
+- This replaces reconnect pin `f7e9448`. Upstream removed
+  `uni_bt_conn_get_address`; the two adapter calls now copy `d->conn.btaddr` with
+  `memcpy(addr, d->conn.btaddr, sizeof(addr))`. The obsolete host-test stub was
+  removed. Adapter behavior and SDK selection are otherwise unchanged.
 - Existing repository-cached Pico SDK **2.2.0** retained. Macro-only HIDS host/client
   compatibility is forced for C compilation of Bluepad32 only, never assembly.
 - Adapter: stock **pico2_w (Pico 2 W / RP2350)**, main's default. No separate PCB
@@ -46,7 +48,7 @@ remote follows `.gitmodules`. New recursive clones use the fork automatically.
 Verification used fresh build trees and retained them for inspection:
 
 ```sh
-env -u BLUEPAD32_SOURCE_DIR BUILD_RELEASE_DIR=build-fork-pin-release BUILD_DEBUG_DIR=build-fork-pin-debug BUILD_ADBMON_DIR=build-fork-pin-adbmon BUILD_KEEP_DIRS=1 ./build-all.sh > /tmp/apple-adb-fork-pin-build.log 2>&1
+env -u BLUEPAD32_SOURCE_DIR PICO_SDK_PATH="$PWD/.pico-sdk/pico-sdk" BUILD_RELEASE_DIR=build-reconnect-20261122-release BUILD_DEBUG_DIR=build-reconnect-20261122-debug BUILD_ADBMON_DIR=build-reconnect-20261122-adbmon BUILD_KEEP_DIRS=1 ./build-all.sh > /tmp/apple-adb-reconnect-20261122-build.log 2>&1
 ```
 
 `BLUEPAD32_SOURCE_DIR=/absolute/path/to/bluepad32` remains an optional development
@@ -91,6 +93,15 @@ gitlink. Do not switch solely because the PR has merged.
    keyboard/mouse names persist. Finally clear bonds through the existing UI, confirm
    metadata is cleared, and pair again to seed names anew.
 8. Repeat reconnect checks with the release UF2 to exclude UART-debug timing effects.
+
+## Rollout hardware status — 2026-11-22
+
+The user validated the new upstream-plus-reconnect implementation on Amiga:
+cold boot, Logitech power cycles, MX keyboard and mouse, held-button dragging,
+and controller coexistence. This is supporting cross-adapter evidence, not an
+Apple ADB hardware result. **Apple hardware validation for `06aed03` is pending**;
+run the checklist above with the new Apple artifacts, including ADB Host mode
+and USB regressions. No Apple hardware was flashed during this rollout.
 
 ## User-reported hardware result — 2026-10-06
 
@@ -146,7 +157,7 @@ classic protocol exclusion, corrupted records, simulated RAM reset with retained
 genuine discovery-name preference, generic-name exclusion, and clear-bonds cleanup.
 This does not test physical flash writes, Bluetooth radio behavior, or ADB timing.
 
-## Published-pin build verification
+## Previous published-pin verification — `f7e9448`
 
 - `build-all.sh` exited 0 from fresh build trees: release and UART-debug Pico 2 W
   adapters plus Pico adbmon. No compiler warnings or errors were found in
@@ -165,7 +176,7 @@ This does not test physical flash writes, Bluetooth radio behavior, or ADB timin
   held-button dragging, bond/name retention, and ADB/USB regressions still require
   hardware validation; the earlier user report is not a test of this exact pin.
 
-### Verified UF2 artifacts
+### Previous UF2 artifacts — `f7e9448`
 
 - `dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2`: 1382912 bytes; SHA-256
   `5014fcbee1270cecdfca13d5eb83806e7839d61a409bc9518ee7f8fc952ec681`.
@@ -173,3 +184,29 @@ This does not test physical flash writes, Bluetooth radio behavior, or ADB timin
   `c43400987d03a30492434203298c4598d0aeecf1907b63bc832a3791dea76190`.
 - `dist/adbmon-pico.uf2`: 83968 bytes; SHA-256
   `b9ec67cbbefd7f713dca5803c2691f9e52bf300c40557308c664fe0f1398481a`.
+
+## Rollout build verification — 2026-11-22, `06aed03`
+
+- Fresh `build-all.sh` completed with exit 0 for Pico 2 W release and UART-debug
+  adapters and Pico adbmon. No compiler warnings or errors were found in
+  `/tmp/apple-adb-reconnect-20261122-build.log`.
+- Both adapter caches select the pinned Apple submodule and existing SDK 2.2.0,
+  with debug OFF/ON respectively. Both binaries contain the 2.3.1 reconnect marker.
+  No SDK or CMake compatibility changes were required.
+- `python3 tests/test_bluepad32_host.py` passed after removing the obsolete address
+  helper stub, exercising the actual adapter code with its direct address copies.
+- All three UF2s have valid block alignment and magic; dist copies equal fresh
+  build outputs. SDK HEAD remains `a1438dff1d38bd9c65dbd693f0e5db4b9ae91779` and clean.
+  The Apple Bluepad32 submodule is clean at the requested pin. Unrelated
+  `docs/release-notes.md` edits are byte-for-byte unchanged.
+- Apple hardware validation remains pending. The Amiga results above do not
+  establish Apple reconnect, ADB timing, or physical bond/name retention behavior.
+
+### Current rollout artifacts
+
+- `dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host.uf2`: 1396736 bytes; SHA-256
+  `c88f108ec7028de4120064f0ab2957d4f02f552f56d74b76168939b79789d7f1`.
+- `dist/ultrausbt-Apple-ADB-adapter-firmware-pico2_w-host-debug.uf2`: 1396736 bytes; SHA-256
+  `6fa4359d1ac6b39ca359b8d90e4296c93e7ec5af9d64ffb07b1cc09b53f0e7e3`.
+- `dist/adbmon-pico.uf2`: 83968 bytes; SHA-256
+  `719ce218be29ab0b9f6d825d10545caf80f61ec69203d08d6d0e1e8021061bbe`.

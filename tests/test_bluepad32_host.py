@@ -57,7 +57,6 @@ static bool uni_hid_device_has_name(uni_hid_device_t*d){return d->name[0]!=0;}
 static bool uni_hid_device_is_keyboard(uni_hid_device_t*d){return d->klass==1;}
 static bool uni_hid_device_is_mouse(uni_hid_device_t*d){return d->klass==2;}
 static bool uni_hid_device_is_gamepad(uni_hid_device_t*d){return d->klass==3;}
-static void uni_bt_conn_get_address(connection_t*c,bd_addr_t a){memcpy(a,c->btaddr,6);}
 static uint32_t time_us_32(void){return 1;}
 static void busy_wait_us(uint32_t n){(void)n;}
 static int core1_get_bt_pause_depth(void){return 0;}
